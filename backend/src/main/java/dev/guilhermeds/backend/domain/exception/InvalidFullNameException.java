@@ -1,8 +1,8 @@
 package dev.guilhermeds.backend.domain.exception;
 
-public class InvalidDisplayNameException extends ValidationException {
+public class InvalidFullNameException extends ValidationException {
 
-    public InvalidDisplayNameException(int minLength, int maxLength) {
+    public InvalidFullNameException(int minLength, int maxLength) {
         super("Display name must be between " + minLength + " and " + maxLength + " characters");
     }
 }

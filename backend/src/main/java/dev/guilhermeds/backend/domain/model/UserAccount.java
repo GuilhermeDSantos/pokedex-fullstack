@@ -11,24 +11,24 @@ public class UserAccount {
 
     private final UserId id;
     private final Email email;
-    private final DisplayName displayName;
+    private final FullName name;
     private final PasswordHash passwordHash;
     private final Instant createdAt;
 
     private UserAccount(Builder builder) {
         this.id = Objects.requireNonNull(builder.id, "id must not be null");
         this.email = Objects.requireNonNull(builder.email, "email must not be null");
-        this.displayName = Objects.requireNonNull(builder.displayName, "displayName must not be null");
+        this.name = Objects.requireNonNull(builder.name, "name must not be null");
         this.passwordHash = Objects.requireNonNull(builder.passwordHash, "passwordHash must not be null");
         this.createdAt = Objects.requireNonNull(builder.createdAt, "createdAt must not be null");
     }
 
-    public static UserAccount register(UserId id, Email email, DisplayName displayName,
+    public static UserAccount register(UserId id, Email email, FullName name,
                                       PasswordHash passwordHash, Instant now) {
         return builder()
             .id(id)
             .email(email)
-            .displayName(displayName)
+            .name(name)
             .passwordHash(passwordHash)
             .createdAt(now)
             .build();
@@ -40,7 +40,7 @@ public class UserAccount {
 
     public UserId getId() { return id; }
     public Email getEmail() { return email; }
-    public DisplayName getDisplayName() { return displayName; }
+    public FullName getName() { return name; }
     public PasswordHash getPasswordHash() { return passwordHash; }
     public Instant getCreatedAt() { return createdAt; }
 
@@ -63,7 +63,7 @@ public class UserAccount {
 
         private UserId id;
         private Email email;
-        private DisplayName displayName;
+        private FullName name;
         private PasswordHash passwordHash;
         private Instant createdAt;
 
@@ -72,7 +72,7 @@ public class UserAccount {
 
         public Builder id(UserId id) { this.id = id; return this; }
         public Builder email(Email email) { this.email = email; return this; }
-        public Builder displayName(DisplayName displayName) { this.displayName = displayName; return this; }
+        public Builder name(FullName name) { this.name = name; return this; }
         public Builder passwordHash(PasswordHash passwordHash) { this.passwordHash = passwordHash; return this; }
         public Builder createdAt(Instant createdAt) { this.createdAt = createdAt; return this; }
 

@@ -14,12 +14,12 @@ class UserAccountTest {
 
     @Test
     void shouldRegisterWithTheGivenIdAndTimestamp() {
-        var account = UserAccount.register(ID, new Email("ash@pallet.town"), new DisplayName("Ash"),
+        var account = UserAccount.register(ID, new Email("ash@pallet.town"), new FullName("Ash"),
             new PasswordHash("$2a$10$hash"), NOW);
 
         assertThat(account.getId()).isEqualTo(ID);
         assertThat(account.getEmail()).isEqualTo(new Email("ash@pallet.town"));
-        assertThat(account.getDisplayName()).isEqualTo(new DisplayName("Ash"));
+        assertThat(account.getName()).isEqualTo(new FullName("Ash"));
         assertThat(account.getPasswordHash()).isEqualTo(new PasswordHash("$2a$10$hash"));
         assertThat(account.getCreatedAt()).isEqualTo(NOW);
     }
