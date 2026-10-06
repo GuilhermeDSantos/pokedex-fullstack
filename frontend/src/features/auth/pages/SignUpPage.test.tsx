@@ -47,4 +47,18 @@ describe('SignUpPage', () => {
       expect(screen.getByLabelText('Email')).toHaveAccessibleDescription('This email is already registered'),
     )
   })
+
+  it('shows a rule the server enforces, such as the password policy, as a form error', async () => {
+    const policy = 'Password must have at least 8 characters, a letter and a digit, and at most 72 bytes'
+    server.use(
+      http.post('/api/v1/auth/register', () =>
+        HttpResponse.json({ code: 'VALIDATION_ERROR', message: policy, fieldErrors: [] }, { status: 400 }),
+      ),
+    )
+    renderApp('/register')
+
+    await signUp('Ash Ketchum', 'ash@pallet.town', 'pikachu')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(policy)
+  })
 })
