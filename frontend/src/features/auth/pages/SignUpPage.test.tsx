@@ -29,4 +29,22 @@ describe('SignUpPage', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/pokemon/25'))
     expect(within(screen.getByRole('banner')).getByText('Ash Ketchum')).toBeInTheDocument()
   })
+
+  it('shows an email that is already registered on the email field', async () => {
+    server.use(
+      http.post('/api/v1/auth/register', () =>
+        HttpResponse.json(
+          { code: 'CONFLICT', message: 'This email is already registered', fieldErrors: [] },
+          { status: 409 },
+        ),
+      ),
+    )
+    renderApp('/register')
+
+    await signUp('Ash Ketchum', 'ash@pallet.town', 'pikachu123')
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Email')).toHaveAccessibleDescription('This email is already registered'),
+    )
+  })
 })
