@@ -16,4 +16,12 @@ describe('app shell', () => {
     expect(within(banner).getByRole('link', { name: 'Pokémon Catalog' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('main')).toBeInTheDocument()
   })
+
+  it('answers an unknown path with a not-found page inside the shell', () => {
+    renderAt('/no-such-page')
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to the start page' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+  })
 })
