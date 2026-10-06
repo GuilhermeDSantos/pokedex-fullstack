@@ -41,4 +41,10 @@ class PokeApiTranslatorTest {
 
         assertThat(translator.toSummary(pokemon(25), onlyFrench).category()).isNull();
     }
+
+    @Test
+    void shouldUseTheDefaultFrontSpriteAsTheListImage() {
+        assertThat(translator.toSummary(pokemon(25), species(25)).spriteUrl())
+            .isEqualTo("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png");
+    }
 }
