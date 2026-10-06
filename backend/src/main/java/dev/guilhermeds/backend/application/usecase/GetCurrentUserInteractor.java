@@ -18,6 +18,8 @@ public class GetCurrentUserInteractor implements GetCurrentUserUseCase {
 
     @Override
     public UserOutput execute(GetCurrentUserInput input) {
-        throw new UnknownAccountException();
+        return repository.findById(mapper.toUserId(input))
+            .map(UserOutput::from)
+            .orElseThrow(UnknownAccountException::new);
     }
 }
