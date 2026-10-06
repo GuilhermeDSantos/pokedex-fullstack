@@ -349,6 +349,10 @@ Quality tooling:
   signatures of `interfaces`, `@Version` on every `@Entity`, `{Id}.generate()` called only from
   `interfaces`. They're enforced by review and ITs until then.
 - E2E tests (Playwright) for the demo flow.
+- Null-safety with JSpecify: `@NullMarked` in each `package-info.java`, the dependency declared,
+  and NullAway in the build. Spring 7 already marks its own packages, which is why the IDE suggests
+  `@NonNull` on overrides. Half-adopting it in one class was reverted.
+- `WWW-Authenticate: Bearer` on the security 401 (RFC 6750), without the error details.
 
 Frontend extras:
 - A toast system, lazy-loaded routes, dark mode, i18n of the UI.
