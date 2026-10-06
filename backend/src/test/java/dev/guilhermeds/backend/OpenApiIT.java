@@ -33,4 +33,14 @@ class OpenApiIT {
             .hasStatusOk()
             .bodyJson().extractingPath("$.paths['/api/v1/auth/login'].post").isNotNull();
     }
+
+    @Test
+    void shouldServeTheSwaggerUiWithoutAToken() {
+        assertThat(mockMvc.get().uri("/swagger-ui.html"))
+            .hasStatus3xxRedirection()
+            .hasRedirectedUrl("/swagger-ui/index.html");
+        assertThat(mockMvc.get().uri("/swagger-ui/index.html"))
+            .hasStatusOk()
+            .bodyText().contains("swagger-ui");
+    }
 }
