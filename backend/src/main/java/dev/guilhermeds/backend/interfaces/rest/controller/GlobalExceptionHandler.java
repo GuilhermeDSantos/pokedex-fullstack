@@ -3,6 +3,7 @@ package dev.guilhermeds.backend.interfaces.rest.controller;
 import dev.guilhermeds.backend.domain.exception.ConflictException;
 import dev.guilhermeds.backend.domain.exception.ValidationException;
 import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
+import dev.guilhermeds.backend.domain.exception.DomainException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import dev.guilhermeds.backend.interfaces.rest.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthenticatedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthenticated(UnauthenticatedException exception) {
         return error(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", exception.getMessage());
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDomain(DomainException exception) {
+        return error(HttpStatus.UNPROCESSABLE_CONTENT, "DOMAIN_ERROR", exception.getMessage());
     }
 
     private static ResponseEntity<ErrorResponse> error(HttpStatus status, String code, String message) {
