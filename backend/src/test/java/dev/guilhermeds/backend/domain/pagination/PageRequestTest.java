@@ -31,4 +31,10 @@ class PageRequestTest {
     void shouldComputeOffsetFromPageAndSize() {
         assertThat(new PageRequest(3, 20).offset()).isEqualTo(60L);
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 50})
+    void shouldAcceptSizesAtTheLimits(int size) {
+        assertThat(new PageRequest(0, size).size()).isEqualTo(size);
+    }
 }
