@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.domain.repository;
 
+import dev.guilhermeds.backend.domain.model.Email;
 import dev.guilhermeds.backend.domain.model.UserAccount;
 import dev.guilhermeds.backend.domain.model.UserId;
 
@@ -10,4 +11,6 @@ public interface UserAccountRepository {
     UserAccount save(UserAccount account);
 
     Optional<UserAccount> findById(UserId id);
+
+    Optional<UserAccount> findByEmail(Email email);
 }

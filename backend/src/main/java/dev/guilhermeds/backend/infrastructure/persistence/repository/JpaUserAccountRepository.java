@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
+import dev.guilhermeds.backend.domain.model.Email;
 import dev.guilhermeds.backend.domain.model.UserAccount;
 import dev.guilhermeds.backend.domain.model.UserId;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
@@ -27,5 +28,10 @@ public class JpaUserAccountRepository implements UserAccountRepository {
     @Override
     public Optional<UserAccount> findById(UserId id) {
         return jpaRepository.findById(id.value()).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<UserAccount> findByEmail(Email email) {
+        return jpaRepository.findByEmail(email.value()).map(mapper::toDomain);
     }
 }
