@@ -132,6 +132,16 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldReturn404ForAnUnknownPath() {
+        assertThat(mockMvc.get().uri("/probe/does-not-exist"))
+            .hasStatus(404)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "NOT_FOUND", "message": "Resource not found", "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
 
