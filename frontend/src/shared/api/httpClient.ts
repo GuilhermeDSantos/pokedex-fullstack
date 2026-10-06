@@ -1,3 +1,6 @@
+import { ApiError } from './ApiError'
+import type { ErrorResponse } from './ErrorResponse'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 
 type RequestOptions = {
@@ -19,5 +22,9 @@ export async function request<T>(path: string, { method = 'GET', body, accessTok
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   })
+  if (!response.ok) {
+    const error = (await response.json()) as ErrorResponse
+    throw new ApiError(response.status, error.code, error.message, error.fieldErrors)
+  }
   return (await response.json()) as T
 }
