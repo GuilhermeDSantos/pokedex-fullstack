@@ -17,4 +17,12 @@ describe('TextField', () => {
 
     expect(screen.getByLabelText('Email')).toHaveValue('ash@pallet.town')
   })
+
+  it('marks the input invalid and describes it with the error', () => {
+    render(<ControlledEmail error="Email must be a valid address" />)
+
+    const input = screen.getByLabelText('Email')
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(input).toHaveAccessibleDescription('Email must be a valid address')
+  })
 })
