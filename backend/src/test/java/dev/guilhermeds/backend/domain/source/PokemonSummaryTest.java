@@ -43,4 +43,13 @@ class PokemonSummaryTest {
         assertThatThrownBy(() -> summary.types().add(new PokemonType("fairy")))
             .isInstanceOf(UnsupportedOperationException.class);
     }
+
+    // PokeAPI has gaps: some forms have no sprite, and a few species no English genus.
+    @Test
+    void shouldAcceptAMissingSpriteAndCategory() {
+        var summary = new PokemonSummary(NUMBER, "pikachu", null, null, WEIGHT, TYPES, ABILITIES);
+
+        assertThat(summary.spriteUrl()).isNull();
+        assertThat(summary.category()).isNull();
+    }
 }
