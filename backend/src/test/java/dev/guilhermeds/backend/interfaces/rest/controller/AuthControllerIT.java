@@ -171,4 +171,13 @@ class AuthControllerIT {
                 """);
         verifyNoInteractions(authenticateUserUseCase);
     }
+
+    @Test
+    void shouldRejectAMalformedSignInBody() {
+        assertThat(mockMvc.post().uri("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"email\": "))
+            .hasStatus(400)
+            .bodyJson().extractingPath("$.message").isEqualTo("Malformed JSON request body");
+    }
 }
