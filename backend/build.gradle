@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'jacoco'
     id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -20,25 +21,74 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'                    // D-012
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'   // D-008
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'com.github.ben-manes.caffeine:caffeine'                               // D-012
     implementation 'org.flywaydb:flyway-database-postgresql'
-    compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
-    annotationProcessor 'org.projectlombok:lombok'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-    testCompileOnly 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'              // D-015
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'                  // D-015
+    testImplementation 'org.testcontainers:testcontainers-postgresql'                     // D-015
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'                       // D-015
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// A fixed name, so the Dockerfile doesn't depend on the project version.
+tasks.named('bootJar') {
+    archiveFileName = 'app.jar'
+}
+
+// Only the executable jar is needed.
+tasks.named('jar') {
+    enabled = false
+}
+
+// Unit tests (*Test) and integration tests (*IT) run as separate tasks. Gradle's default `test`
+// task would otherwise silently skip every *IT (docs/standards/backend.md → Build).
 tasks.named('test') {
     useJUnitPlatform()
+    filter {
+        excludeTestsMatching '*IT'
+        // TEMPORARY: no unit test exists yet. Remove this line and the one below together with plan
+        // task 1.1 (LayeredArchitectureTest), so an empty unit suite fails the build again.
+        failOnNoMatchingTests = false
+    }
+    failOnNoDiscoveredTests = false
+}
+
+def integrationTest = tasks.register('integrationTest', Test) {
+    description = 'Runs the integration tests (*IT). Needs Docker for Testcontainers.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    filter { includeTestsMatching '*IT' }
+    shouldRunAfter tasks.named('test')
+}
+
+// Controller and repository tests are *IT, so coverage reads both tasks' execution data.
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test'), integrationTest
+    executionData tasks.named('test').get(), integrationTest.get()
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.named('check') {
+    dependsOn integrationTest, tasks.named('jacocoTestReport')
 }

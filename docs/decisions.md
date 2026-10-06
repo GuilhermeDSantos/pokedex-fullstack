@@ -208,10 +208,16 @@ WebClient/reactive is a whole new paradigm for one adapter.
 
 ## D-019 — Containers: Dockerfile per app + root `docker-compose.yml`
 **Status:** Accepted · **Date:** 2026-10-05 · **Requirements:** DL-3
-**Decision:** The backend is a multi-stage build (JDK 25 build → JRE 25 runtime, non-root, layered
-jar). The frontend is a multi-stage build (Node build → nginx serving the SPA, with `/api` proxied
-to the backend). Compose runs `postgres` (healthcheck), `backend` (depends on a healthy DB) and
-`frontend`. `docker compose up --build` is the one-command demo.
+**Decision:** The backend is a multi-stage build (JDK 25 build → JRE 25 runtime, non-root user,
+`curl` only for the healthcheck). The frontend is a multi-stage build (Node build → nginx serving
+the SPA, with `/api` proxied to the backend). Compose runs `postgres`, `backend` and `frontend`,
+each with a healthcheck and each starting only once the previous one is healthy.
+`docker compose up --build` is the one-command demo. The app is on `http://localhost:3000`, the
+API on `:8080`, and Postgres on host port **5433** (configurable via `POSTGRES_PORT`), so it never
+clashes with a Postgres already running locally.
+**Consequences:** The browser only talks to one origin, both in Docker (nginx proxy) and in
+development (Vite proxy), so the backend needs **no CORS configuration**. Tests don't run inside
+the image build, because the ITs need Docker. They run with `./gradlew check`.
 
 ## D-020 — Frontend routing: React Router
 **Status:** Accepted · **Date:** 2026-10-06 · dependency · **Requirements:** FE-1, FE-3

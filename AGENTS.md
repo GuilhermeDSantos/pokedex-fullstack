@@ -160,8 +160,8 @@ Be honest and specific. These entries feed the walkthrough.
 # backend (from backend/)
 ./gradlew test                 # unit tests + ArchUnit
 ./gradlew integrationTest      # *IT (Testcontainers — Docker must be running)
-./gradlew check                # everything, incl. the merged coverage report (plan 0.3)
-./gradlew bootRun              # needs Postgres: docker compose up -d postgres
+./gradlew check                # everything, incl. the merged coverage report
+./gradlew bootRun              # needs Postgres: docker compose up -d postgres (host port 5433)
 
 # frontend (from frontend/)
 npm run lint && npm run typecheck && npm test -- --run && npm run build

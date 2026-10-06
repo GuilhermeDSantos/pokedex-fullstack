@@ -302,12 +302,16 @@ Exact patterns, not suggestions.
 
 - Two beans, each with one job:
   - `PokeApiClient` (`@Component`) does the HTTP: one public method per PokeAPI resource (list
-    page, pokemon, species, evolution chain), built on Spring `RestClient` (already in
-    `spring-web`, no extra dependency) with explicit connect/read timeouts and base URL from
+    page, pokemon, species, evolution chain), built on Spring `RestClient` with explicit
+    connect/read timeouts and base URL from
     `PokeApiProperties` (`@ConfigurationProperties("pokeapi")`). It returns the package-private
     JSON records. **It is the only place `@Cacheable` appears.**
   - `PokeApiPokemonSource implements PokemonSource` (`@Component`) composes those calls, runs
     the fan-out, and translates JSON → domain through `PokeApiTranslator`. It has no `@Cacheable`.
+- **Boot 4 dependency:** the `RestClient` *class* is in `spring-web`, but the auto-configured
+  `RestClient.Builder` bean and `@RestClientTest` live in `spring-boot-starter-restclient` and
+  `spring-boot-starter-restclient-test` (verified on Maven Central for 4.1.1). Add both in plan
+  task 2.4.
 - PokeAPI JSON is deserialized into package-private records local to the adapter
   (`PokeApiPokemonJson`, `PokeApiSpeciesJson`, `PokeApiEvolutionChainJson`, …) annotated with
   `@JsonIgnoreProperties(ignoreUnknown = true)`. **No PokeAPI type leaves the package** — the
@@ -353,8 +357,9 @@ Exact patterns, not suggestions.
   `GET …/local`), as are register, login and `/actuator/health`. **Only the writes** (`POST`, `PUT`,
   `DELETE` on `/api/v1/pokemon/*/local`) and `/auth/me` require a valid token. Other actuator
   endpoints are not exposed.
-- CSRF disabled (stateless bearer tokens, no cookies). CORS allows only the configured frontend
-  origin(s) from properties.
+- CSRF disabled (stateless bearer tokens, no cookies). **No CORS configuration**: the browser
+  only ever talks to one origin. In Docker, nginx serves the SPA and proxies `/api` to the
+  backend. In development, the Vite dev server proxies `/api` (D-019).
 - 401/403 from the security layer return the same `ErrorResponse` JSON as everything else. The
   writers live in **`interfaces/rest/security/`** (`ErrorResponseAuthenticationEntryPoint`,
   `ErrorResponseAccessDeniedHandler`), next to `ErrorResponse`, because writing the HTTP error
@@ -480,31 +485,30 @@ review and the ITs, just not mechanically.
 
 ### Build: make sure the tests actually run
 
-Gradle's `test` task ignores `*IT`. Configure from the first IT and prove it once by making an IT
-fail on purpose:
+Gradle's `test` task ignores `*IT`. `build.gradle` gives integration tests their own task, wired
+into `check`. It was proven once by making an IT fail on purpose. On Gradle 9, a custom `Test` task
+must set `testClassesDirs` and `classpath` itself:
 
 ```groovy
-tasks.register('integrationTest', Test) {
+def integrationTest = tasks.register('integrationTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform()
     filter { includeTestsMatching '*IT' }
-    shouldRunAfter tasks.test
+    shouldRunAfter tasks.named('test')
 }
 tasks.named('test') { filter { excludeTestsMatching '*IT' } }
-tasks.named('check') { dependsOn tasks.integrationTest }
+tasks.named('check') { dependsOn integrationTest }
 ```
+
+Gradle 9 also **fails a test task that finds no tests** (`failOnNoMatchingTests` on the filter,
+`failOnNoDiscoveredTests` on the task). That's a useful guard against a broken filter. It's
+switched off on `test` only while no unit test exists, and switched back on in plan task 1.1.
 
 Coverage: JaCoCo report — evidence for the brief's "thorough unit test coverage".
-Controller and repository tests are `*IT`, so the report must read the execution data of **both**
-`test` and `integrationTest`, or the adapters show near 0%. Wire it into `check` (verify the DSL
-against the Gradle 9 JaCoCo plugin docs):
-
-```groovy
-tasks.named('jacocoTestReport') {
-    dependsOn tasks.test, tasks.integrationTest
-    executionData tasks.test, tasks.integrationTest
-}
-tasks.named('check') { dependsOn tasks.jacocoTestReport }
-```
+Controller and repository tests are `*IT`, so the report reads the execution data of **both**
+`test` and `integrationTest`, or the adapters would show near 0% (see `build.gradle`). Report:
+`build/reports/jacoco/test/html/index.html` after `./gradlew check`.
 
 Treat the number as a signal, not a goal.
 
@@ -512,12 +516,14 @@ Treat the number as a signal, not a goal.
 
 ## Spring Boot rules
 
-- Constructor injection always. No `@Autowired` fields. **No Lombok** — records, explicit
-  builders and constructors (Lombok sits in the scaffold; it gets removed in setup).
+- Constructor injection always. No `@Autowired` fields. **No Lombok**: records, explicit
+  builders and constructors (D-014; removed from the build).
 - `application.yaml` only, single profile until a real need appears. Env-specific values come from
-  environment variables (`${DB_URL:jdbc:postgresql://localhost:5432/pokedex}`).
-- `@ConfigurationProperties` records for grouped config (`pokeapi.*`, `security.jwt.*`,
-  `app.cors.*`). No raw `@Value` groups.
+  environment variables (`${DB_URL:jdbc:postgresql://localhost:5433/pokedex}`; the local Postgres
+  from `docker-compose.yml` is published on host port 5433).
+- `@ConfigurationProperties` records for grouped config (`pokeapi.*`, `security.jwt.*`). Add a
+  group to `application.yaml` together with the class that binds it, never ahead of it. No raw
+  `@Value` groups.
 - Logging: `LoggerFactory.getLogger(getClass())`. No `System.out`. **Never log passwords, tokens,
   JWTs, request bodies, or other user-supplied free text** — log ids and metadata.
 - `Optional.get()` forbidden — `orElseThrow`, `orElse`, `ifPresent`.

@@ -485,7 +485,7 @@ public class JwtTokenIssuer implements TokenIssuer {
 ```
 
 `SecurityConfig` (`infrastructure/config/`) declares the `SecurityFilterChain`: stateless, CSRF off,
-CORS from properties, `oauth2ResourceServer(jwt)`, and the route policy from
+no CORS (same origin, D-019), `oauth2ResourceServer(jwt)`, and the route policy from
 [`../domain-model.md#api-contract`](../domain-model.md#api-contract) (D-030):
 
 ```java

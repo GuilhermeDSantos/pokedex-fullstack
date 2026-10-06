@@ -31,6 +31,28 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — Infrastructure: four assumptions checked, two of them wrong
+- **Context:** Making the stack run end to end before any feature code: Gradle, Docker, compose,
+  first IT (plan 0.2–0.5, DL-3, TR-TEST).
+- **AI proposed (earlier):** (1) The docs said `RestClient` needs no extra dependency on Boot 4.
+  (2) The AI expected the first `/actuator/health` test to be red (401), because Spring Security
+  locks everything by default. (3) A build config that would just work with no unit tests yet.
+  (4) Postgres published on host port 5432.
+- **Problem:** Each one was checked against the real thing. (1) Maven Central shows Boot 4.1.1
+  split `spring-boot-starter-restclient(-test)` out: the class is in `spring-web`, but the
+  `RestClient.Builder` bean and `@RestClientTest` are not. The docs were wrong. (2) The test was
+  green on the first run. Boot's actuator security already permits the health endpoint, so the
+  planned `SecurityConfig` wasn't needed yet. A test that passes first time proves nothing, so it
+  was then broken on purpose to prove the `integrationTest` task really runs it. (3) Gradle 9
+  failed `test` with "No tests found". (4) Port 5432 was taken by another project's container on
+  this machine.
+- **Resolution:** (1) The docs were fixed, and the starters are noted for plan 2.4. (2) No security
+  code yet. The finding is recorded, and the IT stays as the guard. (3) The two `failOn…` checks
+  are off on `test` only, with a comment and a plan item (1.1) to switch them back on. (4) Postgres
+  is published on 5433 (configurable). The other project's container was left untouched.
+- **Lesson:** Version-specific framework behaviour is where an AI is most confidently wrong. Check
+  coordinates at the source, run the test before believing it, and make a passing test fail once.
+
 ### 2026-10-06 — The product was unclear until the developer reframed it
 - **Context:** Scope review against the brief (OV-5, US-01…US-04, TR-AUTH-3, FE-3).
 - **AI proposed (earlier):** Two separate concepts: a "catalog" (PokeAPI, browsed through

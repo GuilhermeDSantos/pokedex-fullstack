@@ -1,0 +1,44 @@
+# Whole stack: `docker compose up --build`  →  frontend on http://localhost:3000
+# Database only, for `./gradlew bootRun` / `npm run dev`: `docker compose up -d postgres`
+name: pokemon-catalog
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pokedex}
+      POSTGRES_USER: ${POSTGRES_USER:-pokedex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pokedex}   # local development default only
+    ports:
+      # 5433 on the host, so it never clashes with a Postgres already running locally.
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pokedex}
+      DB_USERNAME: ${POSTGRES_USER:-pokedex}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-pokedex}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

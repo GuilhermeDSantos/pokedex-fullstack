@@ -12,8 +12,9 @@ always TDD inward-out: domain → interactor → adapters. The product being bui
 
 ## Current focus
 
-> **Phase 0 — Repository & tooling setup.** Next task: 0.2.
-> No blockers: every decision is resolved. The agent still asks before pushing (0.6).
+> **Phase 1 — Backend foundation.** Next task: 1.1.
+> Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
+> green. No blockers. The agent still asks before every push.
 
 ---
 
@@ -39,32 +40,40 @@ guard, Docker, the README, the GenAI case study.
       added (OS, IDE, build output, `.env`). `HELP.md`, `*.iml` and `.idea/` were never tracked:
       `backend/.gitignore` already excludes them, so nothing had to be deleted. The agent docs
       (`AGENTS.md`, `CLAUDE.md`, `docs/`) are versioned on purpose.
-- [ ] 0.2 Make the build reproducible on JDK 25: add the Foojay toolchain resolver to
-      `settings.gradle` (the local JDK is 26 and the toolchain asks for 25), then run
-      `./gradlew --version` and `./gradlew build`.
-- [ ] 0.3 `build.gradle`: add `spring-boot-starter-data-jpa`, the test deps (D-015), and the
-      oauth2-resource-server (D-008) and cache + Caffeine (D-012) starters. Remove Lombok (D-014).
-      Add the `integrationTest` task wired into `check`, and JaCoCo reading both `test` and
-      `integrationTest` data (backend.md → Build). Then prove an `*IT` really runs by making one
-      fail on purpose.
-- [ ] 0.4 `application.yaml` baseline: datasource from env with local defaults, `ddl-auto: validate`,
-      `open-in-view: false`, virtual threads on, `hibernate.default_batch_fetch_size`, `pokeapi.*`,
-      `security.jwt.*`, `app.cors.*`, actuator exposure (`health` only public).
-- [ ] 0.5 Local Postgres for development: the `postgres` service in `docker-compose.yml`, usable on
-      its own (`docker compose up -d postgres`).
-- [ ] 0.6 Push `main` to a **public** GitHub repo (TR-GIT). The remote `origin` already exists.
-      **Ask before pushing.**
+- [x] 0.2 Build reproducible on JDK 25: Foojay resolver 1.0.0 in `settings.gradle` (it
+      auto-provisioned Temurin 25; the machine's default JDK is 26). `./gradlew build` green.
+- [x] 0.3 `build.gradle`: data-jpa, cache + Caffeine (D-012), oauth2-resource-server (D-008), the
+      test deps (D-015: Testcontainers 2.0.5, ArchUnit 1.5.1, JaCoCo), Lombok removed (D-014), plain
+      jar disabled, `bootJar` → `app.jar`. `integrationTest` task wired into `check`, and JaCoCo
+      reading both `test` and `integrationTest`. Proven: `ApplicationHealthIT` was made to fail on
+      purpose and the build failed. **Temporary:** `failOnNoMatchingTests`/`failOnNoDiscoveredTests`
+      are off on `test` until 1.1 adds the first unit test.
+- [x] 0.4 `application.yaml` baseline: datasource from env with local defaults, `ddl-auto: validate`,
+      `open-in-view: false`, virtual threads on, `default_batch_fetch_size`, only `health` exposed.
+      `pokeapi.*` and `security.jwt.*` are added later, together with the classes that bind them.
+      No `app.cors.*`: everything is same-origin (D-019).
+- [x] 0.5 `docker-compose.yml` (D-019): `postgres` (host port 5433), `backend` and `frontend`
+      (nginx, `/api` proxied), each with a healthcheck and ordered startup; `backend/Dockerfile`,
+      `frontend/Dockerfile` + `nginx.conf`, `.dockerignore`s, `.env.example`, Vite dev proxy.
+      Verified from scratch (`down -v` → `up --build`): all three healthy, `/actuator/health` UP,
+      SPA fallback 200, `/api` reaches Spring through nginx and through Vite, other actuator
+      endpoints hidden, backend runs as non-root, empty browser console. `bootRun` against the
+      compose Postgres: UP in ~6 s.
+- [x] 0.6 `main` pushed to `github.com/GuilhermeDSantos/pokedex-fullstack` (TR-GIT). The repo
+      must be **public** before delivery: confirm the visibility on GitHub (`gh` isn't installed
+      locally, so it wasn't checked from here).
 
 ## Phase 1 — Backend foundation (OV-2, TR-ERR, TR-API-2)
 
 - [ ] 1.1 `LayeredArchitectureTest` with **all** rules from
       [`examples/tests.md`](examples/tests.md#architecture-test), green on the empty skeleton.
+      Then remove the two temporary `failOn…` lines from the `test` task in `build.gradle`.
 - [ ] 1.2 Domain kernel: `DomainException` + the 4 categories, `domain/pagination` (`PageRequest`,
       `Page`) with tests.
 - [ ] 1.3 `UnitOfWork` port + `SpringUnitOfWork`, `ClockConfig`, an empty `UseCaseConfig`.
 - [ ] 1.4 `interfaces/rest`: `ErrorResponse`, `PageResponse`, `GlobalExceptionHandler` covering all
       categories + framework exceptions, with `GlobalExceptionHandlerIT`.
-- [ ] 1.5 `SecurityConfig` skeleton (stateless, CSRF off, CORS) with everything permitted except a
+- [ ] 1.5 `SecurityConfig` skeleton (stateless, CSRF off, no CORS) with everything permitted except a
       test route, so the IT proves the 401 shape. The JSON 401/403 writers live in
       `interfaces/rest/security/` and reach `SecurityConfig` through Spring Security's interfaces
       (`infrastructure_must_not_depend_on_interfaces`).
@@ -81,7 +90,8 @@ guard, Docker, the README, the GenAI case study.
 - [ ] 2.3 `PokeApiTranslator` + `PokeApiTranslatorTest` (units, genus, flavor-text normalization,
       evolution tree, null sprites).
 - [ ] 2.4 `PokeApiClient` (`RestClient`, timeouts, 404 → empty, failures →
-      `PokemonSourceUnavailableException`) + `@RestClientTest`.
+      `PokemonSourceUnavailableException`) + `@RestClientTest`. Add `spring-boot-starter-restclient`
+      and `spring-boot-starter-restclient-test` first (Boot 4 split them out; see backend.md).
 - [ ] 2.5 `PokeApiPokemonSource` on top of it (translation, concurrent fan-out on virtual threads).
 - [ ] 2.6 Caching (D-012) on `PokeApiClient` only, + a test that a second
       `PokemonSource.getByIdentifier` call makes no HTTP request (guards the self-invocation trap).
@@ -124,9 +134,9 @@ guard, Docker, the README, the GenAI case study.
       **Pikachu is not in the seed**: it's the Pokémon synced live in the demo (a 201, not a 409)
       and the test fixture.
 - [ ] 5.2 `ApplicationContextIT`: context loads, every `*UseCase` bean resolves, seed present.
-- [ ] 5.3 `backend/Dockerfile`, `frontend/Dockerfile` (+ nginx conf), root `docker-compose.yml`, with
-      env vars for the DB and JWT secret. Then verify a clean `docker compose up --build` from
-      scratch.
+- [ ] 5.3 Containers were done in 0.5. Here: add the JWT secret env var to compose and
+      `.env.example`, then verify a clean `docker compose up --build` from scratch again, with the
+      seed, before delivery.
 - [ ] 5.4 OpenAPI UI via springdoc, **timeboxed to 30 minutes** (D-016). If it doesn't work on the
       first try, remove the dependency and move on.
 - [ ] 5.5 `README.md`: product overview (from the domain model's product vision), architecture
