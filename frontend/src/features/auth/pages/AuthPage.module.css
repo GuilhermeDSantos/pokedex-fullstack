@@ -1,0 +1,4 @@
+.page {
+  max-width: 24rem;
+  margin: var(--space-8) auto;
+}
