@@ -34,4 +34,9 @@ class RawPasswordTest {
         assertThat(new RawPassword("pikachu1").value()).hasSize(8);
         assertThat(new RawPassword("é".repeat(35) + "a1").value()).hasSize(37);
     }
+
+    @Test
+    void shouldNeverExposeThePasswordInToString() {
+        assertThat(new RawPassword("pikachu1").toString()).doesNotContain("pikachu1");
+    }
 }
