@@ -72,4 +72,22 @@ describe('httpClient', () => {
       fieldErrors: [{ field: 'email', message: 'must not be blank' }],
     })
   })
+
+  it('still gives an ApiError when an error response is not an ErrorResponse', async () => {
+    server.use(
+      http.get('/api/v1/pokemon', () =>
+        HttpResponse.html('<html><body>502 Bad Gateway</body></html>', { status: 502 }),
+      ),
+    )
+
+    const error = await request('/pokemon').catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({
+      status: 502,
+      code: 'UNEXPECTED_RESPONSE',
+      message: 'Something went wrong. Please try again.',
+      fieldErrors: [],
+    })
+  })
 })
