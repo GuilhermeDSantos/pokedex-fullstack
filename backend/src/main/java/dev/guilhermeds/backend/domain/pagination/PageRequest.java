@@ -4,15 +4,16 @@ import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 
 public record PageRequest(int page, int size) {
 
+    public static final int MIN_SIZE = 1;
     // Each item of a PokeAPI list page costs two upstream calls.
     public static final int MAX_SIZE = 50;
 
     public PageRequest {
         if (page < 0) {
-            throw new InvalidPageRequestException("page cannot be negative");
+            throw InvalidPageRequestException.negativePage();
         }
-        if (size < 1 || size > MAX_SIZE) {
-            throw new InvalidPageRequestException("size must be between 1 and " + MAX_SIZE);
+        if (size < MIN_SIZE || size > MAX_SIZE) {
+            throw InvalidPageRequestException.sizeOutOfRange(MIN_SIZE, MAX_SIZE);
         }
     }
 
