@@ -56,6 +56,12 @@ class SecurityConfigIT {
         assertThat(mockMvc.get().uri(uri)).hasStatusOk();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/v1/auth/register", "/api/v1/auth/login"})
+    void shouldLetAnyoneRegisterAndSignIn(String uri) {
+        assertThat(mockMvc.post().uri(uri)).hasStatusOk();
+    }
+
     @RestController
     static class ProbeController {
 
