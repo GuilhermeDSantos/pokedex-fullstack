@@ -18,18 +18,18 @@ class FullNameTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {2, 50})
+    @ValueSource(ints = {2, 100})
     void shouldAcceptNamesAtTheLengthLimits(int length) {
         assertThat(new FullName("a".repeat(length)).value()).hasSize(length);
     }
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = {"", "   ", "A", " A ", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
+    @ValueSource(strings = {"", "   ", "A", " A ", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"})
     void shouldRejectAMissingOrBadlySizedNameAsAValidationError(String raw) {
         assertThatThrownBy(() -> new FullName(raw))
             .isInstanceOf(InvalidFullNameException.class)
             .isInstanceOf(ValidationException.class)
-            .hasMessage("Display name must be between 2 and 50 characters");
+            .hasMessage("Name must be between 2 and 100 characters");
     }
 }
