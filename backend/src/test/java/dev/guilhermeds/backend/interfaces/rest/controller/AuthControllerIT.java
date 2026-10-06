@@ -1,5 +1,7 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
+import dev.guilhermeds.backend.application.dto.AccessTokenOutput;
+import dev.guilhermeds.backend.application.dto.AuthenticateUserInput;
 import dev.guilhermeds.backend.application.dto.RegisterUserInput;
 import dev.guilhermeds.backend.application.dto.UserOutput;
 import dev.guilhermeds.backend.application.usecase.AuthenticateUserUseCase;
@@ -134,6 +136,23 @@ class AuthControllerIT {
             .bodyJson()
             .isLenientlyEqualTo("""
                 { "code": "CONFLICT", "message": "This email is already registered" }
+                """);
+    }
+
+    @Test
+    void shouldSignInAndReturnABearerToken() {
+        given(authenticateUserUseCase.execute(new AuthenticateUserInput("ash@pallet.town", "pikachu123"), NOW))
+            .willReturn(new AccessTokenOutput("signed.jwt.value", NOW.plusSeconds(3600)));
+
+        assertThat(mockMvc.post().uri("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "ash@pallet.town", "password": "pikachu123" }
+                    """))
+            .hasStatusOk()
+            .bodyJson()
+            .isStrictlyEqualTo("""
+                { "accessToken": "signed.jwt.value", "tokenType": "Bearer", "expiresAt": "2026-01-15T11:00:00Z" }
                 """);
     }
 }
