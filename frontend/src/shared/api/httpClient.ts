@@ -3,12 +3,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   body?: unknown
+  accessToken?: string
 }
 
-export async function request<T>(path: string, { method = 'GET', body }: RequestOptions = {}): Promise<T> {
+export async function request<T>(path: string, { method = 'GET', body, accessToken }: RequestOptions = {}): Promise<T> {
   const headers = new Headers()
   if (body !== undefined) {
     headers.set('Content-Type', 'application/json')
+  }
+  if (accessToken !== undefined) {
+    headers.set('Authorization', `Bearer ${accessToken}`)
   }
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
