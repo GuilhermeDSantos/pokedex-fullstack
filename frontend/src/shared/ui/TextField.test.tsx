@@ -37,4 +37,19 @@ describe('TextField', () => {
 
     expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('At least 8 characters')
   })
+
+  it('announces the error before the hint when there are both', () => {
+    render(
+      <TextField
+        label="Password"
+        name="password"
+        value=""
+        onChange={() => {}}
+        hint="At least 8 characters"
+        error="Password is required"
+      />,
+    )
+
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is required At least 8 characters')
+  })
 })
