@@ -31,6 +31,17 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — Small TDD slips the AI caught in its own frontend steps
+- **Context:** S1.9, the HTTP client and the first `shared/ui` components (FE-4, TR-UT).
+- **AI proposed:** A red step with two tests (one of them already passing), and a `Button` green
+  step that also added `aria-busy`, which no test asked for.
+- **Problem:** Both break the rules the project set for itself: one failing test per red, and
+  only the code the test needs. A test that passes from the start proves nothing in a red step, and
+  untested markup is a guess.
+- **Resolution:** The passing test became its own `test:` step after the green, and `aria-busy`
+  was removed before the step was saved.
+- **Lesson:** The step snapshots make it cheap to fix a step before it becomes history.
+
 ### 2026-10-06 — The frontend toolchain: two checks before trusting it
 - **Context:** S1.8, the frontend setup (FE-1, FE-5, TR-UT).
 - **AI proposed:** Installing "the latest" of each approved library, and a console guard in the

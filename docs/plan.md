@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.9 (HTTP client and the first global components). Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.10 (sign up, sign in, sign out). Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -173,13 +173,20 @@ handlers mirror the API contract):
       link + `main`) and a not-found page, test-first through the real route table. Neutral
       `tokens.css` + `base.css` (D-034). Template content removed, neutral favicon (no 404).
       Checked in the browser: empty console, 360px layout. The Docker image still builds.
-- [ ] S1.9 `shared/api/httpClient` (base path `/api/v1`, auth header only on protected calls,
-      `ApiError` from `ErrorResponse`, 401 handling) + tests; the first global components in
-      `shared/ui`: `Button`, `TextField`, `Heading`, `Stack`, `ErrorState`. The ESLint
-      `no-restricted-imports` rule for `app → features → shared` comes with the first feature.
+- [x] S1.9 `shared/api/httpClient`, test-first with MSW: base path `/api/v1` (`VITE_API_BASE_URL`),
+      JSON bodies, `Authorization: Bearer` only when the call is given a token, `ErrorResponse` →
+      typed `ApiError` (`status`, `code`, `message`, `fieldErrors`), a non-JSON error (e.g. nginx's
+      502 page) → `UNEXPECTED_RESPONSE`, no response at all → `NETWORK_ERROR` (status 0). The client
+      stays free of session rules: clearing the session on a 401 and dropping an expired token move
+      to S1.10, where the session lives. `shared/ui`: `TextField` (label, controlled,
+      `aria-invalid` + the error as accessible description), `Button` (`type="button"` by default,
+      disabled while pending), `ErrorState` (`role="alert"` + Retry). `Heading` and `Stack` come
+      with the S1.10 forms, the first code that uses them. The ESLint `no-restricted-imports` rule
+      for `app → features → shared` comes with the first feature.
 - [ ] S1.10 Sign up and sign in pages (controlled inputs, D-022; server field errors mapped),
       `AuthContext` with session restore from `sessionStorage` (D-024), sign out, and the header
-      showing the signed-in user. A successful sign up signs the user in straight away and returns
+      showing the signed-in user. The session drops an expired token and is cleared by a 401 on a
+      protected call. `Heading` and `Stack` in `shared/ui`. A successful sign up signs the user in straight away and returns
       to `returnTo` (or the list). Tests: field errors on 400, "email already registered" on 409,
       "invalid email or password" on 401 (a form error, not a redirect), session survives a reload,
       sign out clears it.

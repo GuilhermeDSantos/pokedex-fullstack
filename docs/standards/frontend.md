@@ -84,7 +84,12 @@ local data, so the frontend never stitches two sources together.
   using the backend's `ErrorResponse` shape. UI code branches on `code`/`status`, never on message
   text.
 - A **401** on a protected call clears the session and redirects to login, keeping a `returnTo`.
-  The login call's own 401 is a form error ("Invalid email or password"), never a redirect.
+  The login call's own 401 is a form error ("Invalid email or password"), never a redirect. The
+  client only reports the 401 as an `ApiError`; the session layer (`AuthContext`) reacts to it, so
+  `httpClient` knows nothing about sessions.
+- A response that isn't an `ErrorResponse` (a proxy's HTML error page) becomes
+  `ApiError(status, 'UNEXPECTED_RESPONSE')`, and no response at all becomes
+  `ApiError(0, 'NETWORK_ERROR')`, so the UI always has one error type to handle.
 - It never logs tokens or bodies.
 - DTO types live in each feature's `api/` and mirror the backend responses exactly. When the API
   contract changes, these change in the same commit.
