@@ -8,7 +8,7 @@ type ButtonProps = {
   onClick?: () => void
 }
 
-export function Button({ children, type, pending = false, onClick }: ButtonProps) {
+export function Button({ children, type = 'button', pending = false, onClick }: ButtonProps) {
   return (
     <button type={type} disabled={pending} onClick={onClick} className={styles.button}>
       {children}
