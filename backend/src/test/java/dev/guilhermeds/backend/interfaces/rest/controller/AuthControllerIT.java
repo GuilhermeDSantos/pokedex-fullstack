@@ -213,4 +213,12 @@ class AuthControllerIT {
                   "name": "Ash Ketchum", "createdAt": "2026-01-15T10:00:00Z" }
                 """);
     }
+
+    @Test
+    void shouldRequireATokenForTheCurrentUser() {
+        assertThat(mockMvc.get().uri("/api/v1/auth/me"))
+            .hasStatus(401)
+            .bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
+        verifyNoInteractions(getCurrentUserUseCase);
+    }
 }
