@@ -1,6 +1,7 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
+import dev.guilhermeds.backend.domain.exception.ValidationException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +46,23 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldMapAnyValidationCategoryTo400() {
+        assertThat(mockMvc.get().uri("/probe/invalid"))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Probe name is invalid", "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
+
+        @GetMapping("/probe/invalid")
+        void invalid() {
+            throw new ProbeInvalidException();
+        }
 
         @GetMapping("/probe/conflict")
         void conflict() {
@@ -68,6 +84,12 @@ class GlobalExceptionHandlerIT {
     static class ProbeConflictException extends ConflictException {
         ProbeConflictException() {
             super("Probe 42 already exists");
+        }
+    }
+
+    static class ProbeInvalidException extends ValidationException {
+        ProbeInvalidException() {
+            super("Probe name is invalid");
         }
     }
 }
