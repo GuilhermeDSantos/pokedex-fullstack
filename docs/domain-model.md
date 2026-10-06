@@ -222,7 +222,7 @@ updated to match (or trimmed), never the other way around.
 |---|---|---|
 | `local_pokemons` | `id uuid pk`, `pokedex_number int not null`, `name not null`, `category`, `height_m numeric(5,1)`, `weight_kg numeric(6,1)`, `sprite_url`, `artwork_url`, `description text`, `localized_name`, `region`, `synced_at timestamptz`, `updated_at timestamptz`, `version bigint not null` | `uk_local_pokemons_pokedex_number` → `PokemonAlreadySyncedException`; `uk_local_pokemons_name` (lookup by name) |
 | `local_pokemon_tags` | `local_pokemon_id fk → local_pokemons on delete cascade`, `tag` | PK (`local_pokemon_id`, `tag`) |
-| `user_accounts` | `id uuid pk`, `email unique`, `display_name`, `password_hash`, `created_at timestamptz`, `version bigint not null` | `uk_user_accounts_email` → `EmailAlreadyRegisteredException` |
+| `user_accounts` | `id uuid pk`, `email varchar(254) unique`, `name varchar(100)`, `password_hash`, `created_at timestamptz`, `version bigint not null` | `uk_user_accounts_email` → `EmailAlreadyRegisteredException` |
 
 Migrations, in the order the slices create them: `V1__create_user_accounts.sql`,
 `V2__create_local_pokemons.sql`, `V3__seed_demo_data.sql`. The seed has a demo user with a BCrypt hash, plus about 10 synced Pokémon

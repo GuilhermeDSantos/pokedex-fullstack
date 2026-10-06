@@ -247,6 +247,7 @@ trip.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
+@Import({JpaLocalPokemonRepository.class, LocalPokemonEntityMapper.class})  // slices don't scan @Components
 class JpaLocalPokemonRepositoryIT {
 
     @Container
@@ -254,16 +255,7 @@ class JpaLocalPokemonRepositoryIT {
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
     // Testcontainers 2.x: org.testcontainers.postgresql.PostgreSQLContainer — verify against the resolved jar.
 
-    @Autowired private LocalPokemonJpaRepository jpaRepository;
-
-    // Constructed: @DataJpaTest doesn't scan plain @Components.
-    private final LocalPokemonEntityMapper mapper = new LocalPokemonEntityMapper();
-    private JpaLocalPokemonRepository repository;
-
-    @BeforeEach
-    void setUp() {
-        repository = new JpaLocalPokemonRepository(jpaRepository, mapper);
-    }
+    @Autowired private JpaLocalPokemonRepository repository;
 
     @Test
     void shouldPersistAndReloadWholeAggregate() {

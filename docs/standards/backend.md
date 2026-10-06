@@ -454,8 +454,9 @@ Red → confirm it fails **for the right reason** → Green (minimum code) → R
 - Stub a repository's `getById` directly — Mockito does not run a mocked interface's default method.
 - One **fixture (Object Mother)** per aggregate in the test source set (`PokemonFixture`,
   `UserAccountFixture`) with a fixed `NOW`. Fixtures never read the clock.
-- Slices don't scan plain `@Component`s: `@DataJpaTest` → `new {Name}EntityMapper()`;
-  `@WebMvcTest` → `@Import({Name}RestMapper.class)`. With Spring Security on the classpath,
+- Slices don't scan plain `@Component`s: `@DataJpaTest` → `@Import({Jpa{Name}Repository.class,
+  {Name}EntityMapper.class})` and `@Autowired` the adapter, so the test also proves Spring can wire
+  it; `@WebMvcTest` → `@Import({Name}RestMapper.class)`. With Spring Security on the classpath,
   `@WebMvcTest` also needs the security config **and** the `interfaces/rest/security` error
   writers imported (they're plain `@Component`s), plus `spring-security-test` helpers like
   `with(jwt())` — test both the 401 and the authorized path for protected routes.

@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.2. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.3. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -112,9 +112,13 @@ Backend:
       `InvalidPageRequestException`, now with named factories). The other exceptions
       (`EmailAlreadyRegistered`, `InvalidCredentials`, `UnknownAccount`) come in S1.4 with the
       interactors that throw them.
-- [ ] S1.2 Migration `V1__create_user_accounts.sql`, then `UserAccountEntity`, the Spring Data
-      interface, the entity mapper and `JpaUserAccountRepository` + IT (round trip, unique email →
-      409).
+- [x] S1.2 `V1__create_user_accounts.sql` (named PK and `uk_user_accounts_email`), the
+      `UserAccountRepository` port (`save`, `findById`, `findByEmail`), `UserAccountEntity`, the
+      Spring Data interface, the entity mapper and `JpaUserAccountRepository`, in 3 TDD cycles + a
+      test refactor. `JpaUserAccountRepositoryIT` on real Postgres and the real migration: whole
+      round trip, find by email, duplicate email → `EmailAlreadyRegisteredException` (409; only that
+      constraint is translated, anything else stays loud). The adapter is wired by Spring in the
+      test (`@Import`), not built by hand.
 - [ ] S1.3 Ports `PasswordHasher`, `TokenIssuer`, then the adapters `BCryptPasswordHasher` and
       `JwtTokenIssuer`, plus `JwtProperties` (`security.jwt.*`: secret, TTL, issuer) and a `JwtConfig`
       creating the HS256 `JwtEncoder`/`JwtDecoder`. `JWT_SECRET` in `docker-compose.yml` and
