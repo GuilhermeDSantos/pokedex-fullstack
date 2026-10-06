@@ -10,6 +10,7 @@ import dev.guilhermeds.backend.application.usecase.GetCurrentUserUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
 import dev.guilhermeds.backend.domain.exception.EmailAlreadyRegisteredException;
 import dev.guilhermeds.backend.domain.exception.InvalidCredentialsException;
+import dev.guilhermeds.backend.domain.exception.UnknownAccountException;
 import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
@@ -220,5 +221,18 @@ class AuthControllerIT {
             .hasStatus(401)
             .bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
         verifyNoInteractions(getCurrentUserUseCase);
+    }
+
+    @Test
+    void shouldAnswerAVanishedAccountWith401() {
+        given(getCurrentUserUseCase.execute(any())).willThrow(new UnknownAccountException());
+
+        assertThat(mockMvc.get().uri("/api/v1/auth/me")
+                .with(jwt().jwt(token -> token.subject(ASH_ID.value().toString()))))
+            .hasStatus(401)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "UNAUTHENTICATED", "message": "Your session is no longer valid, please sign in again" }
+                """);
     }
 }
