@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { fetchCurrentUser, login, type Credentials } from './api/authApi'
+import { fetchCurrentUser, login, register, type Credentials, type Registration } from './api/authApi'
 import { AuthContext } from './authContext'
 import { clearStoredSession, readStoredSession, storeSession } from './session'
 
@@ -14,10 +14,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(signedIn)
   }
 
+  const signUp = async (registration: Registration) => {
+    await register(registration)
+    await signIn({ email: registration.email, password: registration.password })
+  }
+
   const signOut = () => {
     clearStoredSession()
     setSession(null)
   }
 
-  return <AuthContext value={{ session, signIn, signOut }}>{children}</AuthContext>
+  return <AuthContext value={{ session, signIn, signUp, signOut }}>{children}</AuthContext>
 }

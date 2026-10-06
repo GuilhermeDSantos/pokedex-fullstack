@@ -18,6 +18,14 @@ export type Credentials = {
   password: string
 }
 
+export type Registration = Credentials & {
+  name: string
+}
+
+export function register(registration: Registration): Promise<User> {
+  return request<User>('/auth/register', { method: 'POST', body: registration })
+}
+
 export function login(credentials: Credentials): Promise<AccessToken> {
   return request<AccessToken>('/auth/login', { method: 'POST', body: credentials })
 }
