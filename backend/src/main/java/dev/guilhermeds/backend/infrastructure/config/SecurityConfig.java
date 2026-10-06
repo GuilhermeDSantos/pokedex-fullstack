@@ -23,6 +23,7 @@ public class SecurityConfig {
                 // Docker's healthcheck: once this chain exists, Boot's default actuator security backs off.
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/pokemon/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                 .anyRequest().authenticated())
             .oauth2ResourceServer(resourceServer -> resourceServer
                 .jwt(Customizer.withDefaults())
