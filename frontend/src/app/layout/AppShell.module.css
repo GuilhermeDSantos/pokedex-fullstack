@@ -10,6 +10,20 @@
   padding: var(--space-4);
 }
 
+.headerContent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
 .brand {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);

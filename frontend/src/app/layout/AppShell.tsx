@@ -9,6 +9,10 @@ export function AppShell() {
           <Link to="/" className={styles.brand}>
             Pokémon Catalog
           </Link>
+          <nav aria-label="Account" className={styles.account}>
+            <Link to="/login">Sign in</Link>
+            <Link to="/register">Create account</Link>
+          </nav>
         </div>
       </header>
       <main className={styles.main}>
