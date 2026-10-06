@@ -155,4 +155,20 @@ class AuthControllerIT {
                 { "accessToken": "signed.jwt.value", "tokenType": "Bearer", "expiresAt": "2026-01-15T11:00:00Z" }
                 """);
     }
+
+    @Test
+    void shouldRejectASignInWithMissingFields() {
+        assertThat(mockMvc.post().uri("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "ash@pallet.town" }
+                    """))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Request body is invalid",
+                  "fieldErrors": [ { "field": "password", "message": "must not be blank" } ] }
+                """);
+        verifyNoInteractions(authenticateUserUseCase);
+    }
 }
