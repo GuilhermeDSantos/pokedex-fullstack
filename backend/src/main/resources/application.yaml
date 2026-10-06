@@ -17,6 +17,10 @@ spring:
   threads:
     virtual:
       enabled: true
+  web:
+    # The API speaks English, whatever the browser's Accept-Language says.
+    locale: en
+    locale-resolver: fixed
 
 management:
   endpoints:
