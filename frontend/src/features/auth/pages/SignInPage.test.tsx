@@ -50,4 +50,13 @@ describe('SignInPage', () => {
     expect(router.state.location.pathname).toBe('/login')
     expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
   })
+
+  it('asks for the missing fields before calling the server', async () => {
+    renderApp('/login')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription('Email is required')
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is required')
+  })
 })
