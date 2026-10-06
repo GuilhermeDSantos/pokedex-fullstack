@@ -2,6 +2,7 @@ package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
 import dev.guilhermeds.backend.domain.exception.ValidationException;
+import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,8 +57,23 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldMapAnyUnauthenticatedCategoryTo401() {
+        assertThat(mockMvc.get().uri("/probe/unauthenticated"))
+            .hasStatus(401)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "UNAUTHENTICATED", "message": "Probe credentials are invalid", "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
+
+        @GetMapping("/probe/unauthenticated")
+        void unauthenticated() {
+            throw new ProbeUnauthenticatedException();
+        }
 
         @GetMapping("/probe/invalid")
         void invalid() {
@@ -90,6 +106,12 @@ class GlobalExceptionHandlerIT {
     static class ProbeInvalidException extends ValidationException {
         ProbeInvalidException() {
             super("Probe name is invalid");
+        }
+    }
+
+    static class ProbeUnauthenticatedException extends UnauthenticatedException {
+        ProbeUnauthenticatedException() {
+            super("Probe credentials are invalid");
         }
     }
 }
