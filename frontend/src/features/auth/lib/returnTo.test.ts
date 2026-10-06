@@ -16,4 +16,8 @@ describe('safeReturnTo', () => {
       expect(safeReturnTo(value)).toBe('/')
     },
   )
+
+  it('refuses a backslash after the first slash, which browsers read as "//"', () => {
+    expect(safeReturnTo('/\\evil.example/phish')).toBe('/')
+  })
 })
