@@ -90,4 +90,17 @@ describe('httpClient', () => {
       fieldErrors: [],
     })
   })
+
+  it('gives an ApiError when the server cannot be reached', async () => {
+    server.use(http.get('/api/v1/pokemon', () => HttpResponse.error()))
+
+    const error = await request('/pokemon').catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({
+      status: 0,
+      code: 'NETWORK_ERROR',
+      message: 'Could not reach the server. Check your connection and try again.',
+    })
+  })
 })
