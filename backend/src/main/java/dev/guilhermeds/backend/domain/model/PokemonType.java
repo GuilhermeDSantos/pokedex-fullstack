@@ -1,5 +1,7 @@
 package dev.guilhermeds.backend.domain.model;
 
+import java.util.Locale;
+
 // Comes from PokeAPI, not from a user: a blank one is a mapping bug, not a 400.
 public record PokemonType(String name) {
 
@@ -7,5 +9,6 @@ public record PokemonType(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("type name must not be blank");
         }
+        name = name.trim().toLowerCase(Locale.ROOT);
     }
 }
