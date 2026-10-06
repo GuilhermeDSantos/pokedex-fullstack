@@ -1,6 +1,7 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
+import dev.guilhermeds.backend.domain.exception.ValidationException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import dev.guilhermeds.backend.interfaces.rest.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException exception) {
         return error(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(ValidationException exception) {
+        return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", exception.getMessage());
     }
 
     private static ResponseEntity<ErrorResponse> error(HttpStatus status, String code, String message) {
