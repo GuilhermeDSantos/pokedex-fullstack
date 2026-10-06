@@ -9,11 +9,11 @@ public record DisplayName(String value) {
 
     public DisplayName {
         if (value == null) {
-            throw new InvalidDisplayNameException();
+            throw new InvalidDisplayNameException(MIN_LENGTH, MAX_LENGTH);
         }
         value = value.trim();
         if (value.length() < MIN_LENGTH || value.length() > MAX_LENGTH) {
-            throw new InvalidDisplayNameException();
+            throw new InvalidDisplayNameException(MIN_LENGTH, MAX_LENGTH);
         }
     }
 }
