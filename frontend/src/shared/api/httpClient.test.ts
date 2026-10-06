@@ -24,4 +24,16 @@ describe('httpClient', () => {
       request('/auth/login', { method: 'POST', body: { email: 'ash@pallet.town', password: 'pikachu123' } }),
     ).resolves.toEqual({ received: { email: 'ash@pallet.town', password: 'pikachu123' } })
   })
+
+  it('sends the access token as a bearer token when the call is given one', async () => {
+    server.use(
+      http.get('/api/v1/auth/me', ({ request: received }) =>
+        HttpResponse.json({ authorization: received.headers.get('Authorization') }),
+      ),
+    )
+
+    await expect(request('/auth/me', { accessToken: 'signed.jwt.value' })).resolves.toEqual({
+      authorization: 'Bearer signed.jwt.value',
+    })
+  })
 })
