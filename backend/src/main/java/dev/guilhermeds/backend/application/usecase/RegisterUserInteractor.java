@@ -5,6 +5,7 @@ import dev.guilhermeds.backend.application.dto.UserOutput;
 import dev.guilhermeds.backend.application.mapper.UserAccountMapper;
 import dev.guilhermeds.backend.application.port.PasswordHasher;
 import dev.guilhermeds.backend.application.port.UnitOfWork;
+import dev.guilhermeds.backend.domain.exception.EmailAlreadyRegisteredException;
 import dev.guilhermeds.backend.domain.model.UserId;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
 
@@ -32,6 +33,10 @@ public class RegisterUserInteractor implements RegisterUserUseCase {
         var hash = passwordHasher.hash(registration.password());
 
         return unitOfWork.inTransaction(() -> {
+            // The unique constraint is the backstop under concurrency; this gives the common case a clear 409.
+            repository.findByEmail(registration.email()).ifPresent(existing -> {
+                throw new EmailAlreadyRegisteredException();
+            });
             var account = mapper.toDomain(registration, hash, id, now);
             return UserOutput.from(repository.save(account));
         });
