@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Phase 1 — Backend foundation.** Next task: 1.3. Then Slice 1 (sign up, sign in, sign out).
+> **Phase 1 — Backend foundation.** Next task: 1.4. Then Slice 1 (sign up, sign in, sign out).
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -81,7 +81,12 @@ Everything every slice needs.
       `InvalidPageRequestException`; `PageRequest` (page ≥ 0, size 1..50, `offset()`) and `Page`
       (immutable copy, `map`). The other categories (`NotFound`, `Conflict`, `Unauthenticated`) are
       created in 1.4, with the handler and the tests that map them, so none is born untested.
-- [ ] 1.3 `UnitOfWork` port + `SpringUnitOfWork`, `ClockConfig`, an empty `UseCaseConfig`.
+      Boundary sizes 1 and 50 are accepted (proven by mutating `>` into `>=`).
+- [x] 1.3 `UnitOfWork` port (the `Runnable` overload runs inside the same boundary),
+      `SpringUnitOfWork` on a `TransactionTemplate` (`SpringUnitOfWorkIT` on real Postgres: commits
+      and returns the result; rolls back and rethrows, proven against an adapter without a
+      transaction), `ClockConfig` (UTC system clock). `UseCaseConfig` is created in S1.4 with the
+      first interactor it wires, not as an empty class.
 - [ ] 1.4 `NotFoundException`, `ConflictException`, `UnauthenticatedException`; `interfaces/rest`:
       `ErrorResponse`, `PageResponse`, `GlobalExceptionHandler` covering all categories + framework
       exceptions, with `GlobalExceptionHandlerIT`.
@@ -107,6 +112,7 @@ Backend:
       Nimbus when implementing).
 - [ ] S1.4 Interactors (TDD): `RegisterUser`, `AuthenticateUser` (same 401 for unknown email and
       wrong password), `GetCurrentUser` (account gone → 401 `UnknownAccountException`, D-033).
+      `UseCaseConfig` (the composition root) is created here, wiring them.
 - [ ] S1.5 `SecurityConfig`: stateless, CSRF off, no CORS, `oauth2ResourceServer(jwt)`, the D-030
       route policy (the Pokémon write matchers are declared now), and `/actuator/health`
       **explicitly permitted**: once our own filter chain exists, Boot's default actuator security
