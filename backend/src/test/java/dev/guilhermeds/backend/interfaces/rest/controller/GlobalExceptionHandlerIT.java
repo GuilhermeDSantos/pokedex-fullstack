@@ -3,6 +3,7 @@ package dev.guilhermeds.backend.interfaces.rest.controller;
 import dev.guilhermeds.backend.domain.exception.ConflictException;
 import dev.guilhermeds.backend.domain.exception.ValidationException;
 import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
+import dev.guilhermeds.backend.domain.exception.DomainException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,8 +68,23 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldMapAnyOtherDomainExceptionTo422() {
+        assertThat(mockMvc.get().uri("/probe/rule-broken"))
+            .hasStatus(422)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "DOMAIN_ERROR", "message": "Probe 42 cannot do that", "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
+
+        @GetMapping("/probe/rule-broken")
+        void rule_broken() {
+            throw new ProbeRuleBrokenException();
+        }
 
         @GetMapping("/probe/unauthenticated")
         void unauthenticated() {
@@ -112,6 +128,12 @@ class GlobalExceptionHandlerIT {
     static class ProbeUnauthenticatedException extends UnauthenticatedException {
         ProbeUnauthenticatedException() {
             super("Probe credentials are invalid");
+        }
+    }
+
+    static class ProbeRuleBrokenException extends DomainException {
+        ProbeRuleBrokenException() {
+            super("Probe 42 cannot do that");
         }
     }
 }
