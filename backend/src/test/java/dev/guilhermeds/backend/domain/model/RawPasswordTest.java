@@ -19,7 +19,7 @@ class RawPasswordTest {
         assertThatThrownBy(() -> new RawPassword(raw))
             .isInstanceOf(WeakPasswordException.class)
             .isInstanceOf(ValidationException.class)
-            .hasMessage("Password must have at least 8 characters, a letter and a digit, and at most 72 bytes");
+            .hasMessage("Password must have at least 8 characters, including a letter and a digit");
     }
 
     // BCrypt's limit is in bytes: these 37 characters are 73 bytes in UTF-8.

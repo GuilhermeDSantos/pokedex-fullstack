@@ -112,7 +112,7 @@ class AuthControllerIT {
 
     @Test
     void shouldAnswerADomainValidationFailureWith400() {
-        given(registerUserUseCase.execute(any(), any(), any())).willThrow(new WeakPasswordException(8, 72));
+        given(registerUserUseCase.execute(any(), any(), any())).willThrow(new WeakPasswordException(8));
 
         assertThat(mockMvc.post().uri("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -123,7 +123,7 @@ class AuthControllerIT {
             .bodyJson()
             .isLenientlyEqualTo("""
                 { "code": "VALIDATION_ERROR",
-                  "message": "Password must have at least 8 characters, a letter and a digit, and at most 72 bytes" }
+                  "message": "Password must have at least 8 characters, including a letter and a digit" }
                 """);
     }
 
