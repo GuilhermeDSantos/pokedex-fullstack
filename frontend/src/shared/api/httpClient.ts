@@ -3,6 +3,7 @@ import type { ErrorResponse } from './ErrorResponse'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 const UNEXPECTED_RESPONSE_MESSAGE = 'Something went wrong. Please try again.'
+const NETWORK_ERROR_MESSAGE = 'Could not reach the server. Check your connection and try again.'
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
@@ -18,7 +19,7 @@ export async function request<T>(path: string, { method = 'GET', body, accessTok
   if (accessToken !== undefined) {
     headers.set('Authorization', `Bearer ${accessToken}`)
   }
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await send(`${API_BASE_URL}${path}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -27,6 +28,18 @@ export async function request<T>(path: string, { method = 'GET', body, accessTok
     throw await toApiError(response)
   }
   return (await response.json()) as T
+}
+
+async function send(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init)
+  } catch (error) {
+    // fetch rejects with a TypeError only when no response arrived at all.
+    if (error instanceof TypeError) {
+      throw new ApiError(0, 'NETWORK_ERROR', NETWORK_ERROR_MESSAGE)
+    }
+    throw error
+  }
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
