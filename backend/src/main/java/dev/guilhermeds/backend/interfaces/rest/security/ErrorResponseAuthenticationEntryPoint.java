@@ -3,7 +3,6 @@ package dev.guilhermeds.backend.interfaces.rest.security;
 import dev.guilhermeds.backend.interfaces.rest.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -23,8 +22,8 @@ public class ErrorResponseAuthenticationEntryPoint implements AuthenticationEntr
     }
 
     @Override
-    public void commence(@NonNull HttpServletRequest request, HttpServletResponse response,
-                         @NonNull AuthenticationException exception) throws IOException {
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+                         AuthenticationException exception) throws IOException {
         // The exception's message can explain why a token was rejected, so it's never echoed.
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
