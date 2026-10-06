@@ -5,6 +5,7 @@ import dev.guilhermeds.backend.application.mapper.UserAccountMapper;
 import dev.guilhermeds.backend.application.port.PasswordHasher;
 import dev.guilhermeds.backend.application.port.UnitOfWork;
 import dev.guilhermeds.backend.domain.exception.EmailAlreadyRegisteredException;
+import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 import dev.guilhermeds.backend.domain.model.Email;
 import dev.guilhermeds.backend.domain.model.PasswordHash;
 import dev.guilhermeds.backend.domain.model.RawPassword;
@@ -31,6 +32,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class RegisterUserInteractorTest {
@@ -75,5 +77,14 @@ class RegisterUserInteractorTest {
             .isInstanceOf(EmailAlreadyRegisteredException.class);
 
         then(repository).should(never()).save(any());
+    }
+
+    @Test
+    void shouldRejectAWeakPasswordBeforeHashingOrTouchingTheDatabase() {
+        assertThatThrownBy(() -> interactor.execute(
+                new RegisterUserInput("ash@pallet.town", "Ash Ketchum", "pikachu"), ASH_ID, NOW))
+            .isInstanceOf(WeakPasswordException.class);
+
+        verifyNoInteractions(passwordHasher, repository, unitOfWork);
     }
 }
