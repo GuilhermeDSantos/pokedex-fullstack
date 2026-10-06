@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
+import dev.guilhermeds.backend.domain.model.Email;
 import dev.guilhermeds.backend.fixture.UserAccountFixture;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.UserAccountEntityMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,5 +47,14 @@ class JpaUserAccountRepositoryIT {
             assertThat(reloaded.getPasswordHash()).isEqualTo(account.getPasswordHash());
             assertThat(reloaded.getCreatedAt()).isEqualTo(account.getCreatedAt());
         });
+    }
+
+    @Test
+    void shouldFindAnAccountByEmail() {
+        repository.save(UserAccountFixture.ash());
+
+        assertThat(repository.findByEmail(new Email("ash@pallet.town")))
+            .hasValueSatisfying(found -> assertThat(found.getId()).isEqualTo(UserAccountFixture.ASH_ID));
+        assertThat(repository.findByEmail(new Email("misty@cerulean.city"))).isEmpty();
     }
 }
