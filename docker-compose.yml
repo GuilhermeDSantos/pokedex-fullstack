@@ -26,6 +26,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pokedex}
       DB_USERNAME: ${POSTGRES_USER:-pokedex}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-pokedex}
+      JWT_SECRET: ${JWT_SECRET:-docker-local-only-secret-0123456789abcdef}   # local default only
     ports:
       - "8080:8080"
     depends_on:

@@ -31,6 +31,22 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — Adding the JWT decoder silently closed the health endpoint
+- **Context:** S1.3, password hashing and JWT (TR-AUTH-2).
+- **AI proposed:** Creating the `JwtEncoder`/`JwtDecoder` beans now and leaving the
+  `SecurityConfig` for S1.5, as the plan said.
+- **Problem:** `ApplicationHealthIT` went red with a 401. A `JwtDecoder` bean is enough for Spring
+  Boot to activate the resource server's default filter chain, which authenticates every request,
+  `/actuator/health` included. Docker's healthcheck would have failed with no code change in the
+  security layer. Separately, the plan's "HS256 needs at least 32 bytes" was an unverified claim.
+- **Resolution:** A minimal `SecurityConfig` (stateless, CSRF off, health permitted, the rest
+  authenticated) moved forward from S1.5, which now only completes it. The 32-byte minimum was
+  checked against Nimbus 10.9.1 itself: 31 bytes throw "The secret length must be at least 256
+  bits", 32 pass. `JwtProperties` now refuses a shorter secret at startup instead of failing on the
+  first login.
+- **Lesson:** In Spring Boot, adding a bean can change behaviour far away from it. The test that
+  guarded the healthcheck is what made this visible.
+
 ### 2026-10-06 — The error-handler tests caught three defects before any endpoint existed
 - **Context:** Plan task 1.4, the global error handler (TR-ERR, US-04.b).
 - **AI proposed:** (1) A `@WebMvcTest` with a test controller nested in the test class. (2) The

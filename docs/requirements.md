@@ -63,7 +63,7 @@ to a decision in [`decisions.md`](decisions.md).
 | TR-API-1 | Java Web API with **comprehensive CRUD** on the dataset | ⬜ | on `/api/v1/pokemon/{identifier}/local`: C = `POST` (sync), R = `GET`, U = `PUT`, D = `DELETE` |
 | TR-API-2 | **Standard HTTP verbs**, required parameters, **consistent return structures** | ⬜ | `PageResponse`, `ErrorResponse`, statuses in [`domain-model.md`](domain-model.md#api-contract) |
 | TR-AUTH-1 | Auxiliary API for **user registration** | ⬜ | `POST /api/v1/auth/register` |
-| TR-AUTH-2 | **Authentication** | ⬜ | `POST /api/v1/auth/login` (JWT) |
+| TR-AUTH-2 | **Authentication** | 🟨 | `POST /api/v1/auth/login` (JWT). So far: `BCryptPasswordHasher`, `JwtTokenIssuer` + `JwtConfig` (HS256), `JwtTokenIssuerTest`, `JwtPropertiesTest` |
 | TR-AUTH-3 | **Protected vs public routes** | ⬜ | `SecurityConfig`: every read public, writes on `/local` and `/auth/me` protected (D-030) + 401 tests |
 
 ## Technical — layers

@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.3. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.4. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -119,16 +119,21 @@ Backend:
       round trip, find by email, duplicate email → `EmailAlreadyRegisteredException` (409; only that
       constraint is translated, anything else stays loud). The adapter is wired by Spring in the
       test (`@Import`), not built by hand.
-- [ ] S1.3 Ports `PasswordHasher`, `TokenIssuer`, then the adapters `BCryptPasswordHasher` and
-      `JwtTokenIssuer`, plus `JwtProperties` (`security.jwt.*`: secret, TTL, issuer) and a `JwtConfig`
-      creating the HS256 `JwtEncoder`/`JwtDecoder`. `JWT_SECRET` in `docker-compose.yml` and
-      `.env.example`, with a dev-only default of at least 32 bytes (HS256 minimum; verify against
-      Nimbus when implementing).
+- [x] S1.3 Ports `PasswordHasher`, `TokenIssuer` (+ `AccessToken`), then the adapters
+      `BCryptPasswordHasher` and `JwtTokenIssuer`, plus `JwtProperties` (`security.jwt.*`: secret,
+      TTL, issuer; refuses to start with a secret under 32 bytes) and a `JwtConfig` creating the
+      HS256 `JwtEncoder`/`JwtDecoder`. Tests: hash round trip, token round trip, expired token and
+      token signed with another secret rejected. `JWT_SECRET` in `docker-compose.yml` and
+      `.env.example` with dev-only defaults. 32 bytes verified against Nimbus 10.9.1 (31 rejected).
+      A minimal `SecurityConfig` came forward from S1.5: the `JwtDecoder` bean switches on the
+      resource server's default chain, which closed `/actuator/health` (caught by
+      `ApplicationHealthIT`).
 - [ ] S1.4 Interactors (TDD), with `EmailAlreadyRegisteredException`, `InvalidCredentialsException`
       and `UnknownAccountException`: `RegisterUser`, `AuthenticateUser` (same 401 for unknown email and
       wrong password), `GetCurrentUser` (account gone → 401 `UnknownAccountException`, D-033).
       `UseCaseConfig` (the composition root) is created here, wiring them.
-- [ ] S1.5 `SecurityConfig`: stateless, CSRF off, no CORS, `oauth2ResourceServer(jwt)`, the D-030
+- [ ] S1.5 `SecurityConfig` (a minimal one exists since S1.3: stateless, CSRF off, health
+      permitted, everything else authenticated), completed with: no CORS, the D-030
       route policy (the Pokémon write matchers are declared now), and `/actuator/health`
       **explicitly permitted**: once our own filter chain exists, Boot's default actuator security
       backs off, and `ApplicationHealthIT` guards the Docker healthcheck. The 401/403 `ErrorResponse`
