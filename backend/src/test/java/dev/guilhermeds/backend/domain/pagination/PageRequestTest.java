@@ -16,7 +16,7 @@ class PageRequestTest {
         assertThatThrownBy(() -> new PageRequest(-1, 20))
             .isInstanceOf(InvalidPageRequestException.class)
             .isInstanceOf(ValidationException.class)
-            .hasMessage("page cannot be negative");
+            .hasMessage("Page cannot be negative");
     }
 
     @ParameterizedTest
@@ -24,7 +24,7 @@ class PageRequestTest {
     void shouldRejectSizeOutsideOneToFifty(int size) {
         assertThatThrownBy(() -> new PageRequest(0, size))
             .isInstanceOf(InvalidPageRequestException.class)
-            .hasMessage("size must be between 1 and 50");
+            .hasMessage("Size must be between 1 and 50");
     }
 
     @Test
