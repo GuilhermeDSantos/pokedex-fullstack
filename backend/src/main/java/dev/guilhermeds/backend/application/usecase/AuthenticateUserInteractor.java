@@ -27,6 +27,12 @@ public class AuthenticateUserInteractor implements AuthenticateUserUseCase {
 
     @Override
     public AccessTokenOutput execute(AuthenticateUserInput input, Instant now) {
-        throw new InvalidCredentialsException();
+        var credentials = mapper.toCredentials(input);
+
+        var account = repository.findByEmail(credentials.email())
+            .filter(found -> passwordHasher.matches(credentials.password(), found.getPasswordHash()))
+            .orElseThrow(InvalidCredentialsException::new);
+
+        return AccessTokenOutput.from(tokenIssuer.issue(account, now));
     }
 }

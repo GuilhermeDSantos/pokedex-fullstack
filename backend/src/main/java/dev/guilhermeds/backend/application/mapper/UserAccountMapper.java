@@ -1,5 +1,7 @@
 package dev.guilhermeds.backend.application.mapper;
 
+import dev.guilhermeds.backend.application.dto.AuthenticateUserInput;
+import dev.guilhermeds.backend.application.dto.Credentials;
 import dev.guilhermeds.backend.application.dto.RegisterUserInput;
 import dev.guilhermeds.backend.application.dto.Registration;
 import dev.guilhermeds.backend.domain.model.Email;
@@ -19,5 +21,9 @@ public class UserAccountMapper {
 
     public UserAccount toDomain(Registration registration, PasswordHash hash, UserId id, Instant now) {
         return UserAccount.register(id, registration.email(), registration.name(), hash, now);
+    }
+
+    public Credentials toCredentials(AuthenticateUserInput input) {
+        return new Credentials(new Email(input.email()), new RawPassword(input.password()));
     }
 }
