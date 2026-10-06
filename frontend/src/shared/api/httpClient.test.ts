@@ -36,4 +36,14 @@ describe('httpClient', () => {
       authorization: 'Bearer signed.jwt.value',
     })
   })
+
+  it('sends no Authorization header when the call is given no token', async () => {
+    server.use(
+      http.get('/api/v1/pokemon', ({ request: received }) =>
+        HttpResponse.json({ hasAuthorization: received.headers.has('Authorization') }),
+      ),
+    )
+
+    await expect(request('/pokemon')).resolves.toEqual({ hasAuthorization: false })
+  })
 })
