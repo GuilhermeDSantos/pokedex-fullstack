@@ -26,4 +26,10 @@ class PokeApiTranslatorTest {
         assertThat(translator.toSummary(pokemon(25), species(25)).weight()).isEqualTo(Weight.fromHectograms(60));
         assertThat(translator.toSummary(pokemon(25), species(25)).weight().kilograms()).isEqualByComparingTo("6.0");
     }
+
+    // The category is the species' English genus (D-010); genera holds one entry per language.
+    @Test
+    void shouldUseTheEnglishGenusAsTheCategory() {
+        assertThat(translator.toSummary(pokemon(25), species(25)).category()).isEqualTo("Mouse Pokémon");
+    }
 }
