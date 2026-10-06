@@ -32,4 +32,22 @@ describe('SignInPage', () => {
     expect(within(screen.getByRole('banner')).getByText('Ash Ketchum')).toBeInTheDocument()
     expect(sessionStorage.length).toBe(1)
   })
+
+  it('shows invalid credentials as a form error and stays on the page', async () => {
+    server.use(
+      http.post('/api/v1/auth/login', () =>
+        HttpResponse.json(
+          { code: 'UNAUTHENTICATED', message: 'Invalid email or password', fieldErrors: [] },
+          { status: 401 },
+        ),
+      ),
+    )
+    const { router } = renderApp('/login')
+
+    await signIn('ash@pallet.town', 'charmander1')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid email or password')
+    expect(router.state.location.pathname).toBe('/login')
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
+  })
 })
