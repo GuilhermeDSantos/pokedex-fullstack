@@ -31,6 +31,19 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — An ArchUnit rule written by the AI could never have checked anything
+- **Context:** S1.7, removing the temporary `archRule.failOnEmptyShould=false` (OV-2).
+- **AI proposed:** In the 1.1 rules, `noMethods().that().areAnnotatedWith(Transactional.class)
+  .should().beDeclaredInClassesThat().resideOutsideOfPackage(...)`.
+- **Problem:** With the temporary switch gone, ArchUnit failed it as "checked no classes". Its
+  `that()` selected the violation itself, so in correct code it's always empty, and the switch had
+  been hiding that since day one.
+- **Resolution:** Rewritten to select every method outside the transaction adapter and forbid the
+  annotation: same meaning, non-empty selection. A mutation (`@Transactional` on a JPA adapter
+  method) fails it. The reference example was corrected.
+- **Lesson:** A "temporary" relaxation of a quality gate hides defects for as long as it lives.
+  Remove it at the first moment it's possible.
+
 ### 2026-10-06 — A probe test showed an expired token breaking public pages
 - **Context:** S1.6, the auth endpoints, thinking ahead to the frontend (TR-AUTH-3, FE-4).
 - **AI proposed:** Nothing wrong was generated yet. The AI suspected that a `permitAll` route still

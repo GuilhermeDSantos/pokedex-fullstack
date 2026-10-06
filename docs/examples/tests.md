@@ -524,11 +524,12 @@ class LayeredArchitectureTest {
             .should().beAnnotatedWith(Transactional.class);
 
     // ArchUnit 1.5 has no "classes that contain methods annotated with…" condition, so methods get
-    // their own rule.
+    // their own rule. The that() selects the methods outside the adapter: selecting the annotated
+    // ones would match nothing in a correct codebase, and ArchUnit fails a rule that checks nothing.
     @ArchTest
     static final ArchRule transactional_methods_only_in_the_unit_of_work_adapter =
-        noMethods().that().areAnnotatedWith(Transactional.class)
-            .should().beDeclaredInClassesThat().resideOutsideOfPackage("..infrastructure.transaction..");
+        noMethods().that().areDeclaredInClassesThat().resideOutsideOfPackage("..infrastructure.transaction..")
+            .should().beAnnotatedWith(Transactional.class);
 
     // ---- determinism --------------------------------------------------------------
 
@@ -579,7 +580,8 @@ without `@Version`).
 `Instant.now(clock)` (the one-arg overload) is allowed because the rule targets the no-arg call.
 `JwtTokenIssuer` doesn't trip the clock rule, because it receives `now`.
 
-Gradle: `testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'`. While a layer is still
-empty, `src/test/resources/archunit.properties` sets `archRule.failOnEmptyShould=false`. Remove it
-once every layer has classes (plan S1.7). The class is named
+Gradle: `testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'`. A rule whose `that()`
+matches nothing fails (ArchUnit's default, `failOnEmptyShould`), so a typo in a package name can't
+make a rule silently pass. Write "no X" rules so the `that()` selects what's being checked, not the
+violation. The class is named
 `*Test`, not `*IT`, on purpose, so it runs on every `./gradlew test`.

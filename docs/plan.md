@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.7. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.8 (frontend setup). Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -154,10 +154,13 @@ Backend:
       `permitAll` and a `BearerTokenResolver`. `SecurityConfigIT`: an invalid token on every public
       route → 200, and a **real** issued token on a protected route → 200 (`jwt()` skips the
       resolver; a resolver that ignores every token fails only this test, proven by mutation).
-- [ ] S1.7 `AuthFlowIT` (`@SpringBootTest` + Testcontainers): register → login → `/auth/me` with the
-      **real** issued token (the controller ITs only simulate one), plus a garbage token → 401
-      `ErrorResponse`. Then delete `src/test/resources/archunit.properties`: every layer now has
-      classes, so an ArchUnit rule that matches nothing must fail again.
+- [x] S1.7 `AuthFlowIT` (`@SpringBootTest` + Testcontainers): register → login → `/auth/me` with the
+      **real** issued token, plus a garbage token → 401 `ErrorResponse`. A token whose subject is the
+      email instead of the id fails only this test (mutation), not `AuthControllerIT`.
+      `archunit.properties` deleted, so a rule that matches nothing fails again. That exposed one
+      rule whose `that()` selected the violation itself (methods annotated `@Transactional`), which
+      is empty in correct code; rewritten to select every method outside the transaction adapter
+      (same meaning, proven by mutation).
 
 Frontend (every task below is test-first with RTL + MSW, one behaviour at a time; the MSW
 handlers mirror the API contract):

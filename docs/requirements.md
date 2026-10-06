@@ -62,8 +62,8 @@ to a decision in [`decisions.md`](decisions.md).
 |---|---|---|---|
 | TR-API-1 | Java Web API with **comprehensive CRUD** on the dataset | ⬜ | on `/api/v1/pokemon/{identifier}/local`: C = `POST` (sync), R = `GET`, U = `PUT`, D = `DELETE` |
 | TR-API-2 | **Standard HTTP verbs**, required parameters, **consistent return structures** | ⬜ | `PageResponse`, `ErrorResponse`, statuses in [`domain-model.md`](domain-model.md#api-contract) |
-| TR-AUTH-1 | Auxiliary API for **user registration** | 🟨 | `POST /api/v1/auth/register`: `AuthController`, `RegisterUserInteractor`; `RegisterUserInteractorTest`, `AuthControllerIT` |
-| TR-AUTH-2 | **Authentication** | 🟨 | `POST /api/v1/auth/login` (JWT). `AuthController` (login, `/auth/me`), `BCryptPasswordHasher`, `JwtTokenIssuer` + `JwtConfig` (HS256), `AuthenticateUserInteractor`, `GetCurrentUserInteractor`; their tests, `AuthControllerIT`, `JwtTokenIssuerTest`, `JwtPropertiesTest` |
+| TR-AUTH-1 | Auxiliary API for **user registration** | 🟨 | `POST /api/v1/auth/register`: `AuthController`, `RegisterUserInteractor`; `RegisterUserInteractorTest`, `AuthControllerIT`, `AuthFlowIT` |
+| TR-AUTH-2 | **Authentication** | 🟨 | `POST /api/v1/auth/login` (JWT). `AuthController` (login, `/auth/me`), `BCryptPasswordHasher`, `JwtTokenIssuer` + `JwtConfig` (HS256), `AuthenticateUserInteractor`, `GetCurrentUserInteractor`; their tests, `AuthControllerIT`, `AuthFlowIT` (real token end to end), `JwtTokenIssuerTest`, `JwtPropertiesTest` |
 | TR-AUTH-3 | **Protected vs public routes** | 🟨 | `SecurityConfig`: every read public, writes on `/local` and `/auth/me` protected, closed by default (D-030, D-035); `SecurityConfigIT`. Controller-level 401 tests come with each endpoint |
 
 ## Technical — layers
