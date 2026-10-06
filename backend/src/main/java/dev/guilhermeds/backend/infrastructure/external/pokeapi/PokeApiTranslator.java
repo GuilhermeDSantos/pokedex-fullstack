@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
+import dev.guilhermeds.backend.domain.model.Ability;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonType;
 import dev.guilhermeds.backend.domain.model.Weight;
@@ -17,13 +18,20 @@ public class PokeApiTranslator {
 
     PokemonSummary toSummary(PokeApiPokemonJson pokemon, PokeApiSpeciesJson species) {
         return new PokemonSummary(new PokedexNumber(pokemon.id()), pokemon.name(), pokemon.sprites().frontDefault(), englishGenus(species),
-            Weight.fromHectograms(pokemon.weight()), types(pokemon), List.of());
+            Weight.fromHectograms(pokemon.weight()), types(pokemon), abilities(pokemon));
     }
 
     private static List<PokemonType> types(PokeApiPokemonJson pokemon) {
         return pokemon.types().stream()
             .sorted(Comparator.comparingInt(PokeApiPokemonJson.TypeSlot::slot))
             .map(slot -> new PokemonType(slot.type().name()))
+            .toList();
+    }
+
+    private static List<Ability> abilities(PokeApiPokemonJson pokemon) {
+        return pokemon.abilities().stream()
+            .sorted(Comparator.comparingInt(PokeApiPokemonJson.AbilitySlot::slot))
+            .map(slot -> new Ability(slot.ability().name(), slot.hidden()))
             .toList();
     }
 
