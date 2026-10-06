@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.domain.model;
 
+import dev.guilhermeds.backend.domain.exception.PasswordTooLongException;
 import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 
 import java.nio.charset.StandardCharsets;
@@ -13,10 +14,12 @@ public record RawPassword(String value) {
     public RawPassword {
         if (value == null
             || value.length() < MIN_LENGTH
-            || value.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES
             || value.chars().noneMatch(Character::isLetter)
             || value.chars().noneMatch(Character::isDigit)) {
             throw new WeakPasswordException(MIN_LENGTH);
+        }
+        if (value.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES) {
+            throw new PasswordTooLongException();
         }
     }
 
