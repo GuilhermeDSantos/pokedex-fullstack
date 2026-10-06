@@ -2,6 +2,7 @@ package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.application.dto.AccessTokenOutput;
 import dev.guilhermeds.backend.application.dto.AuthenticateUserInput;
+import dev.guilhermeds.backend.application.dto.GetCurrentUserInput;
 import dev.guilhermeds.backend.application.dto.RegisterUserInput;
 import dev.guilhermeds.backend.application.dto.UserOutput;
 import dev.guilhermeds.backend.application.usecase.AuthenticateUserUseCase;
@@ -34,6 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @WebMvcTest(AuthController.class)
 @Import({AuthRestMapper.class, SecurityConfig.class, JwtConfig.class, ErrorResponseAuthenticationEntryPoint.class,
@@ -195,6 +197,20 @@ class AuthControllerIT {
             .bodyJson()
             .isLenientlyEqualTo("""
                 { "code": "UNAUTHENTICATED", "message": "Invalid email or password" }
+                """);
+    }
+
+    @Test
+    void shouldReturnTheUserTheTokenBelongsTo() {
+        given(getCurrentUserUseCase.execute(new GetCurrentUserInput(ASH_ID.value()))).willReturn(ASH);
+
+        assertThat(mockMvc.get().uri("/api/v1/auth/me")
+                .with(jwt().jwt(token -> token.subject(ASH_ID.value().toString()))))
+            .hasStatusOk()
+            .bodyJson()
+            .isStrictlyEqualTo("""
+                { "id": "00000000-0000-0000-0000-000000000001", "email": "ash@pallet.town",
+                  "name": "Ash Ketchum", "createdAt": "2026-01-15T10:00:00Z" }
                 """);
     }
 }
