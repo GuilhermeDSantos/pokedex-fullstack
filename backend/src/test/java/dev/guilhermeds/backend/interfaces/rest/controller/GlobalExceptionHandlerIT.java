@@ -12,6 +12,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -93,8 +95,25 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldReturn400WithFieldErrorsWhenTheBodyIsInvalid() {
+        assertThat(mockMvc.post().uri("/probe/valid")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"name\": \" \" }"))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Request body is invalid",
+                  "fieldErrors": [ { "field": "name", "message": "must not be blank" } ] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
+
+        @PostMapping("/probe/valid")
+        void valid(@Valid @RequestBody ProbeValidRequest request) {
+        }
 
         @PostMapping("/probe/body")
         void body(@RequestBody ProbeRequest request) {
@@ -157,5 +176,8 @@ class GlobalExceptionHandlerIT {
     }
 
     record ProbeRequest(String name) {
+    }
+
+    record ProbeValidRequest(@NotBlank String name) {
     }
 }
