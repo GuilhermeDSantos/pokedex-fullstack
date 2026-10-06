@@ -19,4 +19,23 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  // Dependencies point one way: app → features → shared.
+  {
+    files: ['src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['**/features/**', '**/app/**'], message: 'shared/ must not depend on features/ or app/.' }] },
+      ],
+    },
+  },
+  {
+    files: ['src/features/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['**/app/**'], message: 'features/ must not depend on app/.' }] },
+      ],
+    },
+  },
 ])
