@@ -8,6 +8,8 @@ import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -153,6 +155,19 @@ class GlobalExceptionHandlerIT {
                 { "code": "INTERNAL_ERROR", "message": "An unexpected error occurred", "fieldErrors": [] }
                 """);
         assertThat(result).bodyText().doesNotContain("s3cr3t");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "GET,  application/json, 405, METHOD_NOT_ALLOWED",
+        "POST, text/plain,       415, UNSUPPORTED_MEDIA_TYPE"
+    })
+    void shouldKeepTheStatusOfFrameworkErrors(String method, String contentType, int status, String code) {
+        assertThat(mockMvc.method(HttpMethod.valueOf(method)).uri("/probe/body")
+                .contentType(contentType)
+                .content("{}"))
+            .hasStatus(status)
+            .bodyJson().extractingPath("$.code").isEqualTo(code);
     }
 
     @RestController
