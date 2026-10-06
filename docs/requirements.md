@@ -79,11 +79,11 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| FE-1 | Modern framework (React) integrated with the backend | ⬜ | |
+| FE-1 | Modern framework (React) integrated with the backend | 🟨 | React 19 + Vite, React Router, TanStack Query (S1.8); backend integration from S1.9 |
 | FE-2 | **Responsive** and **user-centric** design | ⬜ | live resize in the demo (~360 px → desktop), four async states per view |
 | FE-3 | **CRUD** matching the functional use cases | ⬜ | detail page: Sync (C), local section (R), Edit (U), Remove (D) |
 | FE-4 | **Clean component organization** and **efficient state management** | ⬜ | [`standards/frontend.md`](standards/frontend.md) |
-| FE-5 | *Optional but desired:* **no warnings in the browser console** | ⬜ | console guard in tests + manual pass |
+| FE-5 | *Optional but desired:* **no warnings in the browser console** | 🟨 | console guard in `src/test/setup.ts` (fails any test that warns); manual pass per page |
 
 ## Submission & delivery
 

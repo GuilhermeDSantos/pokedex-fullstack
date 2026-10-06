@@ -31,6 +31,21 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — The frontend toolchain: two checks before trusting it
+- **Context:** S1.8, the frontend setup (FE-1, FE-5, TR-UT).
+- **AI proposed:** Installing "the latest" of each approved library, and a console guard in the
+  test setup that throws from `afterEach`.
+- **Problem:** npm installed MSW 2.15 although the registry's latest is 3.0.2. Instead of forcing
+  3.x, the AI asked npm why: Vitest's own mocker declares `msw ^2.4.9` as a peer, so 3.x would
+  leave an invalid tree. Separately, a guard that only *looks* right is worthless, and React
+  Router's API changed across 6/7/8 (`RouterProvider` now has a DOM entry with `flushSync`), so
+  neither was taken on trust.
+- **Resolution:** MSW 2.15 kept on purpose. The guard was proven with a throwaway test: a
+  `console.error`, a `console.warn` and an unmocked request each fail, a quiet test passes. React
+  Router's exports were read from the installed package before writing the router.
+- **Lesson:** "Latest" isn't a version policy; a consistent dependency tree is. And a test guard
+  needs its own proof that it can fail.
+
 ### 2026-10-06 — An ArchUnit rule written by the AI could never have checked anything
 - **Context:** S1.7, removing the temporary `archRule.failOnEmptyShould=false` (OV-2).
 - **AI proposed:** In the 1.1 rules, `noMethods().that().areAnnotatedWith(Transactional.class)

@@ -13,8 +13,8 @@ Plus the "optional but desired" criterion, which we treat as **mandatory**: **ze
 errors in the browser console.**
 
 Stack: React 19 · TypeScript (strict) · Vite · ESLint, plus the approved additions React Router
-(D-020), TanStack Query (D-021) and Vitest + React Testing Library + user-event + jsdom + MSW
-(D-023). Form libraries were rejected (D-022). **Anything else needs a new decision first.**
+(D-020), TanStack Query (D-021), Vitest + React Testing Library + user-event + jsdom + MSW
+(D-023) and jest-dom matchers (D-037). Form libraries were rejected (D-022). **Anything else needs a new decision first.**
 
 ---
 
@@ -78,9 +78,8 @@ local data, so the frontend never stitches two sources together.
   the API prefix lives in exactly one place. The frontend only ever calls our backend, never
   PokeAPI.
 - It attaches `Authorization: Bearer <token>` only on protected calls, and drops a token whose
-  `expiresAt` has passed. The backend validates any bearer token it receives, even on public
-  routes (`BearerTokenAuthenticationFilter`), so a stale token would turn the public list into
-  401s.
+  `expiresAt` has passed. Public routes ignore the header anyway (D-036), so sending it there would
+  only leak the token into requests that don't need it.
 - It parses every non-2xx response into a typed `ApiError { status, code, message, fieldErrors }`,
   using the backend's `ErrorResponse` shape. UI code branches on `code`/`status`, never on message
   text.
@@ -154,8 +153,10 @@ Common sources, all forbidden:
 
 ## Testing (TDD applies here too)
 
-- **Vitest + React Testing Library + MSW** (pending approval). MSW handlers mirror the backend
-  contract (`ErrorResponse`, `PageResponse`) and live in `src/test/msw/handlers.ts`.
+- **Vitest + React Testing Library + MSW** (D-023), with jest-dom matchers (D-037). The MSW server
+  (`src/test/msw/server.ts`) fails any request without a handler. Handlers mirror the backend
+  contract (`ErrorResponse`, `PageResponse`) and live in `src/test/msw/handlers.ts`, created with the
+  first one. No test globals: `describe`/`it`/`expect` are imported from `vitest`.
 - Test **behaviour through the UI** the way a user does: `getByRole`, `getByLabelText`, then
   `userEvent`. Don't test implementation details (state, hooks internals, CSS classes).
 - Minimum per feature: the page renders its data, the loading → success path, an error path (500

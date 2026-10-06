@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.8 (frontend setup). Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.9 (HTTP client and the first global components). Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -164,13 +164,19 @@ Backend:
 
 Frontend (every task below is test-first with RTL + MSW, one behaviour at a time; the MSW
 handlers mirror the API contract):
-- [ ] S1.8 Setup (D-020, D-021, D-023): router, query client, Vitest + RTL + MSW, the console-guard
-      test setup, a `typecheck` script, the `AppShell` layout with a header. `app/styles/tokens.css`
-      with **neutral** values (system font, greys, spacing scale) and a minimal base stylesheet
-      (D-034: UX first, UI later). The Vite template's demo content and assets are removed.
+- [x] S1.8 Setup (D-020, D-021, D-023, D-037): React Router 8 (`RouterProvider` from
+      `react-router/dom`), TanStack Query, Vitest 5 + RTL + user-event + jsdom + MSW 2 + jest-dom.
+      npm resolved MSW 2.15, not 3: Vitest's own mocker declares `msw ^2.4.9` as a peer, so 2.x keeps
+      the tree valid. `src/test/setup.ts`: MSW fails unhandled requests, and the console guard fails
+      any test that writes `console.error`/`console.warn` (proven with a throwaway test: error,
+      warning and an unmocked request all fail). `typecheck` and `test` scripts. `AppShell` (banner
+      link + `main`) and a not-found page, test-first through the real route table. Neutral
+      `tokens.css` + `base.css` (D-034). Template content removed, neutral favicon (no 404).
+      Checked in the browser: empty console, 360px layout. The Docker image still builds.
 - [ ] S1.9 `shared/api/httpClient` (base path `/api/v1`, auth header only on protected calls,
       `ApiError` from `ErrorResponse`, 401 handling) + tests; the first global components in
-      `shared/ui`: `Button`, `TextField`, `Heading`, `Stack`, `ErrorState`.
+      `shared/ui`: `Button`, `TextField`, `Heading`, `Stack`, `ErrorState`. The ESLint
+      `no-restricted-imports` rule for `app → features → shared` comes with the first feature.
 - [ ] S1.10 Sign up and sign in pages (controlled inputs, D-022; server field errors mapped),
       `AuthContext` with session restore from `sessionStorage` (D-024), sign out, and the header
       showing the signed-in user. A successful sign up signs the user in straight away and returns
