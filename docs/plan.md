@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.10 (sign up, sign in, sign out). Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.1 (Slice 2, browse the list). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -183,13 +183,23 @@ handlers mirror the API contract):
       disabled while pending), `ErrorState` (`role="alert"` + Retry). `Heading` and `Stack` come
       with the S1.10 forms, the first code that uses them. The ESLint `no-restricted-imports` rule
       for `app → features → shared` comes with the first feature.
-- [ ] S1.10 Sign up and sign in pages (controlled inputs, D-022; server field errors mapped),
-      `AuthContext` with session restore from `sessionStorage` (D-024), sign out, and the header
-      showing the signed-in user. The session drops an expired token and is cleared by a 401 on a
-      protected call. `Heading` and `Stack` in `shared/ui`. A successful sign up signs the user in straight away and returns
-      to `returnTo` (or the list). Tests: field errors on 400, "email already registered" on 409,
-      "invalid email or password" on 401 (a form error, not a redirect), session survives a reload,
-      sign out clears it.
+- [x] S1.10 `/login` and `/register` (controlled inputs + `requireFields`, D-022), test-first
+      through the real route table (`renderApp`): sign in returns to `returnTo`; 401 → form error,
+      no redirect; missing fields are asked for before any request; sign up signs the user in
+      straight away; 409 → on the email field; a server rule (password policy) → form error; server
+      `fieldErrors` → on their fields; each page links to the other keeping `returnTo`.
+      `safeReturnTo` refuses other sites, including `//host` and the `/\host` bypass. Session:
+      `AuthProvider` + `useAuth` + `authContext` (three files: fast refresh wants component files to
+      export only components), restored from `sessionStorage` (D-024), an expired or malformed
+      stored session is dropped, sign out clears it. Header shows the user + "Sign out", or "Sign in"
+      / "Create account". `shared/ui`: `Heading`, `Stack`, `FormError`. ESLint
+      `no-restricted-imports` enforces `app → features → shared` (proven with forbidden imports).
+      Checked on the Docker stack in the browser: sign up (password policy error, then success),
+      reload keeps the session, sign out, wrong password, sign in, duplicate email (upper-case,
+      normalized by the backend) → email field. Clearing the session on a 401 from a protected call
+      moves to S4.5: before the first protected write there is no call that can trigger it.
+      **Open (FE-5):** Chrome itself logs "Failed to load resource" for every 4xx, so the expected
+      400/401/409 of these error paths show in the console. App code can't suppress it.
 
 ## Slice 2 — Browse the list (US-01, US-01.N, TR-CACHE, FR-0, FE-2)
 
@@ -255,8 +265,10 @@ Backend:
 Frontend:
 - [ ] S4.5 Local section of the detail page: **Sync to local database** when `local` is null ("Log
       in to sync" with `returnTo` when signed out). A 409 (someone just synced it) refetches and
-      shows the local data with an inline note. Tests: signed out → "Log in to sync", sync → local
-      section appears, 409 → refetch + note.
+      shows the local data with an inline note. A 401 on the sync (expired token, or the account is
+      gone, D-033) clears the session and goes to `/login` with `returnTo` (moved here from S1.10).
+      Tests: signed out → "Log in to sync", sync → local section appears, 409 → refetch + note,
+      401 → signed out and sent to sign in.
 
 ## Slice 5 — Edit and remove the local data (US-04, US-04.a–c, TR-API-1, FE-3)
 

@@ -113,4 +113,8 @@ claim should point at something concrete: a file, a test, a row in
   call repositories? → Clean Architecture: controllers → use cases → repository ports, and
   `infrastructure/persistence` implements those ports. The data layer is still the foundation, one
   boundary further in (TR-DAL, D-001).
+- The console shows "Failed to load resource: 401" after a wrong password. Isn't that a console
+  error? → Chrome logs every non-2xx response by itself; no page code can suppress it. The app
+  writes nothing to the console (the test guard fails any test that does), and the happy paths are
+  clean. Returning 200 for a failed login to hide the line would break the API contract.
 - What would you do next? → `plan.md` "Parked".

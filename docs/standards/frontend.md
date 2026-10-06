@@ -34,8 +34,11 @@ frontend/src
 │   │   ├── components/     # PokemonCard, StatBars, EvolutionTree, TypeBadge, LocalSection, LocalForm, TagInput
 │   │   └── pages/          # PokemonListPage, PokemonDetailPage
 │   └── auth/
-│       ├── api/  hooks/  components/  pages/
-│       └── AuthContext.tsx # session (token + user), login/logout — the ONLY global client state
+│       ├── api/  lib/  pages/
+│       ├── session.ts      # sessionStorage read/write, drops expired or malformed sessions
+│       ├── authContext.ts  # the context and its type
+│       ├── AuthProvider.tsx # session (token + user), signIn/signUp/signOut — the ONLY global client state
+│       └── useAuth.ts      # split from the provider: fast refresh wants component files to export only components
 ├── shared/
 │   ├── api/                # httpClient.ts (fetch wrapper), ApiError, PageResponse<T>, ErrorResponse
 │   ├── ui/                 # global components, created when a slice first needs them (see "UX first, UI later")

@@ -31,6 +31,26 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — returnTo: the obvious check missed a known bypass
+- **Context:** S1.10, sending the user back after signing in (TR-AUTH, FE-3).
+- **AI proposed:** Accept a `returnTo` that starts with `/` and not `//`.
+- **Problem:** The AI remembered, while writing the tests, that browsers read `\` as `/`, so
+  `/\evil.example` is protocol-relative too: an open redirect through the sign-in page. The first
+  version let it through, and the new test failed on it.
+- **Resolution:** `safeReturnTo` also refuses a leading `/\`, with its own red/green.
+- **Lesson:** For security checks, write the attacker's inputs as tests, not just the happy path.
+
+### 2026-10-06 — "Zero console errors" met a limit outside the app
+- **Context:** S1.10, the manual browser pass on the Docker stack (FE-5).
+- **AI proposed:** Treating the console guard in tests as proof of a clean console.
+- **Problem:** In the real browser, a wrong password, a weak password and a duplicate email each
+  left a "Failed to load resource: 4xx" line. Chrome writes those for every non-2xx response; the
+  test guard can't see them because jsdom has no network panel.
+- **Resolution:** Reported to the developer instead of hidden: the app writes nothing, the happy
+  paths are clean, and the walkthrough FAQ explains the browser's own network lines.
+- **Lesson:** Automated guards cover what their environment can see. The manual browser pass is
+  still needed.
+
 ### 2026-10-06 — Small TDD slips the AI caught in its own frontend steps
 - **Context:** S1.9, the HTTP client and the first `shared/ui` components (FE-4, TR-UT).
 - **AI proposed:** A red step with two tests (one of them already passing), and a `Button` green
