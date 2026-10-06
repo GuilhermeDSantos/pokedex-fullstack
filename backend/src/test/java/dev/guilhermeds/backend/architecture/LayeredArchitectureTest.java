@@ -103,8 +103,8 @@ class LayeredArchitectureTest {
 
     @ArchTest
     static final ArchRule transactional_methods_only_in_the_unit_of_work_adapter =
-        noMethods().that().areAnnotatedWith(Transactional.class)
-            .should().beDeclaredInClassesThat().resideOutsideOfPackage(TRANSACTION);
+        noMethods().that().areDeclaredInClassesThat().resideOutsideOfPackage(TRANSACTION)
+            .should().beAnnotatedWith(Transactional.class);
 
     // ---- determinism ----------------------------------------------------------------------------
 
