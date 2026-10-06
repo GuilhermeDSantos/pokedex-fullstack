@@ -13,6 +13,7 @@ public final class UserAccountFixture {
 
     public static final Instant NOW = Instant.parse("2026-01-15T10:00:00Z");
     public static final UserId ASH_ID = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+    public static final UserId MISTY_ID = new UserId(UUID.fromString("00000000-0000-0000-0000-000000000002"));
 
     private UserAccountFixture() {
     }

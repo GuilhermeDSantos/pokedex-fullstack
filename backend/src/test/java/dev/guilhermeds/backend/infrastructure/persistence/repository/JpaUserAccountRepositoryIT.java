@@ -3,7 +3,6 @@ package dev.guilhermeds.backend.infrastructure.persistence.repository;
 import dev.guilhermeds.backend.domain.exception.ConflictException;
 import dev.guilhermeds.backend.domain.exception.EmailAlreadyRegisteredException;
 import dev.guilhermeds.backend.domain.model.Email;
-import dev.guilhermeds.backend.domain.model.UserId;
 import dev.guilhermeds.backend.fixture.UserAccountFixture;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.UserAccountEntityMapper;
 import org.junit.jupiter.api.Test;
@@ -15,8 +14,6 @@ import org.springframework.context.annotation.Import;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,7 +58,7 @@ class JpaUserAccountRepositoryIT {
     void shouldTranslateADuplicateEmailIntoAConflict() {
         repository.save(UserAccountFixture.ash());
         var sameEmail = UserAccountFixture.withEmail(
-            new UserId(UUID.fromString("00000000-0000-0000-0000-000000000002")), "ash@pallet.town");
+            UserAccountFixture.MISTY_ID, UserAccountFixture.ash().getEmail().value());
 
         assertThatThrownBy(() -> repository.save(sameEmail))
             .isInstanceOf(EmailAlreadyRegisteredException.class)
