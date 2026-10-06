@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Phase 1 — Backend foundation.** Next task: 1.2. Then Slice 1 (sign up, sign in, sign out).
+> **Phase 1 — Backend foundation.** Next task: 1.3. Then Slice 1 (sign up, sign in, sign out).
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -77,11 +77,14 @@ Everything every slice needs.
       constructor): exactly those three rules failed. The temporary `failOn…` lines in
       `build.gradle` are removed. **Temporary:** `archunit.properties` allows empty rules until
       every layer has classes (removed in S1.7).
-- [ ] 1.2 Domain kernel: `DomainException` + the 4 categories, `domain/pagination` (`PageRequest`,
-      `Page`) with tests.
+- [x] 1.2 Domain kernel, in 5 TDD cycles: `DomainException`, `ValidationException`,
+      `InvalidPageRequestException`; `PageRequest` (page ≥ 0, size 1..50, `offset()`) and `Page`
+      (immutable copy, `map`). The other categories (`NotFound`, `Conflict`, `Unauthenticated`) are
+      created in 1.4, with the handler and the tests that map them, so none is born untested.
 - [ ] 1.3 `UnitOfWork` port + `SpringUnitOfWork`, `ClockConfig`, an empty `UseCaseConfig`.
-- [ ] 1.4 `interfaces/rest`: `ErrorResponse`, `PageResponse`, `GlobalExceptionHandler` covering all
-      categories + framework exceptions, with `GlobalExceptionHandlerIT`.
+- [ ] 1.4 `NotFoundException`, `ConflictException`, `UnauthenticatedException`; `interfaces/rest`:
+      `ErrorResponse`, `PageResponse`, `GlobalExceptionHandler` covering all categories + framework
+      exceptions, with `GlobalExceptionHandlerIT`.
 
 ---
 
