@@ -20,4 +20,11 @@ describe('header session area', () => {
     expect(within(banner).getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
     expect(within(banner).queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument()
   })
+
+  it('drops a stored session whose token has expired', () => {
+    renderApp('/', { session: { ...ASH_SESSION, expiresAt: '2000-01-01T00:00:00Z' } })
+
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
+    expect(sessionStorage.length).toBe(0)
+  })
 })
