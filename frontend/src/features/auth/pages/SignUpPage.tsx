@@ -7,7 +7,7 @@ import { FormError } from '../../../shared/ui/FormError'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
-import type { FieldErrors } from '../lib/requireFields'
+import { requireFields, type FieldErrors } from '../lib/requireFields'
 import { safeReturnTo } from '../lib/returnTo'
 import { useAuth } from '../useAuth'
 import styles from './AuthPage.module.css'
@@ -44,18 +44,26 @@ export function SignUpPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [missing, setMissing] = useState<FieldErrors<SignUpField>>({})
 
   const signUpMutation = useMutation({
     mutationFn: signUp,
     onSuccess: () => navigate(safeReturnTo(searchParams.get('returnTo')), { replace: true }),
   })
 
-  const errors = serverFieldErrors(signUpMutation.error)
+  const errors = { ...serverFieldErrors(signUpMutation.error), ...missing }
   const formError = signUpMutation.error && Object.keys(errors).length === 0 ? signUpMutation.error.message : null
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    signUpMutation.mutate({ name, email, password })
+    const values = { name, email, password }
+    const missingFields = requireFields(values, LABELS)
+    setMissing(missingFields)
+    if (Object.keys(missingFields).length > 0) {
+      signUpMutation.reset()
+      return
+    }
+    signUpMutation.mutate(values)
   }
 
   return (
