@@ -1,12 +1,13 @@
 import { useMutation } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { ApiError } from '../../../shared/api/ApiError'
 import { Button } from '../../../shared/ui/Button'
 import { FormError } from '../../../shared/ui/FormError'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
+import { withReturnTo } from '../lib/authLink'
 import { requireFields, type FieldErrors } from '../lib/requireFields'
 import { safeReturnTo } from '../lib/returnTo'
 import { useAuth } from '../useAuth'
@@ -104,6 +105,9 @@ export function SignUpPage() {
             </Button>
           </Stack>
         </form>
+        <p>
+          Already have an account? <Link to={withReturnTo('/login', searchParams.get('returnTo'))}>Sign in instead</Link>
+        </p>
       </Stack>
     </section>
   )
