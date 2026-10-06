@@ -47,4 +47,14 @@ class PokeApiTranslatorTest {
         assertThat(translator.toSummary(pokemon(25), species(25)).spriteUrl())
             .isEqualTo("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png");
     }
+
+    // Some alternate forms have no sprite at all.
+    @Test
+    void shouldAcceptAPokemonWithoutASprite() {
+        var pikachu = pokemon(25);
+        var withoutSprite = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(),
+            new PokeApiPokemonJson.Sprites(null));
+
+        assertThat(translator.toSummary(withoutSprite, species(25)).spriteUrl()).isNull();
+    }
 }
