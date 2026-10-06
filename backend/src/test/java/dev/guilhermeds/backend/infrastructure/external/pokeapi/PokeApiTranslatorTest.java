@@ -2,6 +2,7 @@ package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.Weight;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.pokemon;
@@ -31,5 +32,13 @@ class PokeApiTranslatorTest {
     @Test
     void shouldUseTheEnglishGenusAsTheCategory() {
         assertThat(translator.toSummary(pokemon(25), species(25)).category()).isEqualTo("Mouse Pokémon");
+    }
+
+    @Test
+    void shouldLeaveTheCategoryEmptyWhenThereIsNoEnglishGenus() {
+        var onlyFrench = new PokeApiSpeciesJson(
+            List.of(new PokeApiSpeciesJson.Genus("Pokémon Souris", new NamedResource("fr", "https://pokeapi.co/api/v2/language/5/"))));
+
+        assertThat(translator.toSummary(pokemon(25), onlyFrench).category()).isNull();
     }
 }
