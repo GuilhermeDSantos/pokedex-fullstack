@@ -6,12 +6,12 @@ import dev.guilhermeds.backend.domain.model.Email;
 import dev.guilhermeds.backend.domain.model.UserId;
 import dev.guilhermeds.backend.fixture.UserAccountFixture;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.UserAccountEntityMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import({JpaUserAccountRepository.class, UserAccountEntityMapper.class})
 @Testcontainers
 class JpaUserAccountRepositoryIT {
 
@@ -31,15 +32,7 @@ class JpaUserAccountRepositoryIT {
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
 
     @Autowired
-    private UserAccountJpaRepository jpaRepository;
-
     private JpaUserAccountRepository repository;
-
-    @BeforeEach
-    void setUp() {
-        // @DataJpaTest doesn't scan plain @Components, so the mapper is constructed.
-        repository = new JpaUserAccountRepository(jpaRepository, new UserAccountEntityMapper());
-    }
 
     @Test
     void shouldSaveAndReloadTheWholeAccount() {
