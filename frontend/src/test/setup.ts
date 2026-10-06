@@ -18,6 +18,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  sessionStorage.clear()
   server.resetHandlers()
   vi.restoreAllMocks()
   if (consoleOutput.length > 0) {
