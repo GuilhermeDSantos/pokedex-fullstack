@@ -19,4 +19,9 @@ public record RawPassword(String value) {
             throw new WeakPasswordException();
         }
     }
+
+    @Override
+    public String toString() {
+        return "RawPassword[****]";
+    }
 }
