@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
+import dev.guilhermeds.backend.domain.exception.ConflictException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +35,23 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldMapAnyConflictCategoryTo409() {
+        assertThat(mockMvc.get().uri("/probe/conflict"))
+            .hasStatus(409)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "CONFLICT", "message": "Probe 42 already exists", "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
+
+        @GetMapping("/probe/conflict")
+        void conflict() {
+            throw new ProbeConflictException();
+        }
 
         @GetMapping("/probe/not-found")
         void notFound() {
@@ -46,6 +62,12 @@ class GlobalExceptionHandlerIT {
     static class ProbeNotFoundException extends NotFoundException {
         ProbeNotFoundException() {
             super("Probe 42 not found");
+        }
+    }
+
+    static class ProbeConflictException extends ConflictException {
+        ProbeConflictException() {
+            super("Probe 42 already exists");
         }
     }
 }
