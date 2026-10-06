@@ -390,6 +390,19 @@ endpoint would get its security retrofitted.
 Slice 1. The list and detail come from PokeAPI only in Slices 2–3, and local data joins them in
 Slices 4 and 6.
 
+## D-035 — The route policy is closed by default
+**Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** TR-AUTH-3 · **Refines:** D-030
+**Context:** D-030 says which routes are public (every read, register, login, health) and which are
+protected (writes on `/local`, `/auth/me`). It doesn't say what happens to a route nobody listed.
+The first example listed only the protected routes and ended in `anyRequest().permitAll()`.
+**Decision:** List the **public** routes (`GET /api/v1/pokemon/**`, `POST` register and login,
+`/actuator/health`) and end in `anyRequest().authenticated()`. `SecurityConfigIT` has a row for an
+undeclared route that must answer 401.
+**Alternatives considered:** Open by default, as in the first example: shorter, but a new write
+endpoint left out of the list would be public, and no test would notice.
+**Consequences:** A request to an unknown path without a token gets 401 instead of 404. With a
+token it still gets the 404 `ErrorResponse`.
+
 ## D-034 — Frontend: UX first, UI later; design tokens and global components from day one
 **Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** FE-2, FE-4
 **Context:** Each slice ships a screen. Polishing every screen as it's built spends time on looks

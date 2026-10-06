@@ -59,7 +59,7 @@ dev.guilhermeds.backend
         ├── request     # HTTP request bodies (Bean Validation lives here)
         ├── response    # HTTP response bodies
         ├── mapper      # Application DTO ↔ HTTP request/response
-        └── security    # AuthenticationEntryPoint / AccessDeniedHandler that write ErrorResponse
+        └── security    # the AuthenticationEntryPoint that writes ErrorResponse
 ```
 
 Don't pre-create empty packages. A category appears the first time a class needs it.
@@ -137,7 +137,7 @@ Exact patterns, not suggestions.
 | Orchestration port adapter | `{Technology}{PortName}` | `SpringUnitOfWork`, `BCryptPasswordHasher`, `JwtTokenIssuer` |
 | Read model / adapter / row | `{Name}Query` / `Jdbc{Name}Query` / `{Name}View` | `PokemonListQuery` |
 | Domain Service | `{Name}DomainService` | *(none planned — create one only when a rule spans aggregates)* |
-| Security error writer (interfaces) | `ErrorResponse{SpringSecurityInterface}` | `ErrorResponseAuthenticationEntryPoint`, `ErrorResponseAccessDeniedHandler` |
+| Security error writer (interfaces) | `ErrorResponse{SpringSecurityInterface}` | `ErrorResponseAuthenticationEntryPoint` |
 | Controller | `{Name}Controller` | `PokemonController`, `AuthController` |
 | HTTP request body | `{Verb}{Name}Request` | `UpdateLocalPokemonRequest` |
 | HTTP response body | `{Name}Response` | `PokemonDetailResponse`, `LocalPokemonResponse` |
@@ -359,21 +359,20 @@ Exact patterns, not suggestions.
   use cases only see the ports.
 - Route policy (D-030) is declared **once**, in `SecurityConfig`, and mirrored in
   [`../domain-model.md`](../domain-model.md#api-contract): **every read is public** (list, detail,
-  `GET …/local`), as are register, login and `/actuator/health`. **Only the writes** (`POST`, `PUT`,
-  `DELETE` on `/api/v1/pokemon/*/local`) and `/auth/me` require a valid token. Other actuator
-  endpoints are not exposed.
+  `GET …/local`), as are register, login and `/actuator/health`. Everything else needs a valid
+  token: the writes (`POST`, `PUT`, `DELETE` on `/api/v1/pokemon/*/local`), `/auth/me`, and any
+  route nobody declared, because the policy lists the public routes and ends in
+  `anyRequest().authenticated()` (D-035). Other actuator endpoints are not exposed.
 - CSRF disabled (stateless bearer tokens, no cookies). **No CORS configuration**: the browser
   only ever talks to one origin. In Docker, nginx serves the SPA and proxies `/api` to the
   backend. In development, the Vite dev server proxies `/api` (D-019).
-- 401/403 from the security layer return the same `ErrorResponse` JSON as everything else. The
-  writers live in **`interfaces/rest/security/`** (`ErrorResponseAuthenticationEntryPoint`,
-  `ErrorResponseAccessDeniedHandler`), next to `ErrorResponse`, because writing the HTTP error
-  shape is a delivery concern. `SecurityConfig` receives them as Spring Security's own
-  `AuthenticationEntryPoint` / `AccessDeniedHandler` interfaces, so `infrastructure` never imports
-  `interfaces` (ArchUnit). Register the entry point both in `exceptionHandling(...)` and in
-  `oauth2ResourceServer(...)`, otherwise an invalid/expired bearer token gets the resource
-  server's default response instead of `ErrorResponse` (verify the configurer method names
-  against the resolved Spring Security version).
+- A 401 from the security layer returns the same `ErrorResponse` JSON as everything else. The
+  writer lives in **`interfaces/rest/security/`** (`ErrorResponseAuthenticationEntryPoint`), next
+  to `ErrorResponse`, because writing the HTTP error shape is a delivery concern. `SecurityConfig`
+  receives it as Spring Security's own `AuthenticationEntryPoint` interface, so `infrastructure`
+  never imports `interfaces` (ArchUnit). Register it on `oauth2ResourceServer(...)`: that covers
+  both a missing token and an invalid/expired one, while `exceptionHandling(...)` alone misses the
+  latter. No 403 writer until roles exist: nothing can answer 403 today.
 - The JWT secret has a dev default in `application.yaml` only for local/demo use and is overridden
   by an env var in Docker; the README says so.
 

@@ -245,6 +245,8 @@ Base path **`/api/v1`**, a plain prefix (D-029). JSON only. Errors always use `E
 lists always use `PageResponse`. `{identifier}` is a name or a Pokédex number (`pikachu` or `25`).
 The frontend doesn't know or care which data comes from PokeAPI and which from the database.
 
+Routes not in this table need a token (D-035): without one, they answer 401, not 404.
+
 | Method & path | Auth | Success | Errors | Story |
 |---|---|---|---|---|
 | `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` | 400 bad page/size, 503 | US-01 |

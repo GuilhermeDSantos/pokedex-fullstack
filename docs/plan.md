@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.5. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.6. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -135,12 +135,14 @@ Backend:
       `GetCurrentUser` (account gone → 401 `UnknownAccountException`, D-033). `UserAccountMapper`
       builds `Registration`/`Credentials`/`UserId`. `UseCaseConfig` wires them, and
       `ApplicationContextIT` discovers every `*UseCase` interface and requires exactly one bean.
-- [ ] S1.5 `SecurityConfig` (a minimal one exists since S1.3: stateless, CSRF off, health
-      permitted, everything else authenticated), completed with: no CORS, the D-030
-      route policy (the Pokémon write matchers are declared now), and `/actuator/health`
-      **explicitly permitted**: once our own filter chain exists, Boot's default actuator security
-      backs off, and `ApplicationHealthIT` guards the Docker healthcheck. The 401/403 `ErrorResponse`
-      writers live in `interfaces/rest/security/`.
+- [x] S1.5 `SecurityConfig` completed with the D-030 policy, **closed by default** (D-035): the
+      public routes are listed (`GET /api/v1/pokemon/**`, register, login, health) and everything
+      else needs a token. `ErrorResponseAuthenticationEntryPoint` (`interfaces/rest/security/`)
+      writes the 401 `ErrorResponse`, registered on the resource server so it covers a missing and
+      an invalid token (proven by mutation). `SecurityConfigIT` (probe controller on the real
+      paths): missing/invalid token → 401 `ErrorResponse`, public reads, register and login,
+      protected writes + `/auth/me` + an undeclared route → 401, authenticated → 200. No 403
+      writer: without roles nothing can answer 403, so it waits for the first role.
 - [ ] S1.6 `AuthController` + `AuthControllerIT`: register 201/400/409, login 200/400/401,
       `/auth/me` 200/401.
 - [ ] S1.7 `AuthFlowIT` (`@SpringBootTest` + Testcontainers): register → login → `/auth/me` with the

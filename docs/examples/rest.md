@@ -253,14 +253,14 @@ public class GlobalExceptionHandler {
 }
 ```
 
-There's also `NoResourceFoundException` → 404 (for unknown paths), and Spring Security's 401/403,
+There's also `NoResourceFoundException` → 404 (for unknown paths), and Spring Security's 401,
 written in the same `ErrorResponse` shape by the two classes below. The frontend then only ever has
 to parse one error format.
 
 ## Security error writers
 
 Spring Security rejects a request before any controller runs, so `GlobalExceptionHandler` never
-sees it. These two classes write the same `ErrorResponse` instead. They live in
+sees it. This class writes the same `ErrorResponse` instead. They live in
 `interfaces/rest/security/`, next to `ErrorResponse`, because the HTTP error shape is a delivery
 concern. `SecurityConfig` (infrastructure) receives them through Spring Security's own interfaces,
 so it never imports anything from `interfaces` (ArchUnit:
@@ -288,10 +288,8 @@ public class ErrorResponseAuthenticationEntryPoint implements AuthenticationEntr
     }
 }
 
-// interfaces/rest/security/ErrorResponseAccessDeniedHandler.java — 403
-// Same shape: implements AccessDeniedHandler, status 403, code "FORBIDDEN". No roles exist yet
-// (D-030), so it's the safety net for when they do.
 ```
 
-`@WebMvcTest` doesn't scan plain `@Component`s, so controller ITs `@Import` both classes along with
-`SecurityConfig`.
+No 403 writer exists: there are no roles (D-030), so nothing can answer 403 and the class would be
+untested code. It comes with the first role. `@WebMvcTest` doesn't scan plain `@Component`s, so
+controller ITs `@Import` the entry point along with `SecurityConfig` and `JwtConfig`.

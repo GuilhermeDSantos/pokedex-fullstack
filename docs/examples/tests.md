@@ -347,7 +347,7 @@ every status in the contract, and both the public reads and the protected writes
 // test/.../interfaces/rest/controller/PokemonControllerIT.java
 @WebMvcTest(PokemonController.class)
 @Import({PokemonRestMapper.class, SecurityConfig.class,
-         ErrorResponseAuthenticationEntryPoint.class, ErrorResponseAccessDeniedHandler.class,
+         JwtConfig.class, ErrorResponseAuthenticationEntryPoint.class,
          PokemonControllerIT.FixedClock.class})
 class PokemonControllerIT {
 

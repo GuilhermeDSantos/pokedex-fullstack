@@ -31,6 +31,22 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — The reference security config was open by default, and half right on 401s
+- **Context:** S1.5, the route policy and the 401 writer (TR-AUTH-3).
+- **AI proposed:** The AI-written example: protect the listed writes, `anyRequest().permitAll()`,
+  register the 401 writer in both `exceptionHandling` and `oauth2ResourceServer`, and add a 403
+  writer "as a safety net".
+- **Problem:** Before coding, the AI flagged that open-by-default makes any forgotten write endpoint
+  public, and the developer chose closed by default. The tests then showed the rest: registering
+  the entry point on the resource server alone already covers a missing token, while
+  `exceptionHandling` alone misses invalid tokens (a mutation made exactly that test fail). And
+  with no roles, nothing can produce a 403, so that writer would have been untested code.
+- **Resolution:** D-035 (closed by default, with a test row for an undeclared route), one
+  registration on the resource server, no 403 writer until roles exist. The examples and the
+  backend standard were corrected.
+- **Lesson:** Generated reference code carries plausible but unverified claims ("register it in
+  both places"). One mutation is cheaper than trusting it.
+
 ### 2026-10-06 — Strict stubs hid a red step, so a mutation proved the test instead
 - **Context:** S1.4, `AuthenticateUserInteractor` (TR-AUTH-2).
 - **AI proposed:** The textbook order: "valid credentials get a token" first, then "a wrong

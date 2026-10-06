@@ -490,15 +490,15 @@ no CORS (same origin, D-019), `oauth2ResourceServer(jwt)`, and the route policy 
 
 ```java
 .authorizeHttpRequests(auth -> auth
-    .requestMatchers(HttpMethod.POST, "/api/v1/pokemon/*/local").authenticated()
-    .requestMatchers(HttpMethod.PUT, "/api/v1/pokemon/*/local").authenticated()
-    .requestMatchers(HttpMethod.DELETE, "/api/v1/pokemon/*/local").authenticated()
-    .requestMatchers("/api/v1/auth/me").authenticated()
-    .anyRequest().permitAll())   // every read is public; register and login are public
+    .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/v1/pokemon/**").permitAll()
+    .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+    .anyRequest().authenticated())   // closed by default (D-035): writes and /auth/me need a token
 ```
 
-For 401/403 it injects Spring Security's own `AuthenticationEntryPoint` and `AccessDeniedHandler`
-**interfaces**. The implementations that write the standard `ErrorResponse` JSON live in
-`interfaces/rest/security/` (see [`rest.md`](rest.md#security-error-writers)), so `infrastructure`
-never imports `interfaces`. The entry point is registered both in `exceptionHandling(...)` and in
-`oauth2ResourceServer(...)`, so an invalid or expired bearer token also gets `ErrorResponse`.
+For 401 it injects Spring Security's own `AuthenticationEntryPoint` **interface**. The
+implementation that writes the standard `ErrorResponse` JSON lives in `interfaces/rest/security/`
+(see [`rest.md`](rest.md#security-error-writers)), so `infrastructure` never imports `interfaces`.
+It's registered on `oauth2ResourceServer(...)`, which also makes it the default entry point for a
+missing token. Registering it only in `exceptionHandling(...)` misses invalid and expired tokens
+(proven by mutation in `SecurityConfigIT`).
