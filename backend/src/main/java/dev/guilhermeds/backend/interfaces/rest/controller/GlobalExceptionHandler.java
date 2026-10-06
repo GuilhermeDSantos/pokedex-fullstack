@@ -75,6 +75,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception exception) {
+        // Spring's own web exceptions (405, 415, ...) already know their status; only the rest is a 500.
+        if (exception instanceof org.springframework.web.ErrorResponse frameworkError) {
+            var status = HttpStatus.valueOf(frameworkError.getStatusCode().value());
+            return error(status, status.name(), status.getReasonPhrase());
+        }
         log.error("Unexpected error", exception);
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "An unexpected error occurred");
     }
