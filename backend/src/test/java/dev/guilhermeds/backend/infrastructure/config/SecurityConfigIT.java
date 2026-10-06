@@ -1,5 +1,7 @@
 package dev.guilhermeds.backend.infrastructure.config;
 
+import dev.guilhermeds.backend.fixture.UserAccountFixture;
+import dev.guilhermeds.backend.infrastructure.security.JwtTokenIssuer;
 import dev.guilhermeds.backend.interfaces.rest.security.ErrorResponseAuthenticationEntryPoint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
@@ -24,12 +28,15 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
  * any other status comes from security.
  */
 @WebMvcTest(SecurityConfigIT.ProbeController.class)
-@Import({SecurityConfig.class, JwtConfig.class, ErrorResponseAuthenticationEntryPoint.class,
+@Import({SecurityConfig.class, JwtConfig.class, JwtTokenIssuer.class, ErrorResponseAuthenticationEntryPoint.class,
     SecurityConfigIT.ProbeController.class})
 class SecurityConfigIT {
 
     @Autowired
     private MockMvcTester mockMvc;
+
+    @Autowired
+    private JwtTokenIssuer tokenIssuer;
 
     @Test
     void shouldAnswerAMissingTokenWithAnErrorResponse() {
@@ -87,6 +94,15 @@ class SecurityConfigIT {
     })
     void shouldLetAnAuthenticatedUserWriteAndSeeTheCurrentUser(String method, String uri) {
         assertThat(mockMvc.method(HttpMethod.valueOf(method)).uri(uri).with(jwt())).hasStatusOk();
+    }
+
+    // jwt() bypasses the bearer token filter, so this is the test that reads a real Authorization header.
+    @Test
+    void shouldAcceptARealTokenOnAProtectedRoute() {
+        var token = tokenIssuer.issue(UserAccountFixture.ash(), Instant.now()).value();
+
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/25/local").header("Authorization", "Bearer " + token))
+            .hasStatusOk();
     }
 
     @RestController
