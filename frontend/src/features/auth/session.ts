@@ -18,7 +18,15 @@ export function readStoredSession(): Session | null {
     return null
   }
   const parsed = parseJson(stored)
-  return isSession(parsed) ? parsed : null
+  if (!isSession(parsed) || Date.parse(parsed.expiresAt) <= Date.now()) {
+    clearStoredSession()
+    return null
+  }
+  return parsed
+}
+
+export function clearStoredSession() {
+  sessionStorage.removeItem(STORAGE_KEY)
 }
 
 function parseJson(text: string): unknown {
