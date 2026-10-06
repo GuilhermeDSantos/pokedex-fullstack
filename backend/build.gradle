@@ -60,13 +60,7 @@ tasks.named('jar') {
 // task would otherwise silently skip every *IT (docs/standards/backend.md → Build).
 tasks.named('test') {
     useJUnitPlatform()
-    filter {
-        excludeTestsMatching '*IT'
-        // TEMPORARY: no unit test exists yet. Remove this line and the one below together with plan
-        // task 1.1 (LayeredArchitectureTest), so an empty unit suite fails the build again.
-        failOnNoMatchingTests = false
-    }
-    failOnNoDiscoveredTests = false
+    filter { excludeTestsMatching '*IT' }
 }
 
 def integrationTest = tasks.register('integrationTest', Test) {
