@@ -31,4 +31,10 @@ describe('TextField', () => {
 
     expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-invalid')
   })
+
+  it('describes the input with its hint, so the rule is known before typing', () => {
+    render(<TextField label="Password" name="password" value="" onChange={() => {}} hint="At least 8 characters" />)
+
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('At least 8 characters')
+  })
 })
