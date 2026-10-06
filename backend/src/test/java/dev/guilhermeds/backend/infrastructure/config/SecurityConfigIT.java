@@ -72,6 +72,20 @@ class SecurityConfigIT {
         assertThat(mockMvc.post().uri(uri)).hasStatusOk();
     }
 
+    // An expired token left in the browser must not break pages anyone can see (D-036).
+    @ParameterizedTest
+    @CsvSource({
+        "GET,  /api/v1/pokemon",
+        "GET,  /api/v1/pokemon/25",
+        "GET,  /api/v1/pokemon/25/local",
+        "POST, /api/v1/auth/register",
+        "POST, /api/v1/auth/login"
+    })
+    void shouldIgnoreAnInvalidTokenOnPublicRoutes(String method, String uri) {
+        assertThat(mockMvc.method(HttpMethod.valueOf(method)).uri(uri).header("Authorization", "Bearer expired-or-garbage"))
+            .hasStatusOk();
+    }
+
     // The last row is a route nobody declared: the policy is closed by default.
     @ParameterizedTest
     @CsvSource({
