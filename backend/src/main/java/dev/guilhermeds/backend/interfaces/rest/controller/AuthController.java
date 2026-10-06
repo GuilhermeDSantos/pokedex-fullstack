@@ -5,6 +5,7 @@ import dev.guilhermeds.backend.domain.model.UserId;
 import dev.guilhermeds.backend.interfaces.rest.mapper.AuthRestMapper;
 import dev.guilhermeds.backend.interfaces.rest.request.RegisterUserRequest;
 import dev.guilhermeds.backend.interfaces.rest.response.UserResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +32,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse register(@RequestBody RegisterUserRequest request) {
+    public UserResponse register(@RequestBody @Valid RegisterUserRequest request) {
         return mapper.toResponse(
             registerUserUseCase.execute(mapper.toInput(request), UserId.generate(), Instant.now(clock)));
     }

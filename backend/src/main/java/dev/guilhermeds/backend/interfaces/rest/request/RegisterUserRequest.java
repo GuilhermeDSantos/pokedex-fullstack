@@ -1,4 +1,11 @@
 package dev.guilhermeds.backend.interfaces.rest.request;
 
-public record RegisterUserRequest(String email, String name, String password) {
+import jakarta.validation.constraints.NotBlank;
+
+// Required-ness only: Email, FullName and RawPassword own format and length (D-028).
+public record RegisterUserRequest(
+    @NotBlank String email,
+    @NotBlank String name,
+    @NotBlank String password
+) {
 }
