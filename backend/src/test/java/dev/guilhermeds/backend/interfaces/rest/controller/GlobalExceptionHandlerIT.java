@@ -10,8 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,8 +81,24 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldReturn400WithoutEchoingTheBodyWhenJsonIsMalformed() {
+        assertThat(mockMvc.post().uri("/probe/body")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"name\": "))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Malformed JSON request body", "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
+
+        @PostMapping("/probe/body")
+        void body(@RequestBody ProbeRequest request) {
+        }
 
         @GetMapping("/probe/rule-broken")
         void rule_broken() {
@@ -135,5 +154,8 @@ class GlobalExceptionHandlerIT {
         ProbeRuleBrokenException() {
             super("Probe 42 cannot do that");
         }
+    }
+
+    record ProbeRequest(String name) {
     }
 }
