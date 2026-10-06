@@ -2,13 +2,17 @@ package dev.guilhermeds.backend.interfaces.rest.mapper;
 
 import dev.guilhermeds.backend.application.dto.AccessTokenOutput;
 import dev.guilhermeds.backend.application.dto.AuthenticateUserInput;
+import dev.guilhermeds.backend.application.dto.GetCurrentUserInput;
 import dev.guilhermeds.backend.application.dto.RegisterUserInput;
 import dev.guilhermeds.backend.application.dto.UserOutput;
 import dev.guilhermeds.backend.interfaces.rest.request.AuthenticateUserRequest;
 import dev.guilhermeds.backend.interfaces.rest.request.RegisterUserRequest;
 import dev.guilhermeds.backend.interfaces.rest.response.AccessTokenResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.UserResponse;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 public class AuthRestMapper {
@@ -29,5 +33,10 @@ public class AuthRestMapper {
 
     public AccessTokenResponse toResponse(AccessTokenOutput output) {
         return new AccessTokenResponse(output.accessToken(), BEARER, output.expiresAt());
+    }
+
+    // The subject is the user id, written by JwtTokenIssuer and covered by the signature.
+    public GetCurrentUserInput toInput(Jwt token) {
+        return new GetCurrentUserInput(UUID.fromString(token.getSubject()));
     }
 }
