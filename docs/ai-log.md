@@ -31,6 +31,19 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — Swagger: a stale search index and a wrong assertion
+- **Context:** D.4, brought forward at the developer's request (TR-OPT, DL-1).
+- **AI proposed:** Picking the springdoc version from Maven Central's search API, and asserting
+  that the login operation has no `security` with `extractingPath(...).isNull()`.
+- **Problem:** The search API answered 2.8.6 as the newest (a Boot 3 line); the repository's
+  `maven-metadata.xml` showed 3.1.1, and its POM's parent is Spring Boot 4.1.0. Then the green run
+  failed on the test, not the code: a key that's absent from JSON isn't `null`, the path just
+  doesn't exist.
+- **Resolution:** springdoc 3.1.1, verified in its POM. The assertion became `doesNotHavePath`,
+  fixed in the red step before it was saved.
+- **Lesson:** Read versions from the artifact's own metadata, not a search index. And when a green
+  run fails, check the test before touching the code.
+
 ### 2026-10-06 — The developer rejected a password message that talked about bytes
 - **Context:** S1.1 wrote it, S1.10 put it on screen (TR-AUTH-1, FE-2).
 - **AI proposed:** One `WeakPasswordException` for every password rule: "Password must have at

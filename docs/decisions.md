@@ -189,6 +189,12 @@ separate `integrationTest` task wired into `check`.
 **Decision:** Try springdoc for `/swagger-ui.html` with a **30-minute timebox** (plan D.4): a
 Boot-4.1-compatible release. If it doesn't work on the
 first try, remove the dependency and rely on the `curl` examples in the README. No `api.http` file.
+**Update (2026-10-06):** Brought forward from delivery to the end of Slice 1, at the developer's
+request: trying routes by hand needed it. `springdoc-openapi-starter-webmvc-ui` **3.1.1**, whose
+parent is `spring-boot-starter-parent` 4.1.0 (checked in its POM on Maven Central). Worked on the
+first try. `/v3/api-docs/**`, `/swagger-ui.html` and `/swagger-ui/**` join the public routes
+(D-035), and the contract declares a `bearer-jwt` scheme that protected operations reference, so
+the UI's **Authorize** button works. `OpenApiIT` covers all three.
 
 ## D-017 — Monorepo: one Git repository at the root
 **Status:** Accepted · **Date:** 2026-10-06 · the agent still asks before deleting `backend/.git` (plan 0.1) · **Requirements:** TR-GIT

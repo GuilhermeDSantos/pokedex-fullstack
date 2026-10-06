@@ -20,6 +20,7 @@ docker compose up --build
 |---|---|
 | Web app | http://localhost:3000 |
 | API | http://localhost:8080 (health: `/actuator/health`) |
+| API docs (Swagger UI) | http://localhost:8080/swagger-ui.html: sign in with `POST /auth/login`, then **Authorize** with the `accessToken` to try the protected routes |
 | PostgreSQL | `localhost:5433`, database/user `pokedex` |
 
 The defaults are for local use only. To override them, copy `.env.example` to `.env`.

@@ -26,8 +26,7 @@ interactor → adapters → controller → screen. The product being built is de
 "Parked" and stays there until every slice below is done.
 
 If scope has to shrink, cut in this order (each step keeps every requirement covered):
-1. Springdoc (D.4). The README `curl` examples cover it.
-2. Frontend tests trimmed to one happy path + one error path per page (the console guard stays).
+1. Frontend tests trimmed to one happy path + one error path per page (the console guard stays).
 
 Never cut: TDD on domain and interactors, the ArchUnit test, the error-status ITs, the console
 guard, Docker, the README, the GenAI case study.
@@ -322,8 +321,13 @@ Frontend:
 - [ ] D.2 `ApplicationContextIT`: context loads, every `*UseCase` bean resolves, seed present.
 - [ ] D.3 Clean `docker compose up --build` from scratch (`down -v`), with the seed, and the whole
       demo flow clicked through.
-- [ ] D.4 OpenAPI UI via springdoc, **timeboxed to 30 minutes** (D-016). If it doesn't work on the
-      first try, remove the dependency and move on.
+- [x] D.4 OpenAPI UI via springdoc (D-016), brought forward to the end of Slice 1: springdoc 3.1.1
+      (built on Boot 4.1.0), `/v3/api-docs` and `/swagger-ui.html` public, a `bearer-jwt` scheme
+      on protected operations (`@SecurityRequirement` on the controller; the scheme is declared in
+      `interfaces/rest/OpenApiDocumentation`, so `interfaces` never imports `infrastructure`).
+      `OpenApiIT`: contract and UI without a token, title, scheme on `/auth/me` and not on login.
+      Checked in the browser on Docker: the UI loads, Authorize works, empty console. Every new
+      protected endpoint carries `@SecurityRequirement(name = OpenApiDocumentation.BEARER_JWT)`.
 - [ ] D.5 `README.md`: expand the current run instructions with the product overview, an
       architecture diagram, demo credentials, the API table, design decisions summary (linking
       `docs/decisions.md`), known limitations and next steps, and how AI was used.

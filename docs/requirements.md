@@ -47,7 +47,7 @@ to a decision in [`decisions.md`](decisions.md).
 | TR-ERR | **Proper error handling** (uniform `ErrorResponse`, category mapping) | 🟨 | `GlobalExceptionHandlerIT`: categories 404/409/400/401/422, malformed/invalid body and params → 400, unknown path 404, generic 500, framework 405/415 kept |
 | TR-CACHE | *Nice to have:* **caching layer for PokeAPI** responses | ⬜ | same as US-01.N |
 | TR-FE | **Front-end** consuming the API | ⬜ | `frontend/` |
-| TR-OPT | *Optional:* additional functionality is welcome | ⬜ | e.g. OpenAPI UI (timeboxed, D-016), "synced" badge and display name on the list |
+| TR-OPT | *Optional:* additional functionality is welcome | 🟨 | Swagger UI at `/swagger-ui.html` with bearer auth (D-016, `OpenApiIT`); planned: "synced" badge and display name on the list |
 
 ## Technical — database
 

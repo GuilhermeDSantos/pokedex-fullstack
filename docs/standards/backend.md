@@ -417,9 +417,10 @@ Exact patterns, not suggestions.
   `/api/v2` controller calling the same input ports, so versioning stays an `interfaces/` concern.
 - Security matchers use the same prefix (`/api/v1/pokemon/**`).
 
-- OpenAPI docs via springdoc (`/swagger-ui.html`), **timeboxed to 30 minutes** (D-016). If no
-  release works with Boot 4.1 on the first try, drop it. The README's
-  `curl` examples are the fallback.
+- OpenAPI docs via springdoc 3.1.1 (`/swagger-ui.html`, D-016). The UI and `/v3/api-docs` are
+  public routes. Every protected operation carries
+  `@SecurityRequirement(name = OpenApiDocumentation.BEARER_JWT)`, so the contract shows the lock
+  and the **Authorize** button applies the token. `OpenApiIT` checks it for `/auth/me`.
 
 ---
 
