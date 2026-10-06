@@ -4,11 +4,13 @@ import dev.guilhermeds.backend.application.usecase.AuthenticateUserUseCase;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
 import dev.guilhermeds.backend.domain.model.UserId;
+import dev.guilhermeds.backend.interfaces.rest.OpenApiDocumentation;
 import dev.guilhermeds.backend.interfaces.rest.mapper.AuthRestMapper;
 import dev.guilhermeds.backend.interfaces.rest.request.AuthenticateUserRequest;
 import dev.guilhermeds.backend.interfaces.rest.request.RegisterUserRequest;
 import dev.guilhermeds.backend.interfaces.rest.response.AccessTokenResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.UserResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -55,6 +57,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @SecurityRequirement(name = OpenApiDocumentation.BEARER_JWT)
     public UserResponse me(@AuthenticationPrincipal Jwt token) {
         return mapper.toResponse(getCurrentUserUseCase.execute(mapper.toInput(token)));
     }
