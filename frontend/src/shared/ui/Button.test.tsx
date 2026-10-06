@@ -12,4 +12,10 @@ describe('Button', () => {
 
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeDisabled()
   })
+
+  it('does not submit a surrounding form unless it is a submit button', () => {
+    render(<Button>Retry</Button>)
+
+    expect(screen.getByRole('button', { name: 'Retry' })).toHaveAttribute('type', 'button')
+  })
 })
