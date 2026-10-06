@@ -117,6 +117,12 @@ exactly what code review should catch.
   behaviour method) rejects it loudly. A guard that logs and returns is the same defect with an
   extra log line.
 - **TDD: Red → Green → Refactor**, in that order, and confirm the red fails *for the right reason*.
+  **One test at a time**: keep a list of behaviours to cover, but write a single failing test, make
+  it pass with the minimum code, refactor, then pick the next. Never write the whole suite first.
+  **Tests don't bend to the code.** A test changes only when the expected behaviour changes, the
+  test itself was wrong, or its code needs a readability refactor, always in its own commit, never
+  in the same step as production code. **One commit per step** (`test:` red → `feat:` green →
+  `refactor:` if any), and never push while red (`docs/standards/commits.md`).
   **Start at the centre**: domain (plain JUnit, no mocks) → interactor (ports mocked, pure
   collaborators real) → adapters (real Postgres via Testcontainers, real HTTP stack via
   `@WebMvcTest`, recorded PokeAPI JSON). If you can't write the test first, stop. That usually

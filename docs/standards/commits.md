@@ -45,18 +45,28 @@ Imperative mood ("add", not "added"), lowercase first letter, no trailing period
 Explain **why**, especially for decisions ("see D-012"). Reference requirement IDs:
 `Refs: US-04, US-04.b`.
 
-## TDD rhythm in history
+## TDD rhythm in history: one commit per step
 
-Either commit each step:
+Every TDD cycle shows up in the history as separate commits, one per step, so the order
+(test first) is visible:
 
 ```
-test(domain): specify that updating custom attributes keeps the profile
-feat(domain): implement Pokemon.updateCustomAttributes
-refactor(domain): move blank-to-null normalization into CustomAttributes
+test(domain): specify that a synced pokemon starts without custom attributes    ← red
+feat(domain): create LocalPokemon with empty custom attributes                  ← green
+refactor(domain): extract the empty-attributes factory                          ← only if there is one
 ```
 
-…or one `feat` per green cycle that includes its tests. Never a `feat` whose behaviour has no test
-in the same commit or the one before it.
+- **Red** (`test:`): only the new failing test, no production code. The build fails, for the
+  reason the test describes.
+- **Green** (`feat:`/`fix:`): the minimum production code that makes it pass. The test isn't touched.
+- **Refactor** (`refactor:`): only when there is something to improve. Behaviour doesn't change, and
+  neither do the tests.
+- **One cycle per behaviour**, not per method or per line.
+- **Never push while red.** Red commits exist in the history, but `git push` only happens on a
+  green build, so the remote branch is never broken.
+- A test changes only in its own commit, for a stated reason: the expected behaviour changed, the
+  test was wrong, or it's a readability refactor of the test code (`test:` or `refactor(test):`).
+  Never change a test to make production code pass.
 
 ## Footer
 
