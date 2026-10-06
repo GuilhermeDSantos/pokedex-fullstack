@@ -1,0 +1,18 @@
+.level1,
+.level2,
+.level3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.level1 {
+  font-size: var(--font-size-xl);
+}
+
+.level2 {
+  font-size: var(--font-size-lg);
+}
+
+.level3 {
+  font-size: var(--font-size-md);
+}
