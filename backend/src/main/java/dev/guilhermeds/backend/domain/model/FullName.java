@@ -5,7 +5,7 @@ import dev.guilhermeds.backend.domain.exception.InvalidFullNameException;
 public record FullName(String value) {
 
     public static final int MIN_LENGTH = 2;
-    public static final int MAX_LENGTH = 50;
+    public static final int MAX_LENGTH = 100;
 
     public FullName {
         if (value == null) {
