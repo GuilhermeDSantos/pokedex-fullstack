@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { server } from '../../test/msw/server'
+import { ApiError } from './ApiError'
 import { request } from './httpClient'
 
 describe('httpClient', () => {
@@ -45,5 +46,30 @@ describe('httpClient', () => {
     )
 
     await expect(request('/pokemon')).resolves.toEqual({ hasAuthorization: false })
+  })
+
+  it('turns an ErrorResponse into an ApiError the UI can branch on', async () => {
+    server.use(
+      http.post('/api/v1/auth/register', () =>
+        HttpResponse.json(
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'Request body is invalid',
+            fieldErrors: [{ field: 'email', message: 'must not be blank' }],
+          },
+          { status: 400 },
+        ),
+      ),
+    )
+
+    const error = await request('/auth/register', { method: 'POST', body: {} }).catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({
+      status: 400,
+      code: 'VALIDATION_ERROR',
+      message: 'Request body is invalid',
+      fieldErrors: [{ field: 'email', message: 'must not be blank' }],
+    })
   })
 })
