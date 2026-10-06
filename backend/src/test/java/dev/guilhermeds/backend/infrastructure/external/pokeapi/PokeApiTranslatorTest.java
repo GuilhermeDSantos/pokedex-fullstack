@@ -3,6 +3,7 @@ package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.Weight;
 import java.util.List;
+import dev.guilhermeds.backend.domain.model.PokemonType;
 import org.junit.jupiter.api.Test;
 
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.pokemon;
@@ -53,8 +54,19 @@ class PokeApiTranslatorTest {
     void shouldAcceptAPokemonWithoutASprite() {
         var pikachu = pokemon(25);
         var withoutSprite = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(),
-            new PokeApiPokemonJson.Sprites(null));
+            new PokeApiPokemonJson.Sprites(null), pikachu.types());
 
         assertThat(translator.toSummary(withoutSprite, species(25)).spriteUrl()).isNull();
+    }
+
+    // The slot is the order players know (Bulbasaur is grass, then poison); the array order isn't guaranteed.
+    @Test
+    void shouldListTheTypesInSlotOrder() {
+        var bulbasaur = pokemon(1);
+        var shuffled = new PokeApiPokemonJson(bulbasaur.id(), bulbasaur.name(), bulbasaur.weight(), bulbasaur.sprites(),
+            bulbasaur.types().reversed());
+
+        assertThat(translator.toSummary(shuffled, species(1)).types())
+            .containsExactly(new PokemonType("grass"), new PokemonType("poison"));
     }
 }
