@@ -6,13 +6,15 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint authenticationEntryPoint)
+        throws Exception {
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -20,7 +22,9 @@ public class SecurityConfig {
                 // Docker's healthcheck: once this chain exists, Boot's default actuator security backs off.
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 .anyRequest().authenticated())
-            .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
+            .oauth2ResourceServer(resourceServer -> resourceServer
+                .jwt(Customizer.withDefaults())
+                .authenticationEntryPoint(authenticationEntryPoint))
             .build();
     }
 }
