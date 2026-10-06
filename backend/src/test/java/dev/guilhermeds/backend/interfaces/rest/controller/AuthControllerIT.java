@@ -5,12 +5,13 @@ import dev.guilhermeds.backend.application.dto.UserOutput;
 import dev.guilhermeds.backend.application.usecase.AuthenticateUserUseCase;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
+import dev.guilhermeds.backend.domain.exception.EmailAlreadyRegisteredException;
+import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
 import dev.guilhermeds.backend.interfaces.rest.mapper.AuthRestMapper;
 import dev.guilhermeds.backend.interfaces.rest.security.ErrorResponseAuthenticationEntryPoint;
 import org.junit.jupiter.api.Test;
-import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -117,6 +118,22 @@ class AuthControllerIT {
             .isLenientlyEqualTo("""
                 { "code": "VALIDATION_ERROR",
                   "message": "Password must have at least 8 characters, a letter and a digit, and at most 72 bytes" }
+                """);
+    }
+
+    @Test
+    void shouldAnswerAnAlreadyRegisteredEmailWith409() {
+        given(registerUserUseCase.execute(any(), any(), any())).willThrow(new EmailAlreadyRegisteredException());
+
+        assertThat(mockMvc.post().uri("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "ash@pallet.town", "name": "Ash Ketchum", "password": "pikachu123" }
+                    """))
+            .hasStatus(409)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "CONFLICT", "message": "This email is already registered" }
                 """);
     }
 }
