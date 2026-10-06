@@ -37,6 +37,17 @@ class SecurityConfigIT {
                 """);
     }
 
+    @Test
+    void shouldAnswerAnInvalidTokenWithAnErrorResponseThatDoesNotSayWhy() {
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/25/local").header("Authorization", "Bearer not-a-jwt"))
+            .hasStatus(401)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "UNAUTHENTICATED", "message": "Authentication is required to access this resource",
+                  "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
 
