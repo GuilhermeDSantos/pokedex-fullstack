@@ -9,4 +9,11 @@ describe('safeReturnTo', () => {
   it('falls back to the start page when there is no returnTo', () => {
     expect(safeReturnTo(null)).toBe('/')
   })
+
+  it.each(['https://evil.example/phish', '//evil.example/phish', 'javascript:alert(1)', 'pokemon/25'])(
+    'refuses %s, so signing in can never send the user to another site',
+    (value) => {
+      expect(safeReturnTo(value)).toBe('/')
+    },
+  )
 })
