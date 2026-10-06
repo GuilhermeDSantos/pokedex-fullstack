@@ -25,4 +25,10 @@ describe('TextField', () => {
     expect(input).toHaveAttribute('aria-invalid', 'true')
     expect(input).toHaveAccessibleDescription('Email must be a valid address')
   })
+
+  it('is not marked invalid without an error', () => {
+    render(<ControlledEmail />)
+
+    expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-invalid')
+  })
 })
