@@ -4,7 +4,7 @@ import { Button } from '../../shared/ui/Button'
 import styles from './AppShell.module.css'
 
 export function AppShell() {
-  const { session } = useAuth()
+  const { session, signOut } = useAuth()
   return (
     <>
       <header className={styles.header}>
@@ -16,7 +16,7 @@ export function AppShell() {
             {session ? (
               <>
                 <span>{session.user.name}</span>
-                <Button>Sign out</Button>
+                <Button onClick={signOut}>Sign out</Button>
               </>
             ) : (
               <>

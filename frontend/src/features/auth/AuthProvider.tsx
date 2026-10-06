@@ -1,8 +1,14 @@
 import { useState, type ReactNode } from 'react'
 import { AuthContext } from './authContext'
-import { readStoredSession } from './session'
+import { clearStoredSession, readStoredSession } from './session'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session] = useState(readStoredSession)
-  return <AuthContext value={{ session }}>{children}</AuthContext>
+  const [session, setSession] = useState(readStoredSession)
+
+  const signOut = () => {
+    clearStoredSession()
+    setSession(null)
+  }
+
+  return <AuthContext value={{ session, signOut }}>{children}</AuthContext>
 }
