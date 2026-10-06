@@ -206,6 +206,12 @@ and wired in `infrastructure/config/UseCaseConfig`.
 The local write use cases (get-local, update, remove) resolve the identifier against the **local
 database only**. They never call PokeAPI.
 
+The auth input DTOs are wrapped by `UserAccountMapper` into `Registration(Email, FullName,
+RawPassword)` and `Credentials(Email, RawPassword)` before any port is called, so malformed input is
+a 400 and never reaches the hasher or the database. Register hashes **before** opening the
+transaction (BCrypt is slow), then checks `findByEmail` (409) inside it; the unique constraint stays
+the backstop under concurrency.
+
 Output ports in `application/port`: `UnitOfWork`, `PasswordHasher` (`PasswordHash hash(RawPassword)`,
 `boolean matches(RawPassword, PasswordHash)`), `TokenIssuer` (`AccessToken issue(UserAccount,
 Instant now)` → `AccessToken(String value, Instant expiresAt)`).
@@ -281,6 +287,9 @@ Shared shapes:
   "local": { "localizedName": "Pikachu BR", "region": "Kanto", "tags": ["mascot", "starter"],
              "syncedAt": "…", "updatedAt": "…" } }          // "local": null when not synced
 
+// UserResponse — register (201) and /auth/me (200). Never the password hash.
+{ "id": "6f1c…", "email": "ash@pallet.town", "name": "Ash Ketchum", "createdAt": "…" }
+
 // LocalPokemonResponse — the /local sub-resource
 { "pokedexNumber": 25, "name": "pikachu", "displayName": "Pikachu BR",
   "localizedName": "Pikachu BR", "region": "Kanto", "tags": ["mascot", "starter"],
@@ -289,7 +298,7 @@ Shared shapes:
 
 **Validation (D-028; both kinds are 400, as US-04 requires).** The domain is the single validation
 authority. Every rule (format, length, policy) lives in a VO (`Tag`, `CustomAttributes`,
-`PokemonIdentifier`, `Email`, `DisplayName`, `RawPassword`) and throws a `ValidationException`
+`PokemonIdentifier`, `Email`, `FullName`, `RawPassword`) and throws a `ValidationException`
 subtype. At the edge, JSON parsing catches malformed bodies and wrong types, and Bean Validation
 checks **shape only**: required fields and collection/string sizes, with every limit referencing
 the domain constant (`@Size(max = CustomAttributes.MAX_TAGS)`). No format rule exists only at the

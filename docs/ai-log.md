@@ -31,6 +31,21 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — Strict stubs hid a red step, so a mutation proved the test instead
+- **Context:** S1.4, `AuthenticateUserInteractor` (TR-AUTH-2).
+- **AI proposed:** The textbook order: "valid credentials get a token" first, then "a wrong
+  password is refused" as its own red.
+- **Problem:** Mockito's strict stubs fail a test whose stubs go unused. Stubbing
+  `passwordHasher.matches(...)` in the happy path forced the first green to check the password
+  already, so the wrong-password test could never be seen red. The AI also first stubbed
+  `findByEmail → Optional.empty()` in the register test, which Mockito returns anyway; with strict
+  stubs, that stub would have forced production code to call it. Caught before the green step.
+- **Resolution:** The redundant stub was removed. The wrong-password test went in as a `test:`
+  step, and was proven by mutation: deleting the `.filter(passwordHasher.matches…)` line turns it
+  red.
+- **Lesson:** When a test can't be seen failing for real, a deliberate mutation is the substitute.
+  A test that was never red isn't evidence.
+
 ### 2026-10-06 — Adding the JWT decoder silently closed the health endpoint
 - **Context:** S1.3, password hashing and JWT (TR-AUTH-2).
 - **AI proposed:** Creating the `JwtEncoder`/`JwtDecoder` beans now and leaving the

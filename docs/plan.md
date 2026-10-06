@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.4. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.5. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -128,10 +128,13 @@ Backend:
       A minimal `SecurityConfig` came forward from S1.5: the `JwtDecoder` bean switches on the
       resource server's default chain, which closed `/actuator/health` (caught by
       `ApplicationHealthIT`).
-- [ ] S1.4 Interactors (TDD), with `EmailAlreadyRegisteredException`, `InvalidCredentialsException`
-      and `UnknownAccountException`: `RegisterUser`, `AuthenticateUser` (same 401 for unknown email and
-      wrong password), `GetCurrentUser` (account gone → 401 `UnknownAccountException`, D-033).
-      `UseCaseConfig` (the composition root) is created here, wiring them.
+- [x] S1.4 Interactors (TDD), with `InvalidCredentialsException` and `UnknownAccountException`
+      (`EmailAlreadyRegisteredException` already came with S1.2): `RegisterUser` (hash outside the
+      transaction, `findByEmail` → 409, invalid input never reaches a port), `AuthenticateUser`
+      (same 401 and message for unknown email and wrong password, proven by mutation),
+      `GetCurrentUser` (account gone → 401 `UnknownAccountException`, D-033). `UserAccountMapper`
+      builds `Registration`/`Credentials`/`UserId`. `UseCaseConfig` wires them, and
+      `ApplicationContextIT` discovers every `*UseCase` interface and requires exactly one bean.
 - [ ] S1.5 `SecurityConfig` (a minimal one exists since S1.3: stateless, CSRF off, health
       permitted, everything else authenticated), completed with: no CORS, the D-030
       route policy (the Pokémon write matchers are declared now), and `/actuator/health`
