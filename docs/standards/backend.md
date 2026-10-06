@@ -389,6 +389,12 @@ Exact patterns, not suggestions.
   `HandlerMethodValidationException`/`ConstraintViolationException`. Plus `PokemonSourceUnavailableException`
   → 503, `NoResourceFoundException` → 404, and a last-resort `Exception` → 500 that logs the stack
   trace and returns a generic message (never the exception text).
+- The catch-all `Exception` handler must keep the status of Spring's own web exceptions (anything
+  implementing `org.springframework.web.ErrorResponse`: 405, 415, …). Otherwise it turns them into
+  500s. Only a truly unknown failure is a 500.
+- **The API speaks English:** `spring.web.locale: en` with `spring.web.locale-resolver: fixed`.
+  Otherwise Bean Validation messages follow the browser's `Accept-Language` (a pt-BR browser gets
+  "não deve estar em branco"). (`spring.mvc.locale` is the deprecated name.)
 - **One error shape everywhere:**
   `ErrorResponse(String code, String message, List<FieldError> fieldErrors)` where `fieldErrors`
   is empty when not applicable.

@@ -31,6 +31,26 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — The error-handler tests caught three defects before any endpoint existed
+- **Context:** Plan task 1.4, the global error handler (TR-ERR, US-04.b).
+- **AI proposed:** (1) A `@WebMvcTest` with a test controller nested in the test class. (2) The
+  catch-all `@ExceptionHandler(Exception.class)` from the reference example. (3) Relying on Bean
+  Validation's default messages.
+- **Problem:** (1) The first green run failed with an empty 404: Spring Boot deliberately doesn't
+  component-scan classes nested in tests, so the probe controller never existed. That was a test
+  bug, fixed before the red step was committed. (2) A test for a `GET` on a `POST`-only endpoint
+  showed the catch-all turning Spring's own 405 and 415 into 500s. The reference example had the
+  same bug. (3) A test sending `Accept-Language: pt-BR` got "não deve estar em branco" back.
+  Validation messages followed the browser's language, while the rest of the API is English.
+  Checking the property name in Boot 4.1's configuration metadata also showed that
+  `spring.mvc.locale` is deprecated in favour of `spring.web.locale`.
+- **Resolution:** `@Import` for the probe controller. The catch-all now keeps the status of any
+  `org.springframework.web.ErrorResponse`. The locale is fixed to English. The example and the
+  backend standard were updated so later code doesn't copy the bug.
+- **Lesson:** Test the error paths a user can actually trigger (wrong verb, wrong media type,
+  another browser language), not only the ones the code was written for. A catch-all is exactly
+  where those get lost.
+
 ### 2026-10-06 — The developer reshaped the plan into vertical slices
 - **Context:** Planning the implementation order after the foundation (all IDs, D-033).
 - **AI proposed (earlier):** A layer-by-layer plan: the whole backend, then the whole frontend.

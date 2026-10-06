@@ -238,6 +238,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
+        // Without this check, Spring's own 405/415/... would be swallowed into a 500.
+        if (ex instanceof org.springframework.web.ErrorResponse frameworkError) {
+            var status = HttpStatus.valueOf(frameworkError.getStatusCode().value());
+            return error(status, status.name(), status.getReasonPhrase());
+        }
         log.error("Unexpected error", ex);  // full stack trace in the log…
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "An unexpected error occurred"); // …never in the body
     }

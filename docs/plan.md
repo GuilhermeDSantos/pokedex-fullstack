@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Phase 1 — Backend foundation.** Next task: 1.4. Then Slice 1 (sign up, sign in, sign out).
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.1. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -87,9 +87,14 @@ Everything every slice needs.
       and returns the result; rolls back and rethrows, proven against an adapter without a
       transaction), `ClockConfig` (UTC system clock). `UseCaseConfig` is created in S1.4 with the
       first interactor it wires, not as an empty class.
-- [ ] 1.4 `NotFoundException`, `ConflictException`, `UnauthenticatedException`; `interfaces/rest`:
-      `ErrorResponse`, `PageResponse`, `GlobalExceptionHandler` covering all categories + framework
-      exceptions, with `GlobalExceptionHandlerIT`.
+- [x] 1.4 `NotFoundException`, `ConflictException`, `UnauthenticatedException`; `ErrorResponse`;
+      `GlobalExceptionHandler`, in 11 TDD cycles + a refactor. `GlobalExceptionHandlerIT` uses
+      exceptions that exist only in the test, proving mapping by category: 404/409/400/401/422,
+      malformed JSON and invalid body (with field errors) → 400, missing or mistyped parameter → 400,
+      unknown path → 404, unexpected → 500 without leaking the cause, Spring's 405/415 kept. Two
+      defects found by the tests: validation messages followed the browser language (fixed with a
+      fixed English locale), and the catch-all turned 405/415 into 500. `PageResponse` and the 503
+      mapping move to S2.5, with the first endpoint that needs them.
 
 ---
 
@@ -158,8 +163,9 @@ Backend:
 - [ ] S2.4 `PokeApiPokemonSource.findAll` (concurrent fan-out on virtual threads, D-018) and the
       Caffeine cache on `PokeApiClient` only (D-012), with a test that a repeated call makes no HTTP
       request.
-- [ ] S2.5 `BrowsePokemonInteractor` (TDD), then `PokemonController` `GET /pokemon` +
-      `PokemonControllerIT` (200, 400 page/size, 503).
+- [ ] S2.5 `BrowsePokemonInteractor` (TDD), then `PageResponse`, the 503 mapping of
+      `PokemonSourceUnavailableException` in `GlobalExceptionHandler`, and `PokemonController`
+      `GET /pokemon` + `PokemonControllerIT` (200, 400 page/size, 503).
 
 Frontend:
 - [ ] S2.6 List page (the home page): every card shows the brief's four fields (sprite, category,
