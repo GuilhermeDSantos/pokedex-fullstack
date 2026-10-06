@@ -15,4 +15,8 @@ public record PageRequest(int page, int size) {
             throw new InvalidPageRequestException("size must be between 1 and " + MAX_SIZE);
         }
     }
+
+    public long offset() {
+        return (long) page * size;
+    }
 }
