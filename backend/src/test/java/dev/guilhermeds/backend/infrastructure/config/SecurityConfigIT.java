@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 /**
  * The route policy (D-030) against the real filter chain. The probe controller only answers 200, so
@@ -75,6 +76,17 @@ class SecurityConfigIT {
     })
     void shouldRequireATokenForWritesAndTheCurrentUser(String method, String uri) {
         assertThat(mockMvc.method(HttpMethod.valueOf(method)).uri(uri)).hasStatus(401);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "POST,   /api/v1/pokemon/25/local",
+        "PUT,    /api/v1/pokemon/25/local",
+        "DELETE, /api/v1/pokemon/25/local",
+        "GET,    /api/v1/auth/me"
+    })
+    void shouldLetAnAuthenticatedUserWriteAndSeeTheCurrentUser(String method, String uri) {
+        assertThat(mockMvc.method(HttpMethod.valueOf(method)).uri(uri).with(jwt())).hasStatusOk();
     }
 
     @RestController
