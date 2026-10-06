@@ -3,10 +3,12 @@ package dev.guilhermeds.backend.infrastructure.config;
 import dev.guilhermeds.backend.interfaces.rest.security.ErrorResponseAuthenticationEntryPoint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,6 +62,19 @@ class SecurityConfigIT {
     @ValueSource(strings = {"/api/v1/auth/register", "/api/v1/auth/login"})
     void shouldLetAnyoneRegisterAndSignIn(String uri) {
         assertThat(mockMvc.post().uri(uri)).hasStatusOk();
+    }
+
+    // The last row is a route nobody declared: the policy is closed by default.
+    @ParameterizedTest
+    @CsvSource({
+        "POST,   /api/v1/pokemon/25/local",
+        "PUT,    /api/v1/pokemon/25/local",
+        "DELETE, /api/v1/pokemon/25/local",
+        "GET,    /api/v1/auth/me",
+        "POST,   /api/v1/pokemon/25"
+    })
+    void shouldRequireATokenForWritesAndTheCurrentUser(String method, String uri) {
+        assertThat(mockMvc.method(HttpMethod.valueOf(method)).uri(uri)).hasStatus(401);
     }
 
     @RestController
