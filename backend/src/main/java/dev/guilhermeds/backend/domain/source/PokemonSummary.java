@@ -16,5 +16,7 @@ public record PokemonSummary(PokedexNumber number, String name, String spriteUrl
         Objects.requireNonNull(number, "number must not be null");
         Objects.requireNonNull(name, "name must not be null");
         Objects.requireNonNull(weight, "weight must not be null");
+        types = List.copyOf(types);
+        abilities = List.copyOf(abilities);
     }
 }
