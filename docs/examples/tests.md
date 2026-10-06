@@ -589,5 +589,5 @@ without `@Version`).
 
 Gradle: `testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'`. While a layer is still
 empty, `src/test/resources/archunit.properties` sets `archRule.failOnEmptyShould=false`. Remove it
-once every layer has classes (plan 3.5). The class is named
+once every layer has classes (plan S1.7). The class is named
 `*Test`, not `*IT`, on purpose, so it runs on every `./gradlew test`.

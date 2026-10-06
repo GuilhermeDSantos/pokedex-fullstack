@@ -211,7 +211,7 @@ Exact patterns, not suggestions.
 | `NotFoundException` | 404 | `NOT_FOUND` | `PokemonNotFoundException` (not in PokeAPI), `LocalPokemonNotFoundException` (not synced) |
 | `ConflictException` | 409 | `CONFLICT` | `PokemonAlreadySyncedException`, `EmailAlreadyRegisteredException`, `LocalPokemonModifiedConcurrentlyException` |
 | `ValidationException` | 400 | `VALIDATION_ERROR` | `InvalidTagException`, `InvalidEmailException`, `WeakPasswordException`, `InvalidPageRequestException` |
-| `UnauthenticatedException` | 401 | `UNAUTHENTICATED` | `InvalidCredentialsException` |
+| `UnauthenticatedException` | 401 | `UNAUTHENTICATED` | `InvalidCredentialsException`, `UnknownAccountException` |
 | `DomainException` (catch-all) | 422 | `DOMAIN_ERROR` | one-off business rule violations with no sibling |
 
 - **PokeAPI being down is not a domain exception.** The `PokemonSource` port declares
@@ -311,7 +311,7 @@ Exact patterns, not suggestions.
 - **Boot 4 dependency:** the `RestClient` *class* is in `spring-web`, but the auto-configured
   `RestClient.Builder` bean and `@RestClientTest` live in `spring-boot-starter-restclient` and
   `spring-boot-starter-restclient-test` (verified on Maven Central for 4.1.1). Add both in plan
-  task 2.4.
+  task S2.3.
 - PokeAPI JSON is deserialized into package-private records local to the adapter
   (`PokeApiPokemonJson`, `PokeApiSpeciesJson`, `PokeApiEvolutionChainJson`, …) annotated with
   `@JsonIgnoreProperties(ignoreUnknown = true)`. **No PokeAPI type leaves the package** — the

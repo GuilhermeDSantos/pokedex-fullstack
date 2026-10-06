@@ -5,7 +5,7 @@ Keep it **clear and concise**. **Backend and frontend** practices each get their
 claim should point at something concrete: a file, a test, a row in
 [`requirements.md`](requirements.md).
 
-> Completed in plan Phase 8. Keep it as an outline, not a script to read aloud.
+> Completed in the plan's Walkthrough section. Keep it as an outline, not a script to read aloud.
 
 ## Agenda (about 25 minutes, then questions)
 

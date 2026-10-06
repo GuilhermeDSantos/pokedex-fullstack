@@ -4,33 +4,37 @@ The living backlog. **The agent reads this at the start of every session and upd
 of every task.** It ticks the box, adds evidence to [`requirements.md`](requirements.md), and moves
 "Current focus".
 
-Each task lists the requirement IDs it serves. For backend features the order inside a task is
-always TDD inward-out: domain → interactor → adapters. The product being built is described in
+The work is organized in **vertical slices** (D-033). After the foundation, each slice delivers one
+user action working end to end, backend **and** frontend, and runnable with
+`docker compose up --build`. Inside a slice, the order is always TDD inward-out: domain →
+interactor → adapters → controller → screen. The product being built is described in
 [`domain-model.md` → Product vision](domain-model.md#product-vision).
 
 ---
 
 ## Current focus
 
-> **Phase 1 — Backend foundation.** Next task: 1.2.
+> **Phase 1 — Backend foundation.** Next task: 1.2. Then Slice 1 (sign up, sign in, sign out).
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
-> green. No blockers. The agent still asks before every push.
+> green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
 ---
 
 ## Priorities
 
 **The brief comes first.** Anything not needed to satisfy a row in `requirements.md` is in
-"Parked" and stays there until every phase below is done.
+"Parked" and stays there until every slice below is done.
 
 If scope has to shrink, cut in this order (each step keeps every requirement covered):
-1. Springdoc (5.4). The README `curl` examples cover it.
-2. `GET /pokemon/{identifier}/local` in the frontend: the detail response already carries `local`.
-   The endpoint stays in the API.
-3. Frontend tests trimmed to one happy path + one error path per page (the console guard stays).
+1. Springdoc (D.4). The README `curl` examples cover it.
+2. Frontend tests trimmed to one happy path + one error path per page (the console guard stays).
 
 Never cut: TDD on domain and interactors, the ArchUnit test, the error-status ITs, the console
 guard, Docker, the README, the GenAI case study.
+
+**A slice is done** when its user action works in the browser on the Docker stack, `./gradlew
+check` and the frontend checks (`lint`, `typecheck`, `test`, `build`) are green, the console is
+empty, and `requirements.md` has the evidence.
 
 ---
 
@@ -65,127 +69,219 @@ guard, Docker, the README, the GenAI case study.
 
 ## Phase 1 — Backend foundation (OV-2, TR-ERR, TR-API-2)
 
+Everything every slice needs.
+
 - [x] 1.1 `LayeredArchitectureTest`: 17 ArchUnit rules from
       [`examples/tests.md`](examples/tests.md#architecture-test), green on the empty skeleton.
       Proven with a throwaway domain class (Spring annotation + `Instant.now()` + public
       constructor): exactly those three rules failed. The temporary `failOn…` lines in
       `build.gradle` are removed. **Temporary:** `archunit.properties` allows empty rules until
-      every layer has classes (removed in 3.5).
+      every layer has classes (removed in S1.7).
 - [ ] 1.2 Domain kernel: `DomainException` + the 4 categories, `domain/pagination` (`PageRequest`,
       `Page`) with tests.
 - [ ] 1.3 `UnitOfWork` port + `SpringUnitOfWork`, `ClockConfig`, an empty `UseCaseConfig`.
 - [ ] 1.4 `interfaces/rest`: `ErrorResponse`, `PageResponse`, `GlobalExceptionHandler` covering all
       categories + framework exceptions, with `GlobalExceptionHandlerIT`.
-- [ ] 1.5 `SecurityConfig` skeleton (stateless, CSRF off, no CORS) with everything permitted except a
-      test route, so the IT proves the 401 shape. The JSON 401/403 writers live in
-      `interfaces/rest/security/` and reach `SecurityConfig` through Spring Security's interfaces
-      (`infrastructure_must_not_depend_on_interfaces`).
 
-## Phase 2 — PokeAPI integration (FR-0, US-01.N, TR-CACHE)
+---
 
-- [ ] 2.1 Domain VOs (TDD): `PokedexNumber`, `PokemonIdentifier`, `Height`, `Weight`, `PokemonType`,
-      `Ability`, `BaseStat`/`StatName`, `PokemonSnapshot`, `PokemonProfile` (+ `toSnapshot()`).
-      Source types: `PokemonSummary`, `PokemonDetail`, `EvolutionStage`, plus the `PokemonSource`
-      port, `PokemonSourceUnavailableException` and `PokemonNotFoundException`.
-- [ ] 2.2 Record PokeAPI fixtures (`curl`, commit them under `src/test/resources/pokeapi/`):
-      bulbasaur (1), pikachu (25), eevee (133, branching chain), plus a list page. No alternate
-      form: forms are a known limitation (Parked).
-- [ ] 2.3 `PokeApiTranslator` + `PokeApiTranslatorTest` (units, genus, flavor-text normalization,
-      evolution tree, null sprites).
-- [ ] 2.4 `PokeApiClient` (`RestClient`, timeouts, 404 → empty, failures →
-      `PokemonSourceUnavailableException`) + `@RestClientTest`. Add `spring-boot-starter-restclient`
-      and `spring-boot-starter-restclient-test` first (Boot 4 split them out; see backend.md).
-- [ ] 2.5 `PokeApiPokemonSource` on top of it (translation, concurrent fan-out on virtual threads).
-- [ ] 2.6 Caching (D-012) on `PokeApiClient` only, + a test that a second
-      `PokemonSource.getByIdentifier` call makes no HTTP request (guards the self-invocation trap).
+## Slice 1 — Sign up, sign in, sign out (TR-DB-1, TR-AUTH-1..3, FE-1, FE-4)
 
-## Phase 3 — Pokémon endpoints: merged reads + local data (US-01…US-04, US-03.a, TR-API-1, TR-DAL)
+First, so every protected endpoint of the later slices is born behind the real security config,
+with its 401 tests.
 
-- [ ] 3.1 Domain (TDD): `LocalPokemonId`, `Tag`, `CustomAttributes`, the `LocalPokemon` aggregate
-      (`create`, `updateCustomAttributes`, `displayName`) + `LocalPokemonNotFoundException`,
-      `PokemonAlreadySyncedException`, `LocalPokemonModifiedConcurrentlyException` and the
-      validation exceptions.
-- [ ] 3.2 Migration `V1__create_local_pokemons.sql` (`local_pokemons` + `local_pokemon_tags`).
-- [ ] 3.3 `LocalPokemonEntity`, `LocalPokemonJpaRepository`, `LocalPokemonEntityMapper`,
-      `JpaLocalPokemonRepository` + `JpaLocalPokemonRepositoryIT` (whole-aggregate round trip, find
-      by name and by number, `findAllByPokedexNumbers`, unique constraint → 409, optimistic lock →
+Backend:
+- [ ] S1.1 Domain (TDD): `UserId`, `Email`, `DisplayName`, `RawPassword` (redacted, ≤ 72 bytes),
+      `PasswordHash`, `UserAccount` + `EmailAlreadyRegisteredException`,
+      `InvalidCredentialsException`, `UnknownAccountException` and the validation exceptions.
+- [ ] S1.2 Migration `V1__create_user_accounts.sql`, then `UserAccountEntity`, the Spring Data
+      interface, the entity mapper and `JpaUserAccountRepository` + IT (round trip, unique email →
       409).
-- [ ] 3.4 Interactors (TDD): `BrowsePokemon` and `GetPokemon` (the merge), `SyncPokemon` (no
-      transaction during the PokeAPI call), `GetLocalPokemon`, `UpdateLocalPokemon`,
-      `RemoveLocalPokemon`.
-- [ ] 3.5 `PokemonController` + `PokemonControllerIT`: every status in the contract, including
-      reads without a token (public), writes without a token → 401, malformed JSON → 400, not
-      synced → 404, already synced → 409. Then delete `src/test/resources/archunit.properties`:
-      every layer now has classes, so an ArchUnit rule that matches nothing must fail again.
+- [ ] S1.3 Ports `PasswordHasher`, `TokenIssuer`, then the adapters `BCryptPasswordHasher` and
+      `JwtTokenIssuer`, plus `JwtProperties` (`security.jwt.*`: secret, TTL, issuer) and a `JwtConfig`
+      creating the HS256 `JwtEncoder`/`JwtDecoder`. `JWT_SECRET` in `docker-compose.yml` and
+      `.env.example`, with a dev-only default of at least 32 bytes (HS256 minimum; verify against
+      Nimbus when implementing).
+- [ ] S1.4 Interactors (TDD): `RegisterUser`, `AuthenticateUser` (same 401 for unknown email and
+      wrong password), `GetCurrentUser` (account gone → 401 `UnknownAccountException`, D-033).
+- [ ] S1.5 `SecurityConfig`: stateless, CSRF off, no CORS, `oauth2ResourceServer(jwt)`, the D-030
+      route policy (the Pokémon write matchers are declared now), and `/actuator/health`
+      **explicitly permitted**: once our own filter chain exists, Boot's default actuator security
+      backs off, and `ApplicationHealthIT` guards the Docker healthcheck. The 401/403 `ErrorResponse`
+      writers live in `interfaces/rest/security/`.
+- [ ] S1.6 `AuthController` + `AuthControllerIT`: register 201/400/409, login 200/400/401,
+      `/auth/me` 200/401.
+- [ ] S1.7 `AuthFlowIT` (`@SpringBootTest` + Testcontainers): register → login → `/auth/me` with the
+      **real** issued token (the controller ITs only simulate one), plus a garbage token → 401
+      `ErrorResponse`. Then delete `src/test/resources/archunit.properties`: every layer now has
+      classes, so an ArchUnit rule that matches nothing must fail again.
 
-## Phase 4 — Users & authentication (TR-DB-1, TR-AUTH-1..3)
+Frontend (every task below is test-first with RTL + MSW, one behaviour at a time; the MSW
+handlers mirror the API contract):
+- [ ] S1.8 Setup (D-020, D-021, D-023): router, query client, Vitest + RTL + MSW, the console-guard
+      test setup, a `typecheck` script, the `AppShell` layout with a header. `app/styles/tokens.css`
+      with **neutral** values (system font, greys, spacing scale) and a minimal base stylesheet
+      (D-034: UX first, UI later). The Vite template's demo content and assets are removed.
+- [ ] S1.9 `shared/api/httpClient` (base path `/api/v1`, auth header only on protected calls,
+      `ApiError` from `ErrorResponse`, 401 handling) + tests; the first global components in
+      `shared/ui`: `Button`, `TextField`, `Heading`, `Stack`, `ErrorState`.
+- [ ] S1.10 Sign up and sign in pages (controlled inputs, D-022; server field errors mapped),
+      `AuthContext` with session restore from `sessionStorage` (D-024), sign out, and the header
+      showing the signed-in user. A successful sign up signs the user in straight away and returns
+      to `returnTo` (or the list). Tests: field errors on 400, "email already registered" on 409,
+      "invalid email or password" on 401 (a form error, not a redirect), session survives a reload,
+      sign out clears it.
 
-- [ ] 4.1 Domain: `UserId`, `Email`, `DisplayName`, `RawPassword` (redacted), `PasswordHash`,
-      `UserAccount` + tests.
-- [ ] 4.2 Migration `V2__create_user_accounts.sql`, then the persistence adapter + IT (unique email → 409).
-- [ ] 4.3 Ports `PasswordHasher`, `TokenIssuer`, then the adapters `BCryptPasswordHasher`,
-      `JwtTokenIssuer` + tests.
-- [ ] 4.4 Interactors: Register, Authenticate (same 401 for unknown email and wrong password),
-      GetCurrentUser.
-- [ ] 4.5 `AuthController` + IT. Final route policy in `SecurityConfig` (D-030), with 401 tests on
-      every protected endpoint.
+## Slice 2 — Browse the list (US-01, US-01.N, TR-CACHE, FR-0, FE-2)
 
-## Phase 5 — Delivery: seed, Docker, docs (DL-1..3, TR-OPT)
+The list comes straight from PokeAPI here. Local data joins it in Slice 6.
 
-- [ ] 5.1 `V3__seed_demo_data.sql`: demo user (BCrypt hash) + about 10 synced Pokémon with custom
-      attributes and tags, so the list starts with merged data. The snapshot values come from real
-      PokeAPI responses recorded with `curl` (like the 2.2 fixtures), never typed from memory.
-      **Pikachu is not in the seed**: it's the Pokémon synced live in the demo (a 201, not a 409)
-      and the test fixture.
-- [ ] 5.2 `ApplicationContextIT`: context loads, every `*UseCase` bean resolves, seed present.
-- [ ] 5.3 Containers were done in 0.5. Here: add the JWT secret env var to compose and
-      `.env.example`, then verify a clean `docker compose up --build` from scratch again, with the
-      seed, before delivery.
-- [ ] 5.4 OpenAPI UI via springdoc, **timeboxed to 30 minutes** (D-016). If it doesn't work on the
+Backend:
+- [ ] S2.1 Domain VOs (TDD): `PokedexNumber`, `PokemonIdentifier`, `Weight`, `PokemonType`,
+      `Ability`, plus `PokemonSummary` and the `PokemonSource` port with
+      `PokemonSourceUnavailableException`.
+- [ ] S2.2 Record PokeAPI fixtures with `curl` under `src/test/resources/pokeapi/` (a list page,
+      bulbasaur, pikachu with their species). `PokeApiTranslator` for summaries + tests (units,
+      English genus as category, slot order, null sprite).
+- [ ] S2.3 Add `spring-boot-starter-restclient` and `spring-boot-starter-restclient-test` (Boot 4
+      split them out, see backend.md). `PokeApiClient` (`RestClient`, timeouts, 404 → empty,
+      failures → `PokemonSourceUnavailableException`) + `@RestClientTest`.
+- [ ] S2.4 `PokeApiPokemonSource.findAll` (concurrent fan-out on virtual threads, D-018) and the
+      Caffeine cache on `PokeApiClient` only (D-012), with a test that a repeated call makes no HTTP
+      request.
+- [ ] S2.5 `BrowsePokemonInteractor` (TDD), then `PokemonController` `GET /pokemon` +
+      `PokemonControllerIT` (200, 400 page/size, 503).
+
+Frontend:
+- [ ] S2.6 List page (the home page): every card shows the brief's four fields (sprite, category,
+      mass in kg, skills = abilities) plus name and number. Responsive grid, pagination in the URL,
+      skeletons, error and empty states. New global components: `Card`, `Skeleton`, `Pagination`,
+      `EmptyState`, `Badge`. Tests: the four fields render, loading → success, 503 → `ErrorState`
+      with retry, empty page → `EmptyState`, the page number follows the URL.
+
+## Slice 3 — View a Pokémon (US-02, FE-2)
+
+Backend:
+- [ ] S3.1 Domain (TDD): `Height`, `BaseStat`/`StatName`, `PokemonProfile`, `EvolutionStage`,
+      `PokemonDetail`, `PokemonNotFoundException`.
+- [ ] S3.2 Fixtures for eevee (branching chain) and an evolution chain. `PokeApiTranslator` for
+      details + tests (flavor-text normalization, highest English version, branching evolution
+      tree, null artwork). `PokeApiPokemonSource.findByIdentifier`, cached through the client, with
+      the test that goes through the port's `getByIdentifier` (the self-invocation trap).
+- [ ] S3.3 `GetPokemonInteractor` (TDD), then `GET /pokemon/{identifier}` + IT (200, 400, 404, 503).
+
+Frontend:
+- [ ] S3.4 Detail page: artwork, name and number, stats, description, the evolution tree
+      (branching), loading/error/not-found states. A card on the list opens it. Tests: every US-02
+      field renders, a branching chain renders every branch, 404 → not-found state.
+
+## Slice 4 — Sync a Pokémon into the local database (US-03, TR-DAL, TR-API-1)
+
+Backend:
+- [ ] S4.1 Domain (TDD): `LocalPokemonId`, `PokemonSnapshot` (+ `PokemonProfile.toSnapshot()`),
+      `Tag`, `CustomAttributes`, the `LocalPokemon` aggregate (`create`) +
+      `PokemonAlreadySyncedException`, `LocalPokemonNotFoundException`.
+- [ ] S4.2 Migration `V2__create_local_pokemons.sql` (`local_pokemons` + `local_pokemon_tags`), then
+      `LocalPokemonEntity`, `LocalPokemonJpaRepository`, `LocalPokemonEntityMapper`,
+      `JpaLocalPokemonRepository` + IT (whole-aggregate round trip, find by name and by number,
+      unique constraint → 409).
+- [ ] S4.3 Interactors (TDD): `SyncPokemon` (no transaction during the PokeAPI call),
+      `GetLocalPokemon`. `GetPokemon` now merges the local record into the detail (`local`, `null`
+      when not synced).
+- [ ] S4.4 `POST` and `GET /pokemon/{identifier}/local` + IT (201 + `Location`, 401 without a token,
+      404 not in PokeAPI / not synced, 409 already synced, 503), and the `local` field in the detail
+      response.
+
+Frontend:
+- [ ] S4.5 Local section of the detail page: **Sync to local database** when `local` is null ("Log
+      in to sync" with `returnTo` when signed out). A 409 (someone just synced it) refetches and
+      shows the local data with an inline note. Tests: signed out → "Log in to sync", sync → local
+      section appears, 409 → refetch + note.
+
+## Slice 5 — Edit and remove the local data (US-04, US-04.a–c, TR-API-1, FE-3)
+
+Backend:
+- [ ] S5.1 Domain (TDD): `LocalPokemon.updateCustomAttributes`, `LocalPokemonModifiedConcurrentlyException`
+      and the custom-attribute validation (tags, sizes).
+- [ ] S5.2 Interactors (TDD): `UpdateLocalPokemon`, `RemoveLocalPokemon`. Optimistic locking in the
+      repository adapter (`copyInto` the managed entity, D-011) + IT for the concurrent edit → 409.
+- [ ] S5.3 `PUT` and `DELETE /pokemon/{identifier}/local` + IT: 200/204, 400 invalid **and**
+      malformed body, 401, 404 not synced, 409 concurrent edit.
+
+Frontend:
+- [ ] S5.4 New global component `ConfirmDialog`. Inline edit form for the localized name, region
+      and tags (controlled inputs, server field errors mapped), and **Remove** with a confirmation
+      dialog. After either, the detail refetches. Tests: save sends the PUT and shows the new
+      values, a 400 maps to field errors, cancelling the dialog removes nothing, confirming does.
+
+## Slice 6 — Edits show up everywhere (US-01, US-02, US-03.a)
+
+The list and the detail reflect the local data: the edited name replaces the original one, and the
+original stays visible underneath.
+
+Backend:
+- [ ] S6.1 Domain (TDD): `LocalPokemon.displayName()` (localized name when set, otherwise the
+      original).
+- [ ] S6.2 The list merge: `findAllByPokedexNumbers` (one query per page) + IT, and
+      `BrowsePokemon` adds `displayName` and `synced` to each item. `GetPokemon` adds `displayName`.
+      Controller ITs for the new fields.
+
+Frontend:
+- [ ] S6.3 The cards and the detail title show `displayName`, with the original name underneath
+      when they differ, plus a "synced" badge on the list. Sync, edit and remove invalidate both the
+      detail and the list queries, so going back to the list shows the change at once. Tests: the
+      display name and the original name render, the badge appears only for synced Pokémon, an
+      edit is visible on the list without a manual reload.
+
+---
+
+## Delivery (DL-1..3, TR-OPT, FE-5)
+
+- [ ] D.1 `V3__seed_demo_data.sql`: demo user + about 10 synced Pokémon with custom attributes
+      and tags, so the list starts with merged data. The user's BCrypt hash is generated with the
+      project's own `BCryptPasswordHasher` (a one-off run), never with an online generator. The
+      plain demo password appears only in the README. The snapshot values come from real
+      PokeAPI responses recorded with `curl`, never typed from memory. **Pikachu is not in the
+      seed**: it's synced live in the demo (a 201, not a 409) and it's the test fixture.
+- [ ] D.2 `ApplicationContextIT`: context loads, every `*UseCase` bean resolves, seed present.
+- [ ] D.3 Clean `docker compose up --build` from scratch (`down -v`), with the seed, and the whole
+      demo flow clicked through.
+- [ ] D.4 OpenAPI UI via springdoc, **timeboxed to 30 minutes** (D-016). If it doesn't work on the
       first try, remove the dependency and move on.
-- [ ] 5.5 `README.md`: product overview (from the domain model's product vision), architecture
-      diagram, how to run (Docker, and locally), demo credentials, API table, testing commands,
-      design decisions summary (linking `docs/decisions.md`), known limitations and next steps, and
-      how AI was used.
+- [ ] D.5 `README.md`: expand the current run instructions with the product overview, an
+      architecture diagram, demo credentials, the API table, design decisions summary (linking
+      `docs/decisions.md`), known limitations and next steps, and how AI was used.
+- [ ] D.6 Frontend quality pass: zero console warnings on every page (manual, DevTools open),
+      keyboard-only run, a manual check at ~360 px and desktop width.
 
-## Phase 6 — Frontend (TR-FE, FE-1..5)
+## UI pass (FE-2)
 
-- [ ] 6.1 Setup (D-020, D-021, D-023): router, query client, Vitest + RTL + MSW, the console-guard
-      setup, the `/api` dev proxy, a `typecheck` script, design tokens, and the `AppShell` layout.
-- [ ] 6.2 `shared/api/httpClient` (base path, auth header only on protected calls, `ApiError`, 401
-      handling) + tests.
-- [ ] 6.3 `shared/ui` primitives: Button, Input, Card, Skeleton, Pagination, EmptyState, ErrorState,
-      ConfirmDialog.
-- [ ] 6.4 **List page** (US-01): every card shows the brief's four fields (sprite, category, mass in
-      kg, skills = abilities), plus the display name, number and a "synced" badge. Responsive grid,
-      URL pagination, skeletons, error/empty states.
-- [ ] 6.5 **Detail page** (US-02): artwork, display name (original name underneath when different),
-      stats, description, evolution tree (branching).
-- [ ] 6.6 Auth: register, login, logout, session restore on reload, "Log in to sync" with `returnTo`.
-- [ ] 6.7 **Local section of the detail page** (US-03, US-04): Sync button when `local` is null
-      (409 → refetch + inline note); localized name, region and tags with an inline Edit form
-      (controlled inputs, D-022, server field errors mapped) and Remove with confirmation, when
-      synced.
-- [ ] 6.8 Quality pass: zero console warnings on both pages (manual, DevTools open), keyboard-only
-      run, a manual check at ~360 px and desktop width (shown live in the demo), `lint` +
-      `typecheck` + `test` + `build` all clean.
+After the slices and the delivery checks: the functional MVP becomes a polished one (D-034). Only
+styles change; behaviour and tests stay as they are.
 
-## Phase 7 — GenAI case study (AI-1..5)
+- [ ] U.1 Visual direction: colour palette (incl. Pokémon type colours), typeface, type scale,
+      spacing and radius. Applied by changing the values in `tokens.css`.
+- [ ] U.2 Component polish in `shared/ui` (states: hover, focus, disabled, loading), and the card
+      and detail layouts.
+- [ ] U.3 Visual check at ~360 px, tablet and desktop width, keyboard focus still visible, AA
+      contrast still met, console still empty.
 
-Independent of the Pokémon code. Do it as soon as the backend phases are done, before the frontend.
+## GenAI case study (AI-1..5)
 
-- [ ] 7.1 Write the prompt in [`genai-case-study.md`](genai-case-study.md), run it, and save the raw output.
-- [ ] 7.2 Review the output against a checklist, then record the defects found and the fixes, with
+Independent of the Pokémon code: do it once Slice 5 is done, before the polish.
+
+- [ ] G.1 Write the prompt in [`genai-case-study.md`](genai-case-study.md), run it, and save the raw output.
+- [ ] G.2 Review the output against a checklist, then record the defects found and the fixes, with
       before/after snippets.
-- [ ] 7.3 Write up edge cases, auth and validation handling, plus lessons learned.
+- [ ] G.3 Write up edge cases, auth and validation handling, plus lessons learned.
 
-## Phase 8 — Walkthrough (EV-1..6)
+## Walkthrough (EV-1..6)
 
-- [ ] 8.1 Fill in the [`walkthrough.md`](walkthrough.md) agenda and demo script, and have the
+- [ ] W.1 Fill in the [`walkthrough.md`](walkthrough.md) agenda and demo script, and have the
       evidence for every row of `requirements.md` ready.
-- [ ] 8.2 Check the answers in the design FAQ against the final code, with a full dry run from
+- [ ] W.2 Check the answers in the design FAQ against the final code, with a full dry run from
       `docker compose up`.
-- [ ] 8.3 Final check: every row in `requirements.md` is ✅ with evidence, the repo is public, the
+- [ ] W.3 Final check: every row in `requirements.md` is ✅ with evidence, the repo is public, the
       README is accurate, and CI is green (if added).
 
 ## Parked (ideas worth keeping; build only if every phase above is done)

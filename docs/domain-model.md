@@ -157,7 +157,9 @@ public interface LocalPokemonRepository {
 }
 ```
 
-`UserAccountRepository`: `save`, `findById`/`getById`, `findByEmail`.
+`UserAccountRepository`: `save`, `findById`, `findByEmail`. No `getById`: a missing account is
+never a 404. At login it's `InvalidCredentialsException`, and on `/auth/me` it's
+`UnknownAccountException` (401), so the frontend clears the session (D-033).
 
 ### Exceptions (`domain/exception`)
 
@@ -165,8 +167,7 @@ public interface LocalPokemonRepository {
 DomainException (abstract)                          → 422 DOMAIN_ERROR (catch-all; no member yet)
 ├── NotFoundException (abstract)                    → 404 NOT_FOUND
 │   ├── PokemonNotFoundException                    (PokeAPI has no such Pokémon)
-│   ├── LocalPokemonNotFoundException               (exists in PokeAPI, but not synced)
-│   └── UserAccountNotFoundException
+│   └── LocalPokemonNotFoundException               (exists in PokeAPI, but not synced)
 ├── ConflictException (abstract)                    → 409 CONFLICT
 │   ├── PokemonAlreadySyncedException
 │   ├── LocalPokemonModifiedConcurrentlyException
@@ -176,7 +177,8 @@ DomainException (abstract)                          → 422 DOMAIN_ERROR (catch-
 │   ├── InvalidTagException, InvalidCustomAttributesException
 │   └── InvalidEmailException, InvalidDisplayNameException, WeakPasswordException
 └── UnauthenticatedException (abstract)             → 401 UNAUTHENTICATED
-    └── InvalidCredentialsException                 (same message for unknown email and wrong password)
+    ├── InvalidCredentialsException                 (same message for unknown email and wrong password)
+    └── UnknownAccountException                     (valid token, but the account no longer exists — D-033)
 ```
 
 The 422 catch-all stays in the handler as the safety net for a future one-off business rule, so
@@ -199,7 +201,7 @@ and wired in `infrastructure/config/UseCaseConfig`.
 | `RemoveLocalPokemonUseCase` | `void execute(RemoveLocalPokemonInput)` | CRUD-D | 404 not synced |
 | `RegisterUserUseCase` | `UserOutput execute(RegisterUserInput, UserId, Instant now)` | TR-AUTH | 409 on duplicate email |
 | `AuthenticateUserUseCase` | `AccessTokenOutput execute(AuthenticateUserInput, Instant now)` | TR-AUTH | 401 `InvalidCredentialsException` |
-| `GetCurrentUserUseCase` | `UserOutput execute(GetCurrentUserInput)` | TR-AUTH | |
+| `GetCurrentUserUseCase` | `UserOutput execute(GetCurrentUserInput)` | TR-AUTH | Account gone (e.g. the database was reset while a token was still valid) → 401 `UnknownAccountException` |
 
 The local write use cases (get-local, update, remove) resolve the identifier against the **local
 database only**. They never call PokeAPI.
@@ -222,8 +224,8 @@ updated to match (or trimmed), never the other way around.
 | `local_pokemon_tags` | `local_pokemon_id fk → local_pokemons on delete cascade`, `tag` | PK (`local_pokemon_id`, `tag`) |
 | `user_accounts` | `id uuid pk`, `email unique`, `display_name`, `password_hash`, `created_at timestamptz`, `version bigint not null` | `uk_user_accounts_email` → `EmailAlreadyRegisteredException` |
 
-Migrations: `V1__create_local_pokemons.sql`, `V2__create_user_accounts.sql`,
-`V3__seed_demo_data.sql`. The seed has a demo user with a BCrypt hash, plus about 10 synced Pokémon
+Migrations, in the order the slices create them: `V1__create_user_accounts.sql`,
+`V2__create_local_pokemons.sql`, `V3__seed_demo_data.sql`. The seed has a demo user with a BCrypt hash, plus about 10 synced Pokémon
 with custom attributes and tags, so the demo starts with merged data. **Pikachu is not in the
 seed**, because it's synced live in the demo. The snapshot values come from **real PokeAPI
 responses** (recorded with `curl`, like the test fixtures), never typed from memory. The demo
@@ -247,7 +249,7 @@ The frontend doesn't know or care which data comes from PokeAPI and which from t
 | `DELETE /pokemon/{identifier}/local` | 🔒 | 204 | 400, 401, 404 (not synced) | CRUD-D |
 | `POST /auth/register` body `{ "email", "displayName", "password" }` | public | 201 `UserResponse` | 400, 409 | TR-AUTH |
 | `POST /auth/login` body `{ "email", "password" }` | public | 200 `{ "accessToken", "tokenType": "Bearer", "expiresAt" }` | 400, 401 | TR-AUTH |
-| `GET /auth/me` | 🔒 | 200 `UserResponse` | 401 | TR-AUTH |
+| `GET /auth/me` | 🔒 | 200 `UserResponse` | 401 (no/invalid token, or the account no longer exists) | TR-AUTH |
 | `GET /actuator/health` | public | 200 | | ops |
 
 CRUD on the dataset (TR-API-1): **C**reate = sync, **R**ead = `GET …/local` (and the merged

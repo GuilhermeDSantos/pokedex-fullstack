@@ -31,6 +31,19 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — The developer reshaped the plan into vertical slices
+- **Context:** Planning the implementation order after the foundation (all IDs, D-033).
+- **AI proposed (earlier):** A layer-by-layer plan: the whole backend, then the whole frontend.
+  When asked, it suggested moving authentication earlier, but kept the backend-then-frontend shape.
+- **Problem:** The developer described the work as user actions (sign in → see the list → see a
+  Pokémon → edit it → see the edit everywhere). The AI's plan left the frontend, a graded
+  criterion, and all the integration risk to the end, with nothing demoable before.
+- **Resolution:** The plan was rewritten as six vertical slices, each runnable end to end. The AI
+  added the two steps the developer's list skipped but the brief requires (sign up, and sync before
+  edit) and turned the last step into the list/detail merge.
+- **Lesson:** Plan in user actions, not in layers. A layer plan looks complete on paper and hides
+  the moment nothing works yet.
+
 ### 2026-10-06 — An ArchUnit method in the reference examples didn't exist
 - **Context:** Writing `LayeredArchitectureTest` from `docs/examples/tests.md` (plan 1.1, OV-2).
 - **AI proposed (earlier, in the examples it wrote):** `noClasses()…should().beAnnotatedWith(Transactional.class)

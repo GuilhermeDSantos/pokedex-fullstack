@@ -8,7 +8,7 @@ including edge cases, authentication and validation.
 **Functional scope:** CRUD on tasks. A task has `title`, `description`, `status`
 and `due_date`. Tasks belong to a user (assume a basic `User` model exists).
 
-> Status: ⬜ to be produced in plan Phase 7. The sections below are the structure. Fill them with
+> Status: ⬜ to be produced in the plan's GenAI case study section. The sections below are the structure. Fill them with
 > real output, never with invented results. If generated code is kept in the repo, it goes in
 > `genai-case-study/` (an isolated module) so it can't be confused with the Pokémon project's code.
 

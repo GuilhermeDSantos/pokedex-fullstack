@@ -53,7 +53,7 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| TR-DB-1 | Relational DB with a **primary entity** (Pokémon) and a **secondary collection for user management** (user accounts) | ⬜ | `local_pokemons` (`V1__…`), `user_accounts` (`V2__…`) |
+| TR-DB-1 | Relational DB with a **primary entity** (Pokémon) and a **secondary collection for user management** (user accounts) | ⬜ | `user_accounts` (`V1__…`), `local_pokemons` (`V2__…`) |
 | TR-DB-2 | Records have a **unique primary key** and **≥ 2 descriptive attributes** | ⬜ | `local_pokemons.id`, `user_accounts.id` |
 
 ## Technical — API

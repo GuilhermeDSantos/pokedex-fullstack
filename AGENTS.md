@@ -49,8 +49,8 @@ it as the contract.
 | [`docs/standards/frontend.md`](docs/standards/frontend.md) | React structure, state, UX, zero-console-warnings, tests | Any `frontend/` work |
 | [`docs/standards/commits.md`](docs/standards/commits.md) | Conventional Commits + TDD rhythm | Every commit |
 | [`docs/ai-log.md`](docs/ai-log.md) | Evidence of critical AI use | Append whenever an entry trigger occurs (§8) |
-| [`docs/genai-case-study.md`](docs/genai-case-study.md) | The separate "task API via GenAI" case study | Plan Phase 7 |
-| [`docs/walkthrough.md`](docs/walkthrough.md) | Walkthrough agenda, demo script, design FAQ | Plan Phase 8 |
+| [`docs/genai-case-study.md`](docs/genai-case-study.md) | The separate "task API via GenAI" case study | Plan → GenAI case study |
+| [`docs/walkthrough.md`](docs/walkthrough.md) | Walkthrough agenda, demo script, design FAQ | Plan → Walkthrough |
 
 **Precedence when they disagree:** the brief (`requirements.md`) > `decisions.md` (latest
 Accepted entry) > `domain-model.md` > `standards/*` > `examples/*`. If you find a contradiction,
@@ -148,7 +148,7 @@ exactly what code review should catch.
 │   └── src/main/java/dev/guilhermeds/backend/{domain,application,infrastructure,interfaces}
 ├── frontend/                 # React 19 · TypeScript · Vite
 │   └── src/{app,features/{pokemon,auth},shared,test}
-└── genai-case-study/         # only if generated task-API code is kept (plan Phase 7). Isolated: not
+└── genai-case-study/         # only if generated task-API code is kept (plan → GenAI). Isolated: not
                               # part of the backend build, never imported by the main project
 ```
 
@@ -180,7 +180,7 @@ npm run dev                    # Vite on :5173, proxies /api → :8080
 docker compose up --build
 ```
 
-Some of these scripts and tasks are created in plan Phase 0/6. Until a command exists, don't claim
+Some of these scripts and tasks are created along the plan's slices. Until a command exists, don't claim
 to have run it.
 
 **A task is done only when:**

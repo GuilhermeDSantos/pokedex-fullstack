@@ -186,7 +186,7 @@ separate `integrationTest` task wired into `check`.
 
 ## D-016 — OpenAPI UI via springdoc
 **Status:** Accepted, timeboxed · **Date:** 2026-10-06 · **Requirements:** DL-1, TR-OPT
-**Decision:** Try springdoc for `/swagger-ui.html` with a **30-minute timebox** (plan 5.4): a
+**Decision:** Try springdoc for `/swagger-ui.html` with a **30-minute timebox** (plan D.4): a
 Boot-4.1-compatible release. If it doesn't work on the
 first try, remove the dependency and rely on the `curl` examples in the README. No `api.http` file.
 
@@ -365,3 +365,43 @@ while the whole system is a catalog. Both made the model harder to explain.
 means "not in PokeAPI", and `LocalPokemonNotFoundException` means "not synced".
 **Consequences:** No change in behaviour. D-004's reasoning (a domain-owned port, an outage
 exception in the port contract) is unchanged.
+
+## D-033 — Vertical slices, authentication first; an unknown account on `/auth/me` is a 401
+**Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** TR-AUTH-1..3, FE-1…FE-5, US-01…US-04
+**Context:** The plan built the whole backend first and the whole frontend at the end. That puts
+the integration risk (token handling, error shapes, proxying) and a graded criterion (the
+frontend) at the end, and it means nothing is demoable until then. The developer also wanted
+authentication first, because it's the most fiddly part and every later endpoint depends on it.
+**Decision:**
+- **Vertical slices.** After the foundation, each slice delivers one user action end to end,
+  backend and frontend: sign up/in/out → browse the list → view a Pokémon → sync it → edit and
+  remove → edits show up everywhere (the list/detail merge). TDD stays inward-out inside each slice.
+- **Authentication is Slice 1.** The real `SecurityConfig` (with `/actuator/health` explicitly
+  permitted) exists before any Pokémon endpoint, so each one is born with its 401 tests. Migrations
+  follow: `V1` user accounts, `V2` local Pokémon, `V3` seed.
+- **`/auth/me` with a valid token for an account that no longer exists → 401**
+  (`UnknownAccountException`), not 404. It happens when the database is reset while a browser still
+  holds a token. A 401 makes the frontend drop the session and go to sign in. There's no
+  `UserAccountNotFoundException`.
+**Alternatives considered:** Backend first, then frontend (the previous plan): simpler to describe,
+but riskier at the end. Pokémon features before auth: faster first demo, but every protected
+endpoint would get its security retrofitted.
+**Consequences:** Frontend foundations (router, query client, test setup, HTTP client) land in
+Slice 1. The list and detail come from PokeAPI only in Slices 2–3, and local data joins them in
+Slices 4 and 6.
+
+## D-034 — Frontend: UX first, UI later; design tokens and global components from day one
+**Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** FE-2, FE-4
+**Context:** Each slice ships a screen. Polishing every screen as it's built spends time on looks
+before the features exist, and repeated styling decisions drift between pages.
+**Decision:** The slices build a functional, **usable** MVP (responsive, all async states,
+accessible) with minimal neutral styling. A dedicated UI pass at the end adds the palette, the
+typography and the visual polish. From day one, every style value is a design token in
+`tokens.css`, and anything used twice is a global component in `shared/ui`. Pages only compose
+those components.
+**Alternatives considered:** Polishing per slice, which costs more time early and gives an
+uneven look. A UI library, rejected in the frontend standard: a dependency, and it hides the
+component organization the brief asks to see.
+**Consequences:** The UI pass is mostly changing token values plus component styles, with no
+page-by-page rework. Until then the app looks plain on purpose. Usability isn't deferred.
+

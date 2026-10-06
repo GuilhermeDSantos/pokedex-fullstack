@@ -38,7 +38,7 @@ frontend/src
 │       └── AuthContext.tsx # session (token + user), login/logout — the ONLY global client state
 ├── shared/
 │   ├── api/                # httpClient.ts (fetch wrapper), ApiError, PageResponse<T>, ErrorResponse
-│   ├── ui/                 # primitives: Button, Input, Card, Skeleton, Pagination, EmptyState, ErrorState, ConfirmDialog
+│   ├── ui/                 # global components, created when a slice first needs them (see "UX first, UI later")
 │   ├── hooks/              # useDebouncedValue, useMediaQuery …
 │   └── lib/                # pure helpers (formatters, kg/m display) — unit tested
 └── test/                   # setup (MSW server, console guard), test utils (renderWithProviders)
@@ -113,6 +113,29 @@ no CORS in dev. In Docker, nginx proxies `/api` to the backend container.
 - Styling uses CSS Modules + CSS custom properties (design tokens in `app/styles/tokens.css`), with
   type colours as tokens. No UI library. Dark mode is out of scope.
 
+## UX first, UI later (D-034)
+
+The slices build a **functional, usable MVP** with minimal styling. A dedicated **UI pass** at the
+end (plan → UI pass) makes it look good. The two are separate on purpose:
+
+- **UX is never deferred.** Everything in "UX requirements" above ships with the slice that needs
+  it: responsive layout, the four async states, field errors, confirmations, keyboard use, visible
+  focus, readable contrast.
+- **UI is deferred.** That covers the colour palette, the typeface, refined spacing, type colours,
+  imagery and visual detail. The MVP is plain and tidy, not ugly: system font, a neutral grey
+  palette, a consistent spacing scale.
+- **Design tokens from day one.** Every colour, font, size, spacing, radius and shadow is a CSS
+  custom property in `app/styles/tokens.css`. Components only ever read tokens, never literal
+  values. The UI pass then changes token values first and component styles second, without hunting
+  colours through pages.
+- **Global components from day one, created on demand.** Anything used twice lives in
+  `shared/ui`, created by the first slice that needs it, never ahead of time: `Button`,
+  `TextField` (label + input + error), `Heading`, `Stack` (spacing between elements),
+  `ErrorState`, then `Card`, `Skeleton`, `Pagination`, `EmptyState`, `Badge`, `ConfirmDialog`.
+- **Pages compose, components style.** No inline styles and no literal colours in pages or feature
+  components. If a page needs a look that doesn't exist, it becomes a variant of a global component
+  (`<Button variant="danger">`), not a one-off CSS rule.
+
 ## Zero console warnings (treated as mandatory)
 
 Common sources, all forbidden:
@@ -171,6 +194,9 @@ The **local section** of the detail page decides everything from `local` in the 
 
 Sync → 409 ("already synced", e.g. someone else just did it) refetches the detail and shows the
 existing local data, with an inline note. It's not treated as a generic error.
+
+A successful sign up signs the user in straight away (register, then login) and returns to
+`returnTo`, or to the list. There's no separate "now sign in" step.
 
 No `RequireAuth` route wrapper is needed: no page is private, only actions are. Pages are imported
 eagerly. The bundle is small, and code splitting is out of scope.
