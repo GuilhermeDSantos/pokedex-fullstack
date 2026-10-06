@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PageRequestTest {
@@ -24,5 +25,10 @@ class PageRequestTest {
         assertThatThrownBy(() -> new PageRequest(0, size))
             .isInstanceOf(InvalidPageRequestException.class)
             .hasMessage("size must be between 1 and 50");
+    }
+
+    @Test
+    void shouldComputeOffsetFromPageAndSize() {
+        assertThat(new PageRequest(3, 20).offset()).isEqualTo(60L);
     }
 }
