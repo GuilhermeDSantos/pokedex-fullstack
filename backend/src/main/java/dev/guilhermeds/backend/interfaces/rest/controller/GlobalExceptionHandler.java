@@ -1,10 +1,10 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
-import dev.guilhermeds.backend.domain.exception.ValidationException;
-import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
 import dev.guilhermeds.backend.domain.exception.DomainException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
+import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
+import dev.guilhermeds.backend.domain.exception.ValidationException;
 import dev.guilhermeds.backend.interfaces.rest.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,17 +59,17 @@ public class GlobalExceptionHandler {
 
     // The parser's message can contain the raw payload, so it's never echoed.
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleMalformedBody(HttpMessageNotReadableException exception) {
+    public ResponseEntity<ErrorResponse> handleMalformedBody() {
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Malformed JSON request body");
     }
 
     @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
-    public ResponseEntity<ErrorResponse> handleInvalidParameter(Exception exception) {
+    public ResponseEntity<ErrorResponse> handleInvalidParameter() {
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request parameter");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUnknownPath(NoResourceFoundException exception) {
+    public ResponseEntity<ErrorResponse> handleUnknownPath() {
         return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Resource not found");
     }
 
