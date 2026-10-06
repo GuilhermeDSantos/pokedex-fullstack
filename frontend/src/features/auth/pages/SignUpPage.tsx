@@ -1,15 +1,27 @@
 import { useMutation } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { ApiError } from '../../../shared/api/ApiError'
 import { Button } from '../../../shared/ui/Button'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
+import type { FieldErrors } from '../lib/requireFields'
 import { safeReturnTo } from '../lib/returnTo'
 import { useAuth } from '../useAuth'
 import styles from './AuthPage.module.css'
 
 const LABELS = { name: 'Name', email: 'Email', password: 'Password' }
+
+type SignUpField = keyof typeof LABELS
+
+// Registering can only conflict on the email, so a 409 belongs on that field.
+function serverFieldErrors(error: Error | null): FieldErrors<SignUpField> {
+  if (error instanceof ApiError && error.status === 409) {
+    return { email: error.message }
+  }
+  return {}
+}
 
 export function SignUpPage() {
   const { signUp } = useAuth()
@@ -23,6 +35,8 @@ export function SignUpPage() {
     mutationFn: signUp,
     onSuccess: () => navigate(safeReturnTo(searchParams.get('returnTo')), { replace: true }),
   })
+
+  const errors = serverFieldErrors(signUpMutation.error)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -43,6 +57,7 @@ export function SignUpPage() {
               autoComplete="email"
               value={email}
               onChange={setEmail}
+              error={errors.email}
             />
             <TextField
               label={LABELS.password}
