@@ -126,6 +126,9 @@ exactly what code review should catch.
   `domain-model.md` → API contract.
 - **Small, readable, boring code.** Explicit names from the naming tables. No cleverness that needs
   a comment to defend. No dead code, commented-out code, or TODOs without a plan item.
+- **Few comments.** Comment only a non-obvious *why* (a trap, a constraint, a deliberate deviation),
+  in one short line. Never restate what the code does. Longer rationale goes to `docs/`. This applies
+  to every file: Java, TypeScript, Gradle, Dockerfiles, YAML, nginx.
 
 ## 7. Repository layout
 
