@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.domain.model;
 
+import dev.guilhermeds.backend.domain.exception.PasswordTooLongException;
 import dev.guilhermeds.backend.domain.exception.ValidationException;
 import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,9 @@ class RawPasswordTest {
     @Test
     void shouldRejectAPasswordLongerThan72Bytes() {
         assertThatThrownBy(() -> new RawPassword("é".repeat(36) + "1"))
-            .isInstanceOf(WeakPasswordException.class);
+            .isInstanceOf(PasswordTooLongException.class)
+            .isInstanceOf(ValidationException.class)
+            .hasMessage("Password is too long");
     }
 
     @Test
