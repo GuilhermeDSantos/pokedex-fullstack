@@ -31,6 +31,21 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — A probe test showed an expired token breaking public pages
+- **Context:** S1.6, the auth endpoints, thinking ahead to the frontend (TR-AUTH-3, FE-4).
+- **AI proposed:** Nothing wrong was generated yet. The AI suspected that a `permitAll` route still
+  validates a bearer token, and wrote a throwaway test instead of assuming either way.
+- **Problem:** Confirmed: an invalid token on `GET /api/v1/pokemon` answered 401. With one-hour
+  tokens, the public list (and even login) would break for anyone whose token had expired. Then a
+  second gap: every existing "authenticated" test used `jwt()` from spring-security-test, which
+  bypasses the bearer token filter, so none of them could catch a resolver that ignored all tokens.
+- **Resolution:** D-036, chosen by the developer over a frontend-only rule: one `PUBLIC_ROUTES`
+  matcher for `permitAll` and a `BearerTokenResolver` that skips those routes. A test with a real
+  token from `JwtTokenIssuer` went in first; a mutation (resolver always `null`) fails only that
+  test.
+- **Lesson:** Test helpers that fake authentication can skip the very code under test. Keep at
+  least one test on the real path.
+
 ### 2026-10-06 — The reference security config was open by default, and half right on 401s
 - **Context:** S1.5, the route policy and the 401 writer (TR-AUTH-3).
 - **AI proposed:** The AI-written example: protect the listed writes, `anyRequest().permitAll()`,

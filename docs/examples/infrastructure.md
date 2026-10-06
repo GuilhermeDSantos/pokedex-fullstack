@@ -489,11 +489,20 @@ no CORS (same origin, D-019), `oauth2ResourceServer(jwt)`, and the route policy 
 [`../domain-model.md#api-contract`](../domain-model.md#api-contract) (D-030):
 
 ```java
-.authorizeHttpRequests(auth -> auth
-    .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-    .requestMatchers(HttpMethod.GET, "/api/v1/pokemon/**").permitAll()
-    .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-    .anyRequest().authenticated())   // closed by default (D-035): writes and /auth/me need a token
+private static final RequestMatcher PUBLIC_ROUTES = new OrRequestMatcher(
+    withDefaults().matcher("/actuator/health"),
+    withDefaults().matcher("/actuator/health/**"),
+    withDefaults().matcher(HttpMethod.GET, "/api/v1/pokemon/**"),
+    withDefaults().matcher(HttpMethod.POST, "/api/v1/auth/register"),
+    withDefaults().matcher(HttpMethod.POST, "/api/v1/auth/login"));
+
+.authorizeHttpRequests(routes -> routes
+    .requestMatchers(PUBLIC_ROUTES).permitAll()
+    .anyRequest().authenticated())   // closed by default (D-035)
+.oauth2ResourceServer(resourceServer -> resourceServer
+    .bearerTokenResolver(ignoringPublicRoutes())   // D-036: an expired token can't break a public page
+    .jwt(Customizer.withDefaults())
+    .authenticationEntryPoint(authenticationEntryPoint))
 ```
 
 For 401 it injects Spring Security's own `AuthenticationEntryPoint` **interface**. The

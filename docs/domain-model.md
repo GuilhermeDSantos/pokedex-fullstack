@@ -245,7 +245,8 @@ Base path **`/api/v1`**, a plain prefix (D-029). JSON only. Errors always use `E
 lists always use `PageResponse`. `{identifier}` is a name or a Pokédex number (`pikachu` or `25`).
 The frontend doesn't know or care which data comes from PokeAPI and which from the database.
 
-Routes not in this table need a token (D-035): without one, they answer 401, not 404.
+Routes not in this table need a token (D-035): without one, they answer 401, not 404. Public
+routes ignore the `Authorization` header, so an expired token never makes them fail (D-036).
 
 | Method & path | Auth | Success | Errors | Story |
 |---|---|---|---|---|

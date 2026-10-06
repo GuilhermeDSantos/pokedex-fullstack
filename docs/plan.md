@@ -149,8 +149,11 @@ Backend:
       and `Instant.now(clock)`; `/auth/me` reads the user id from the token's subject.
       `AuthControllerIT`: register 201/400 (missing fields, malformed, rejected by the domain)/409,
       login 200/400 (missing fields, malformed)/401, `/auth/me` 200/401 (no token, vanished account).
-      **Open:** an expired or invalid token sent to a **public** read answers 401 (the resource server
-      validates any `Authorization` header; checked with a throwaway test). To decide before S1.8.
+      Found while testing: an expired or invalid token sent to a **public** route answered 401.
+- [x] S1.6b Public routes ignore the bearer token (D-036): one `PUBLIC_ROUTES` matcher drives
+      `permitAll` and a `BearerTokenResolver`. `SecurityConfigIT`: an invalid token on every public
+      route → 200, and a **real** issued token on a protected route → 200 (`jwt()` skips the
+      resolver; a resolver that ignores every token fails only this test, proven by mutation).
 - [ ] S1.7 `AuthFlowIT` (`@SpringBootTest` + Testcontainers): register → login → `/auth/me` with the
       **real** issued token (the controller ITs only simulate one), plus a garbage token → 401
       `ErrorResponse`. Then delete `src/test/resources/archunit.properties`: every layer now has

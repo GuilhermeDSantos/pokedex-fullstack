@@ -390,6 +390,22 @@ endpoint would get its security retrofitted.
 Slice 1. The list and detail come from PokeAPI only in Slices 2–3, and local data joins them in
 Slices 4 and 6.
 
+## D-036 — Public routes ignore the bearer token
+**Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** TR-AUTH-3, FE-4 · **Refines:** D-035
+**Context:** The resource server validates any `Authorization` header it finds, even on a
+`permitAll` route. Tokens live for an hour, so a browser still holding an expired one got a 401 on
+the public Pokémon list, and even on login. Checked with a throwaway test before deciding.
+**Decision:** The public routes are declared once, as a `RequestMatcher` in `SecurityConfig`. The
+same matcher drives `permitAll` and a `BearerTokenResolver` that returns no token for those
+routes, so public routes never read the header.
+**Alternatives considered:** Leaving it to the frontend (send the token only on protected calls,
+clear the session on 401). It works, but the rule would be hidden in one client, and any other
+client would hit the same trap.
+**Consequences:** A public route answers the same with or without a token, valid or not. A
+protected route still rejects an invalid token with 401. `SecurityConfigIT` covers both, plus a
+**real** issued token on a protected route, because `jwt()` from spring-security-test skips the
+resolver.
+
 ## D-035 — The route policy is closed by default
 **Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** TR-AUTH-3 · **Refines:** D-030
 **Context:** D-030 says which routes are public (every read, register, login, health) and which are

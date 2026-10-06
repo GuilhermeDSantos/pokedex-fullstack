@@ -363,6 +363,9 @@ Exact patterns, not suggestions.
   token: the writes (`POST`, `PUT`, `DELETE` on `/api/v1/pokemon/*/local`), `/auth/me`, and any
   route nobody declared, because the policy lists the public routes and ends in
   `anyRequest().authenticated()` (D-035). Other actuator endpoints are not exposed.
+- The public routes are one `RequestMatcher` (`PUBLIC_ROUTES`), used by `permitAll` **and** by the
+  `BearerTokenResolver`, which ignores the `Authorization` header on them (D-036). Otherwise an
+  expired token in the browser turns a public page into a 401.
 - CSRF disabled (stateless bearer tokens, no cookies). **No CORS configuration**: the browser
   only ever talks to one origin. In Docker, nginx serves the SPA and proxies `/api` to the
   backend. In development, the Vite dev server proxies `/api` (D-019).
