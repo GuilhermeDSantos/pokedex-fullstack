@@ -170,9 +170,12 @@ public record LocalPokemonId(UUID value) {
 
 // domain/model/PokedexNumber.java
 public record PokedexNumber(int value) {
+
+    public static final int MIN_VALUE = 1;
+
     public PokedexNumber {
-        if (value < 1) {
-            throw new InvalidPokedexNumberException(value);
+        if (value < MIN_VALUE) {
+            throw new InvalidPokedexNumberException(MIN_VALUE);
         }
     }
 }
@@ -427,10 +430,6 @@ public record EvolutionStage(String speciesName, PokedexNumber number, List<Evol
  * map it to 503 without depending on the infrastructure adapter that throws it.
  */
 public class PokemonSourceUnavailableException extends RuntimeException {
-    public PokemonSourceUnavailableException(String message) {
-        super(message);
-    }
-
     public PokemonSourceUnavailableException(String message, Throwable cause) {
         super(message, cause);
     }

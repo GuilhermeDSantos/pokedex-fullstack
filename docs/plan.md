@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.1 (Slice 2, browse the list). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.2 (PokeAPI fixtures and the translator). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -201,17 +201,23 @@ handlers mirror the API contract):
       detail users can't act on. Split into `WeakPasswordException` (what to do) and
       `PasswordTooLongException` ("Password is too long"), and the sign-up form now shows the rule up
       front as a `TextField` hint (described after any error).
-      **Open (FE-5):** Chrome itself logs "Failed to load resource" for every 4xx, so the expected
-      400/401/409 of these error paths show in the console. App code can't suppress it.
+      **FE-5, accepted by the developer:** Chrome itself logs "Failed to load resource" for every
+      4xx, so the expected 400/401/409 of these error paths show in the console. App code can't
+      suppress it; the app writes nothing and the happy paths are clean (walkthrough FAQ).
 
 ## Slice 2 — Browse the list (US-01, US-01.N, TR-CACHE, FR-0, FE-2)
 
 The list comes straight from PokeAPI here. Local data joins it in Slice 6.
 
 Backend:
-- [ ] S2.1 Domain VOs (TDD): `PokedexNumber`, `PokemonIdentifier`, `Weight`, `PokemonType`,
-      `Ability`, plus `PokemonSummary` and the `PokemonSource` port with
-      `PokemonSourceUnavailableException`.
+- [x] S2.1 Domain (TDD, plain JUnit): `PokedexNumber` (≥ 1, else `InvalidPokedexNumberException`,
+      400; boundary proven by mutation), `Weight` (kg from PokeAPI's hectograms, one decimal so
+      `6` equals `6.0`, negative rejected), `PokemonType` (trimmed, lower-cased), `Ability` (the
+      brief's skills), `PokemonSummary` (number, name and weight required; sprite and category
+      nullable; immutable lists), and the `PokemonSource` port (`findAll` only) with
+      `PokemonSourceUnavailableException`. Data that comes from PokeAPI and breaks a rule is a
+      mapping bug (`IllegalArgumentException`, 500), not a 400. `PokemonIdentifier` and
+      `findByIdentifier` move to S3.1: only the detail route uses them.
 - [ ] S2.2 Record PokeAPI fixtures with `curl` under `src/test/resources/pokeapi/` (a list page,
       bulbasaur, pikachu with their species). `PokeApiTranslator` for summaries + tests (units,
       English genus as category, slot order, null sprite).
@@ -235,8 +241,9 @@ Frontend:
 ## Slice 3 — View a Pokémon (US-02, FE-2)
 
 Backend:
-- [ ] S3.1 Domain (TDD): `Height`, `BaseStat`/`StatName`, `PokemonProfile`, `EvolutionStage`,
-      `PokemonDetail`, `PokemonNotFoundException`.
+- [ ] S3.1 Domain (TDD): `PokemonIdentifier` (+ `InvalidPokemonIdentifierException`), `Height`,
+      `BaseStat`/`StatName`, `PokemonProfile`, `EvolutionStage`, `PokemonDetail`,
+      `PokemonNotFoundException`, and `PokemonSource.findByIdentifier` / `getByIdentifier`.
 - [ ] S3.2 Fixtures for eevee (branching chain) and an evolution chain. `PokeApiTranslator` for
       details + tests (flavor-text normalization, highest English version, branching evolution
       tree, null artwork). `PokeApiPokemonSource.findByIdentifier`, cached through the client, with

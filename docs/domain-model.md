@@ -86,10 +86,10 @@ repository of their own.
 |---|---|
 | `LocalPokemonId(UUID value)` | non-null; `generate()` (edge only) |
 | `UserId(UUID value)` | same shape |
-| `PokedexNumber(int value)` | `value ≥ 1` → `InvalidPokedexNumberException` (Validation) |
+| `PokedexNumber(int value)` | `value ≥ MIN_VALUE` (1) → `InvalidPokedexNumberException` ("Pokédex number must be at least 1", Validation) |
 | `PokemonIdentifier(String value)` | trimmed, lower-cased; digits or `[a-z0-9-]+`, ≤ `MAX_LENGTH` (100) → `InvalidPokemonIdentifierException` (Validation). A name **or** a number: `isNumber()`, `asNumber()` |
 | `Height(BigDecimal meters)` / `Weight(BigDecimal kilograms)` | `≥ 0`, scale 1. Factories `fromDecimetres(int)` / `fromHectograms(int)` hold the unit conversion |
-| `PokemonType(String name)` | non-blank, lower-case |
+| `PokemonType(String name)` | non-blank (else `IllegalArgumentException`: it comes from PokeAPI, so it's a mapping bug), trimmed, lower-cased |
 | `Ability(String name, boolean hidden)` | non-blank name |
 | `BaseStat(StatName name, int value)` | `1 ≤ value ≤ 255`. `StatName` enum: `HP, ATTACK, DEFENSE, SPECIAL_ATTACK, SPECIAL_DEFENSE, SPEED` |
 | `PokemonProfile(...)` | The full PokeAPI view: name, category, height, weight, spriteUrl, artworkUrl, `types` 1..2, `abilities` ≥ 1, `stats` one per `StatName` in `StatName` order, description. Urls, description and category are nullable (PokeAPI has gaps). `toSnapshot()` returns the scalar subset |
