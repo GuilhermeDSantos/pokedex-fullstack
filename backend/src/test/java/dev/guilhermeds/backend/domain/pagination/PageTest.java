@@ -21,4 +21,14 @@ class PageTest {
         assertThatThrownBy(() -> page.content().add("charmander"))
             .isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    void shouldMapTheContentAndKeepTheTotal() {
+        var page = new Page<>(List.of("bulbasaur", "ivysaur"), 1302);
+
+        var mapped = page.map(String::length);
+
+        assertThat(mapped.content()).containsExactly(9, 7);
+        assertThat(mapped.totalElements()).isEqualTo(1302);
+    }
 }
