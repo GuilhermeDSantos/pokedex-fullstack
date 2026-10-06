@@ -23,6 +23,7 @@ public class SecurityConfig {
     private static final RequestMatcher PUBLIC_ROUTES = new OrRequestMatcher(
         withDefaults().matcher("/actuator/health"),
         withDefaults().matcher("/actuator/health/**"),
+        withDefaults().matcher(HttpMethod.GET, "/v3/api-docs/**"),
         withDefaults().matcher(HttpMethod.GET, "/api/v1/pokemon/**"),
         withDefaults().matcher(HttpMethod.POST, "/api/v1/auth/register"),
         withDefaults().matcher(HttpMethod.POST, "/api/v1/auth/login"));
