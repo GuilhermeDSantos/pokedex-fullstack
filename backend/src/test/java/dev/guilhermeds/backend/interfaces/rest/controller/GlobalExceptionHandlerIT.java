@@ -108,6 +108,16 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldKeepValidationMessagesInEnglishWhateverTheBrowserLanguage() {
+        assertThat(mockMvc.post().uri("/probe/valid")
+                .header("Accept-Language", "pt-BR")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"name\": \" \" }"))
+            .hasStatus(400)
+            .bodyJson().extractingPath("$.fieldErrors[0].message").isEqualTo("must not be blank");
+    }
+
     @RestController
     static class ProbeController {
 
