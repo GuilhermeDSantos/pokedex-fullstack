@@ -16,7 +16,7 @@ public record RawPassword(String value) {
             || value.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES
             || value.chars().noneMatch(Character::isLetter)
             || value.chars().noneMatch(Character::isDigit)) {
-            throw new WeakPasswordException(MIN_LENGTH, MAX_BYTES);
+            throw new WeakPasswordException(MIN_LENGTH);
         }
     }
 
