@@ -390,6 +390,17 @@ endpoint would get its security retrofitted.
 Slice 1. The list and detail come from PokeAPI only in Slices 2–3, and local data joins them in
 Slices 4 and 6.
 
+## D-037 — Frontend test matchers: @testing-library/jest-dom
+**Status:** Accepted · **Date:** 2026-10-06 · dev dependency · **Requirements:** TR-UT, FE-5
+**Context:** D-023 covers the runner and the rendering library, but not the DOM assertions.
+**Decision:** Add `@testing-library/jest-dom`, loaded through its Vitest entry in the test setup.
+Tests read as the user sees the page: `toBeDisabled`, `toHaveValue`, `toHaveAccessibleDescription`
+for field errors.
+**Alternatives considered:** Plain `expect`, with casts like `(el as HTMLButtonElement).disabled`:
+one dependency less, but noisier tests and failure messages that say less.
+**Consequences:** Dev-only, no production code. It's the standard companion of React Testing
+Library.
+
 ## D-036 — Public routes ignore the bearer token
 **Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** TR-AUTH-3, FE-4 · **Refines:** D-035
 **Context:** The resource server validates any `Authorization` header it finds, even on a
