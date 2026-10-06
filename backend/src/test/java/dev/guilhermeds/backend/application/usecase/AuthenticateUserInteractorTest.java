@@ -21,7 +21,10 @@ import static dev.guilhermeds.backend.fixture.UserAccountFixture.NOW;
 import static dev.guilhermeds.backend.fixture.UserAccountFixture.ash;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticateUserInteractorTest {
@@ -56,5 +59,18 @@ class AuthenticateUserInteractorTest {
 
         assertThat(output.accessToken()).isEqualTo("signed.jwt.value");
         assertThat(output.expiresAt()).isEqualTo(NOW.plusSeconds(3600));
+    }
+
+    @Test
+    void shouldRefuseAWrongPasswordWithTheSameErrorAsAnUnknownEmail() {
+        var ash = ash();
+        given(repository.findByEmail(new Email("ash@pallet.town"))).willReturn(Optional.of(ash));
+        given(passwordHasher.matches(new RawPassword("charmander1"), ash.getPasswordHash())).willReturn(false);
+
+        assertThatThrownBy(() -> interactor.execute(new AuthenticateUserInput("ash@pallet.town", "charmander1"), NOW))
+            .isInstanceOf(InvalidCredentialsException.class)
+            .hasMessage("Invalid email or password");
+
+        then(tokenIssuer).should(never()).issue(any(), any());
     }
 }
