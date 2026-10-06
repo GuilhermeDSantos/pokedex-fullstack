@@ -12,6 +12,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Testcontainers
@@ -42,6 +43,18 @@ class SpringUnitOfWorkIT {
 
         assertThat(result).isEqualTo("done");
         assertThat(probeRows()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldRollBackAndRethrowWhenWorkFails() {
+        var failure = new IllegalStateException("boom");
+
+        assertThatThrownBy(() -> unitOfWork.inTransaction(() -> {
+            jdbc.update("INSERT INTO uow_probe VALUES ('pikachu')");
+            throw failure;
+        })).isSameAs(failure);
+
+        assertThat(probeRows()).isZero();
     }
 
     private int probeRows() {
