@@ -12,7 +12,7 @@ always TDD inward-out: domain → interactor → adapters. The product being bui
 
 ## Current focus
 
-> **Phase 1 — Backend foundation.** Next task: 1.1.
+> **Phase 1 — Backend foundation.** Next task: 1.2.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent still asks before every push.
 
@@ -65,9 +65,12 @@ guard, Docker, the README, the GenAI case study.
 
 ## Phase 1 — Backend foundation (OV-2, TR-ERR, TR-API-2)
 
-- [ ] 1.1 `LayeredArchitectureTest` with **all** rules from
+- [x] 1.1 `LayeredArchitectureTest`: 17 ArchUnit rules from
       [`examples/tests.md`](examples/tests.md#architecture-test), green on the empty skeleton.
-      Then remove the two temporary `failOn…` lines from the `test` task in `build.gradle`.
+      Proven with a throwaway domain class (Spring annotation + `Instant.now()` + public
+      constructor): exactly those three rules failed. The temporary `failOn…` lines in
+      `build.gradle` are removed. **Temporary:** `archunit.properties` allows empty rules until
+      every layer has classes (removed in 3.5).
 - [ ] 1.2 Domain kernel: `DomainException` + the 4 categories, `domain/pagination` (`PageRequest`,
       `Page`) with tests.
 - [ ] 1.3 `UnitOfWork` port + `SpringUnitOfWork`, `ClockConfig`, an empty `UseCaseConfig`.
@@ -112,7 +115,8 @@ guard, Docker, the README, the GenAI case study.
       `RemoveLocalPokemon`.
 - [ ] 3.5 `PokemonController` + `PokemonControllerIT`: every status in the contract, including
       reads without a token (public), writes without a token → 401, malformed JSON → 400, not
-      synced → 404, already synced → 409.
+      synced → 404, already synced → 409. Then delete `src/test/resources/archunit.properties`:
+      every layer now has classes, so an ArchUnit rule that matches nothing must fail again.
 
 ## Phase 4 — Users & authentication (TR-DB-1, TR-AUTH-1..3)
 

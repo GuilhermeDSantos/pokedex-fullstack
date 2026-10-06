@@ -527,10 +527,16 @@ class LayeredArchitectureTest {
             .orShould().beAnnotatedWith(ManyToMany.class);
 
     @ArchTest
-    static final ArchRule transactional_only_in_the_unit_of_work_adapter =
+    static final ArchRule transactional_classes_only_in_the_unit_of_work_adapter =
         noClasses().that().resideOutsideOfPackage("..infrastructure.transaction..")
-            .should().beAnnotatedWith(Transactional.class)
-            .orShould().containAnyMethodsThat(annotatedWith(Transactional.class));
+            .should().beAnnotatedWith(Transactional.class);
+
+    // ArchUnit 1.5 has no "classes that contain methods annotated with…" condition, so methods get
+    // their own rule.
+    @ArchTest
+    static final ArchRule transactional_methods_only_in_the_unit_of_work_adapter =
+        noMethods().that().areAnnotatedWith(Transactional.class)
+            .should().beDeclaredInClassesThat().resideOutsideOfPackage("..infrastructure.transaction..");
 
     // ---- determinism --------------------------------------------------------------
 
@@ -581,5 +587,7 @@ without `@Version`).
 `Instant.now(clock)` (the one-arg overload) is allowed because the rule targets the no-arg call.
 `JwtTokenIssuer` doesn't trip the clock rule, because it receives `now`.
 
-Gradle: `testImplementation 'com.tngtech.archunit:archunit-junit5:<latest 1.x>'`. The class is named
+Gradle: `testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'`. While a layer is still
+empty, `src/test/resources/archunit.properties` sets `archRule.failOnEmptyShould=false`. Remove it
+once every layer has classes (plan 3.5). The class is named
 `*Test`, not `*IT`, on purpose, so it runs on every `./gradlew test`.

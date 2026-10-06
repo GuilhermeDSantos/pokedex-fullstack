@@ -31,6 +31,20 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — An ArchUnit method in the reference examples didn't exist
+- **Context:** Writing `LayeredArchitectureTest` from `docs/examples/tests.md` (plan 1.1, OV-2).
+- **AI proposed (earlier, in the examples it wrote):** `noClasses()…should().beAnnotatedWith(Transactional.class)
+  .orShould().containAnyMethodsThat(annotatedWith(Transactional.class))`.
+- **Problem:** The compiler rejected it: `ClassesShould` in ArchUnit 1.5.1 has no
+  `containAnyMethodsThat`, which `javap` on the jar confirmed. The API was plausible-sounding and
+  invented. Every agent copying the example would have hit the same wall.
+- **Resolution:** Two rules using the real API: classes annotated outside the transaction package,
+  and `noMethods().that().areAnnotatedWith(…).should().beDeclaredInClassesThat()…`. The example was
+  fixed too. The whole rule set was then proven with a throwaway violating class: the three
+  expected rules failed, and nothing else did.
+- **Lesson:** Reference docs written by an AI need the same compile-and-run check as its code. A
+  fluent API makes invented method names look especially natural.
+
 ### 2026-10-06 — Infrastructure: four assumptions checked, two of them wrong
 - **Context:** Making the stack run end to end before any feature code: Gradle, Docker, compose,
   first IT (plan 0.2–0.5, DL-3, TR-TEST).
