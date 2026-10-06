@@ -142,8 +142,26 @@ class GlobalExceptionHandlerIT {
                 """);
     }
 
+    @Test
+    void shouldReturnAGeneric500WithoutLeakingTheCause() {
+        var result = mockMvc.get().uri("/probe/unexpected").exchange();
+
+        assertThat(result)
+            .hasStatus(500)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "INTERNAL_ERROR", "message": "An unexpected error occurred", "fieldErrors": [] }
+                """);
+        assertThat(result).bodyText().doesNotContain("s3cr3t");
+    }
+
     @RestController
     static class ProbeController {
+
+        @GetMapping("/probe/unexpected")
+        void unexpected() {
+            throw new IllegalStateException("connection string with s3cr3t");
+        }
 
         @GetMapping("/probe/params")
         void params(@RequestParam int page) {
