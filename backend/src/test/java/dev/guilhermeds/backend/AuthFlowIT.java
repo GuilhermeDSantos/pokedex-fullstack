@@ -55,4 +55,14 @@ class AuthFlowIT {
                 { "email": "brock@pewter.city", "name": "Brock" }
                 """);
     }
+
+    @Test
+    void shouldAnswerAGarbageTokenWithAnErrorResponse() {
+        assertThat(mockMvc.get().uri("/api/v1/auth/me").header("Authorization", "Bearer garbage"))
+            .hasStatus(401)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "UNAUTHENTICATED", "message": "Authentication is required to access this resource" }
+                """);
+    }
 }
