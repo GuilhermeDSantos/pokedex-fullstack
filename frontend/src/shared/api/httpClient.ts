@@ -2,6 +2,7 @@ import { ApiError } from './ApiError'
 import type { ErrorResponse } from './ErrorResponse'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
+const UNEXPECTED_RESPONSE_MESSAGE = 'Something went wrong. Please try again.'
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
@@ -23,8 +24,29 @@ export async function request<T>(path: string, { method = 'GET', body, accessTok
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   if (!response.ok) {
-    const error = (await response.json()) as ErrorResponse
-    throw new ApiError(response.status, error.code, error.message, error.fieldErrors)
+    throw await toApiError(response)
   }
   return (await response.json()) as T
+}
+
+async function toApiError(response: Response): Promise<ApiError> {
+  const body: unknown = await response.json().catch(() => null)
+  if (isErrorResponse(body)) {
+    return new ApiError(response.status, body.code, body.message, body.fieldErrors)
+  }
+  // A proxy in front of the backend (nginx) answers with HTML when the backend is down.
+  return new ApiError(response.status, 'UNEXPECTED_RESPONSE', UNEXPECTED_RESPONSE_MESSAGE)
+}
+
+function isErrorResponse(body: unknown): body is ErrorResponse {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'code' in body &&
+    typeof body.code === 'string' &&
+    'message' in body &&
+    typeof body.message === 'string' &&
+    'fieldErrors' in body &&
+    Array.isArray(body.fieldErrors)
+  )
 }
