@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.6. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.7. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -143,8 +143,14 @@ Backend:
       paths): missing/invalid token → 401 `ErrorResponse`, public reads, register and login,
       protected writes + `/auth/me` + an undeclared route → 401, authenticated → 200. No 403
       writer: without roles nothing can answer 403, so it waits for the first role.
-- [ ] S1.6 `AuthController` + `AuthControllerIT`: register 201/400/409, login 200/400/401,
-      `/auth/me` 200/401.
+- [x] S1.6 `AuthController` + `AuthRestMapper` (requests `RegisterUserRequest`,
+      `AuthenticateUserRequest` with required-ness only; responses `UserResponse`,
+      `AccessTokenResponse` with `tokenType: "Bearer"`). The controller is the edge: `UserId.generate()`
+      and `Instant.now(clock)`; `/auth/me` reads the user id from the token's subject.
+      `AuthControllerIT`: register 201/400 (missing fields, malformed, rejected by the domain)/409,
+      login 200/400 (missing fields, malformed)/401, `/auth/me` 200/401 (no token, vanished account).
+      **Open:** an expired or invalid token sent to a **public** read answers 401 (the resource server
+      validates any `Authorization` header; checked with a throwaway test). To decide before S1.8.
 - [ ] S1.7 `AuthFlowIT` (`@SpringBootTest` + Testcontainers): register → login → `/auth/me` with the
       **real** issued token (the controller ITs only simulate one), plus a garbage token → 401
       `ErrorResponse`. Then delete `src/test/resources/archunit.properties`: every layer now has
