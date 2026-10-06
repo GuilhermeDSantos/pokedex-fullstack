@@ -90,7 +90,9 @@ describe('SignUpPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
 
     expect(screen.getByLabelText('Name')).toHaveAccessibleDescription('Name is required')
-    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is required')
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription(
+      'Password is required At least 8 characters, with a letter and a digit',
+    )
     expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-invalid')
   })
 
@@ -101,5 +103,11 @@ describe('SignUpPage', () => {
       'href',
       '/login?returnTo=%2Fpokemon%2F25',
     )
+  })
+
+  it('shows the password rule before the user types', () => {
+    renderApp('/register')
+
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('At least 8 characters, with a letter and a digit')
   })
 })
