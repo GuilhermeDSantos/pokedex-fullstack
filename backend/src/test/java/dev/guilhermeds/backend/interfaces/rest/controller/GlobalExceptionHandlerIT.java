@@ -6,6 +6,8 @@ import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
 import dev.guilhermeds.backend.domain.exception.DomainException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -17,6 +19,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,8 +121,23 @@ class GlobalExceptionHandlerIT {
             .bodyJson().extractingPath("$.fieldErrors[0].message").isEqualTo("must not be blank");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"/probe/params", "/probe/params?page=abc"})
+    void shouldReturn400WhenAParameterIsMissingOrOfTheWrongType(String uri) {
+        assertThat(mockMvc.get().uri(uri))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Invalid request parameter", "fieldErrors": [] }
+                """);
+    }
+
     @RestController
     static class ProbeController {
+
+        @GetMapping("/probe/params")
+        void params(@RequestParam int page) {
+        }
 
         @PostMapping("/probe/valid")
         void valid(@Valid @RequestBody ProbeValidRequest request) {
