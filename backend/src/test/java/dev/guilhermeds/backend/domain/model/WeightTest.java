@@ -22,4 +22,10 @@ class WeightTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("weight cannot be negative");
     }
+
+    // BigDecimal equality includes the scale, so 6 and 6.0 must normalize to the same weight.
+    @Test
+    void shouldKeepOneDecimalSoEqualWeightsAreEqual() {
+        assertThat(new Weight(new BigDecimal("6"))).isEqualTo(Weight.fromHectograms(60));
+    }
 }
