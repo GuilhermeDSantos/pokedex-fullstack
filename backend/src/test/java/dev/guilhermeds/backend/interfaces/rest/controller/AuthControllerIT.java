@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @WebMvcTest(AuthController.class)
 @Import({AuthRestMapper.class, SecurityConfig.class, JwtConfig.class, ErrorResponseAuthenticationEntryPoint.class,
@@ -73,5 +74,22 @@ class AuthControllerIT {
                 { "id": "00000000-0000-0000-0000-000000000001", "email": "ash@pallet.town",
                   "name": "Ash Ketchum", "createdAt": "2026-01-15T10:00:00Z" }
                 """);
+    }
+
+    @Test
+    void shouldRejectARegistrationWithMissingFields() {
+        assertThat(mockMvc.post().uri("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": " ", "name": "Ash Ketchum" }
+                    """))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Request body is invalid",
+                  "fieldErrors": [ { "field": "email", "message": "must not be blank" },
+                                   { "field": "password", "message": "must not be blank" } ] }
+                """);
+        verifyNoInteractions(registerUserUseCase);
     }
 }
