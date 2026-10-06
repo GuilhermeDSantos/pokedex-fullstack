@@ -1,6 +1,7 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
+import dev.guilhermeds.backend.domain.model.Weight;
 import org.junit.jupiter.api.Test;
 
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.pokemon;
@@ -17,5 +18,12 @@ class PokeApiTranslatorTest {
 
         assertThat(summary.number()).isEqualTo(new PokedexNumber(25));
         assertThat(summary.name()).isEqualTo("pikachu");
+    }
+
+    // PokeAPI sends hectograms: Pikachu's 60 is 6.0 kg, the brief's "mass in kg".
+    @Test
+    void shouldConvertTheWeightToKilograms() {
+        assertThat(translator.toSummary(pokemon(25), species(25)).weight()).isEqualTo(Weight.fromHectograms(60));
+        assertThat(translator.toSummary(pokemon(25), species(25)).weight().kilograms()).isEqualByComparingTo("6.0");
     }
 }
