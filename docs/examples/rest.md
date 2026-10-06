@@ -104,11 +104,11 @@ public record UpdateLocalPokemonRequest(
     @Size(max = CustomAttributes.MAX_TAGS) List<@NotBlank String> tags   // format: the Tag VO decides
 ) {}
 
-// interfaces/rest/request/RegisterUserRequest.java — required-ness only; Email, DisplayName and
+// interfaces/rest/request/RegisterUserRequest.java — required-ness only; Email, FullName and
 // RawPassword own format, length and the 72-byte BCrypt limit.
 public record RegisterUserRequest(
     @NotBlank String email,
-    @NotBlank String displayName,
+    @NotBlank String name,
     @NotBlank String password
 ) {}
 ```

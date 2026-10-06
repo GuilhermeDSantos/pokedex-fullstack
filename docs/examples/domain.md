@@ -280,16 +280,17 @@ public record CustomAttributes(String localizedName, String region, Set<Tag> tag
 // domain/model/RawPassword.java — a secret: validated, never stored, never printed
 public record RawPassword(String value) {
 
+    public static final int MIN_LENGTH = 8;
+    // BCrypt rejects inputs longer than 72 bytes, so the limit is in bytes, not characters.
+    public static final int MAX_BYTES = 72;
+
     public RawPassword {
-        Objects.requireNonNull(value, "password must not be null");
-        // BCrypt's limit is 72 BYTES, not chars: 60 accented chars pass a char check and then make
-        // the hasher throw (a 500). Spring Security 7.1.1 BCrypt.hashpw rejects > 72 bytes.
-        var longEnough = value.length() >= 8 && value.getBytes(StandardCharsets.UTF_8).length <= 72;
-        var hasLetter = value.chars().anyMatch(Character::isLetter);
-        var hasDigit = value.chars().anyMatch(Character::isDigit);
-        if (!(longEnough && hasLetter && hasDigit)) {
-            // The message describes the policy, never echoes the value.
-            throw new WeakPasswordException();
+        if (value == null
+            || value.length() < MIN_LENGTH
+            || value.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES
+            || value.chars().noneMatch(Character::isLetter)
+            || value.chars().noneMatch(Character::isDigit)) {
+            throw new WeakPasswordException(MIN_LENGTH, MAX_BYTES);
         }
     }
 
@@ -317,14 +318,16 @@ adds `toSnapshot()`, which returns the scalar subset the local record keeps.
 // domain/pagination/PageRequest.java
 public record PageRequest(int page, int size) {
 
-    public static final int MAX_SIZE = 50; // a list page fans out to 2 PokeAPI calls per entry
+    public static final int MIN_SIZE = 1;
+    // Each item of a PokeAPI list page costs two upstream calls.
+    public static final int MAX_SIZE = 50;
 
     public PageRequest {
         if (page < 0) {
-            throw new InvalidPageRequestException("page cannot be negative");
+            throw InvalidPageRequestException.negativePage();
         }
-        if (size < 1 || size > MAX_SIZE) {
-            throw new InvalidPageRequestException("size must be between 1 and " + MAX_SIZE);
+        if (size < MIN_SIZE || size > MAX_SIZE) {
+            throw InvalidPageRequestException.sizeOutOfRange(MIN_SIZE, MAX_SIZE);
         }
     }
 

@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.1. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S1.2. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -104,9 +104,14 @@ First, so every protected endpoint of the later slices is born behind the real s
 with its 401 tests.
 
 Backend:
-- [ ] S1.1 Domain (TDD): `UserId`, `Email`, `DisplayName`, `RawPassword` (redacted, ≤ 72 bytes),
-      `PasswordHash`, `UserAccount` + `EmailAlreadyRegisteredException`,
-      `InvalidCredentialsException`, `UnknownAccountException` and the validation exceptions.
+- [x] S1.1 Domain, in TDD cycles + refactors: `Email` (trimmed, lower-cased, format, ≤ 254),
+      `FullName` (the user's name, one free-text field, trimmed, 2..100; renamed from
+      `DisplayName`), `RawPassword` (8 chars to 72 **bytes**, a letter and a digit, redacted
+      `toString`), `PasswordHash`, `UserId`, the `UserAccount` aggregate, and their validation
+      exceptions, whose messages are built from the VO's limits and read consistently (also
+      `InvalidPageRequestException`, now with named factories). The other exceptions
+      (`EmailAlreadyRegistered`, `InvalidCredentials`, `UnknownAccount`) come in S1.4 with the
+      interactors that throw them.
 - [ ] S1.2 Migration `V1__create_user_accounts.sql`, then `UserAccountEntity`, the Spring Data
       interface, the entity mapper and `JpaUserAccountRepository` + IT (round trip, unique email →
       409).
@@ -115,7 +120,8 @@ Backend:
       creating the HS256 `JwtEncoder`/`JwtDecoder`. `JWT_SECRET` in `docker-compose.yml` and
       `.env.example`, with a dev-only default of at least 32 bytes (HS256 minimum; verify against
       Nimbus when implementing).
-- [ ] S1.4 Interactors (TDD): `RegisterUser`, `AuthenticateUser` (same 401 for unknown email and
+- [ ] S1.4 Interactors (TDD), with `EmailAlreadyRegisteredException`, `InvalidCredentialsException`
+      and `UnknownAccountException`: `RegisterUser`, `AuthenticateUser` (same 401 for unknown email and
       wrong password), `GetCurrentUser` (account gone → 401 `UnknownAccountException`, D-033).
       `UseCaseConfig` (the composition root) is created here, wiring them.
 - [ ] S1.5 `SecurityConfig`: stateless, CSRF off, no CORS, `oauth2ResourceServer(jwt)`, the D-030

@@ -186,6 +186,11 @@ Exact patterns, not suggestions.
 - **`builder()` is the reconstitution contract, not a construction API.** It null-checks but does
   not re-run creation invariants. Only `{Name}EntityMapper` calls it. Say so in the entity Javadoc.
 - Value Objects: always `record`, validated in the compact constructor. No null, no invalid state.
+  Limits are public constants on the VO (`FullName.MAX_LENGTH`), and the exception builds its
+  message from them (`new InvalidFullNameException(MIN_LENGTH, MAX_LENGTH)`), so the message
+  can't drift from the rule. Tests still assert the literal values, because they're the spec.
+  Messages reach the user through `ErrorResponse`: start with a capital letter, name the field as
+  the user knows it ("Name", "Password"), and state the real rule (the password limit is in bytes).
   A VO holding a secret (`RawPassword`) overrides `toString()` to redact it.
 - Repository interfaces declare only what the domain needs, with the domain's own
   `Page`/`PageRequest` (`domain/pagination/`) — never Spring Data types. Pair `findById` with a

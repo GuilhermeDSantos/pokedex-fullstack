@@ -63,7 +63,7 @@ records are shared, not owned.
 ┌──────────── LocalPokemon (aggregate root) ─────────────┐   ┌──── UserAccount (aggregate root) ────┐
 │ LocalPokemonId id            (UUID, minted at the edge) │   │ UserId id                             │
 │ PokedexNumber pokedexNumber  (unique)                   │   │ Email email            (unique)       │
-│ PokemonSnapshot snapshot     (copied from PokeAPI)      │   │ DisplayName displayName               │
+│ PokemonSnapshot snapshot     (copied from PokeAPI)      │   │ FullName name                         │
 │   └ name (unique), category, height, weight,            │   │ PasswordHash passwordHash             │
 │     spriteUrl, artworkUrl, description                  │   │ Instant createdAt                     │
 │ CustomAttributes custom      (ours — US-03.a / US-04)   │   └───────────────────────────────────────┘
@@ -96,8 +96,8 @@ repository of their own.
 | `PokemonSnapshot(...)` | name non-blank; category, height, weight, spriteUrl, artworkUrl, description; urls, category and description nullable |
 | `Tag(String value)` | trimmed, lower-cased, `^[a-z0-9][a-z0-9-]{0,29}$` → `InvalidTagException` (Validation) |
 | `CustomAttributes(String localizedName, String region, Set<Tag> tags)` | strings trimmed, blank → `null`, ≤ `MAX_TEXT_LENGTH` (100) chars each; ≤ `MAX_TAGS` (10) tags → `InvalidCustomAttributesException` (Validation). `CustomAttributes.empty()` |
-| `Email(String value)` | trimmed, lower-cased, basic format → `InvalidEmailException` (Validation) |
-| `DisplayName(String value)` | 2..50 chars → `InvalidDisplayNameException` (Validation) |
+| `Email(String value)` | null rejected; trimmed, lower-cased, basic format, ≤ `MAX_LENGTH` (254) → `InvalidEmailException` (Validation) |
+| `FullName(String value)` | the user's name, free text as they write it (one field, no first/last split); null rejected; trimmed, `MIN_LENGTH`..`MAX_LENGTH` (2..100) chars → `InvalidFullNameException` (Validation) |
 | `RawPassword(String value)` | ≥ 8 chars and ≤ 72 **bytes** in UTF-8 (BCrypt's limit is in bytes: Spring Security 7.1.1 `BCrypt.hashpw` throws above it), at least one letter and one digit → `WeakPasswordException` (Validation). **`toString()` is redacted.** Never stored and never logged |
 | `PasswordHash(String value)` | non-blank. Opaque to the domain |
 
@@ -114,7 +114,7 @@ repository of their own.
 
 | Method | Rule |
 |---|---|
-| `static register(UserId, Email, DisplayName, PasswordHash, Instant now)` | `createdAt = now` |
+| `static register(UserId, Email, FullName, PasswordHash, Instant now)` | `createdAt = now`; exposed as `getName()` |
 | `static builder()` | Reconstitution only |
 
 Password policy runs on `RawPassword` **before** hashing. The domain never sees a hash being
@@ -175,7 +175,7 @@ DomainException (abstract)                          → 422 DOMAIN_ERROR (catch-
 ├── ValidationException (abstract)                  → 400 VALIDATION_ERROR
 │   ├── InvalidPokedexNumberException, InvalidPokemonIdentifierException, InvalidPageRequestException
 │   ├── InvalidTagException, InvalidCustomAttributesException
-│   └── InvalidEmailException, InvalidDisplayNameException, WeakPasswordException
+│   └── InvalidEmailException, InvalidFullNameException, WeakPasswordException
 └── UnauthenticatedException (abstract)             → 401 UNAUTHENTICATED
     ├── InvalidCredentialsException                 (same message for unknown email and wrong password)
     └── UnknownAccountException                     (valid token, but the account no longer exists — D-033)
@@ -247,7 +247,7 @@ The frontend doesn't know or care which data comes from PokeAPI and which from t
 | `POST /pokemon/{identifier}/local` (no body) | 🔒 | 201 `LocalPokemonResponse` + `Location` | 400, 401, 404 (not in PokeAPI), 409 (already synced), 503 | US-03 / CRUD-C |
 | `PUT /pokemon/{identifier}/local` body `{ "localizedName", "region", "tags": [] }` | 🔒 | 200 `LocalPokemonResponse` | 400 (invalid **or** malformed body), 401, 404 (not synced), 409 (modified concurrently) | US-04 / CRUD-U |
 | `DELETE /pokemon/{identifier}/local` | 🔒 | 204 | 400, 401, 404 (not synced) | CRUD-D |
-| `POST /auth/register` body `{ "email", "displayName", "password" }` | public | 201 `UserResponse` | 400, 409 | TR-AUTH |
+| `POST /auth/register` body `{ "email", "name", "password" }` | public | 201 `UserResponse` | 400, 409 | TR-AUTH |
 | `POST /auth/login` body `{ "email", "password" }` | public | 200 `{ "accessToken", "tokenType": "Bearer", "expiresAt" }` | 400, 401 | TR-AUTH |
 | `GET /auth/me` | 🔒 | 200 `UserResponse` | 401 (no/invalid token, or the account no longer exists) | TR-AUTH |
 | `GET /actuator/health` | public | 200 | | ops |
