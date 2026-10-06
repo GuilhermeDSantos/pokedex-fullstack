@@ -17,8 +17,14 @@ public class PokeApiTranslator {
     private static final String ENGLISH = "en";
 
     PokemonSummary toSummary(PokeApiPokemonJson pokemon, PokeApiSpeciesJson species) {
-        return new PokemonSummary(new PokedexNumber(pokemon.id()), pokemon.name(), pokemon.sprites().frontDefault(), englishGenus(species),
-            Weight.fromHectograms(pokemon.weight()), types(pokemon), abilities(pokemon));
+        return new PokemonSummary(
+            new PokedexNumber(pokemon.id()),
+            pokemon.name(),
+            pokemon.sprites().frontDefault(),
+            englishGenus(species),
+            Weight.fromHectograms(pokemon.weight()),
+            types(pokemon),
+            abilities(pokemon));
     }
 
     private static List<PokemonType> types(PokeApiPokemonJson pokemon) {
