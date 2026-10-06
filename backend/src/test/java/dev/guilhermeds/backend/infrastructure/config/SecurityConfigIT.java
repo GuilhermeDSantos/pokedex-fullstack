@@ -2,6 +2,8 @@ package dev.guilhermeds.backend.infrastructure.config;
 
 import dev.guilhermeds.backend.interfaces.rest.security.ErrorResponseAuthenticationEntryPoint;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -46,6 +48,12 @@ class SecurityConfigIT {
                 { "code": "UNAUTHENTICATED", "message": "Authentication is required to access this resource",
                   "fieldErrors": [] }
                 """);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/v1/pokemon", "/api/v1/pokemon/25", "/api/v1/pokemon/pikachu/local"})
+    void shouldLetAnyoneReadThePokemon(String uri) {
+        assertThat(mockMvc.get().uri(uri)).hasStatusOk();
     }
 
     @RestController
