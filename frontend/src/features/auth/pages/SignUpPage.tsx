@@ -16,12 +16,25 @@ const LABELS = { name: 'Name', email: 'Email', password: 'Password' }
 
 type SignUpField = keyof typeof LABELS
 
-// Registering can only conflict on the email, so a 409 belongs on that field.
+function isSignUpField(field: string): field is SignUpField {
+  return field in LABELS
+}
+
 function serverFieldErrors(error: Error | null): FieldErrors<SignUpField> {
-  if (error instanceof ApiError && error.status === 409) {
+  if (!(error instanceof ApiError)) {
+    return {}
+  }
+  // Registering can only conflict on the email, so a 409 belongs on that field.
+  if (error.status === 409) {
     return { email: error.message }
   }
-  return {}
+  const errors: FieldErrors<SignUpField> = {}
+  for (const { field, message } of error.fieldErrors) {
+    if (isSignUpField(field)) {
+      errors[field] = message
+    }
+  }
+  return errors
 }
 
 export function SignUpPage() {
@@ -52,7 +65,14 @@ export function SignUpPage() {
         <form onSubmit={handleSubmit} noValidate>
           <Stack>
             {formError && <FormError message={formError} />}
-            <TextField label={LABELS.name} name="name" autoComplete="name" value={name} onChange={setName} />
+            <TextField
+              label={LABELS.name}
+              name="name"
+              autoComplete="name"
+              value={name}
+              onChange={setName}
+              error={errors.name}
+            />
             <TextField
               label={LABELS.email}
               name="email"
@@ -69,6 +89,7 @@ export function SignUpPage() {
               autoComplete="new-password"
               value={password}
               onChange={setPassword}
+              error={errors.password}
             />
             <Button type="submit" pending={signUpMutation.isPending}>
               Create account
