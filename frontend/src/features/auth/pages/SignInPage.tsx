@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Button } from '../../../shared/ui/Button'
+import { FormError } from '../../../shared/ui/FormError'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
@@ -32,6 +33,7 @@ export function SignInPage() {
         <Heading level={1}>Sign in</Heading>
         <form onSubmit={handleSubmit} noValidate>
           <Stack>
+            {signInMutation.error && <FormError message={signInMutation.error.message} />}
             <TextField label="Email" name="email" type="email" autoComplete="email" value={email} onChange={setEmail} />
             <TextField
               label="Password"
