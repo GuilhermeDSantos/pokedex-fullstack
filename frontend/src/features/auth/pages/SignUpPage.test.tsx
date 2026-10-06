@@ -49,7 +49,7 @@ describe('SignUpPage', () => {
   })
 
   it('shows a rule the server enforces, such as the password policy, as a form error', async () => {
-    const policy = 'Password must have at least 8 characters, a letter and a digit, and at most 72 bytes'
+    const policy = 'Password must have at least 8 characters, including a letter and a digit'
     server.use(
       http.post('/api/v1/auth/register', () =>
         HttpResponse.json({ code: 'VALIDATION_ERROR', message: policy, fieldErrors: [] }, { status: 400 }),
