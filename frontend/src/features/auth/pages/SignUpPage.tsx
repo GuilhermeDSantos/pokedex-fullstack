@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { ApiError } from '../../../shared/api/ApiError'
 import { Button } from '../../../shared/ui/Button'
+import { FormError } from '../../../shared/ui/FormError'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
@@ -37,6 +38,7 @@ export function SignUpPage() {
   })
 
   const errors = serverFieldErrors(signUpMutation.error)
+  const formError = signUpMutation.error && Object.keys(errors).length === 0 ? signUpMutation.error.message : null
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -49,6 +51,7 @@ export function SignUpPage() {
         <Heading level={1}>Create account</Heading>
         <form onSubmit={handleSubmit} noValidate>
           <Stack>
+            {formError && <FormError message={formError} />}
             <TextField label={LABELS.name} name="name" autoComplete="name" value={name} onChange={setName} />
             <TextField
               label={LABELS.email}
