@@ -8,6 +8,7 @@ import dev.guilhermeds.backend.application.usecase.AuthenticateUserUseCase;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
 import dev.guilhermeds.backend.domain.exception.EmailAlreadyRegisteredException;
+import dev.guilhermeds.backend.domain.exception.InvalidCredentialsException;
 import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
@@ -179,5 +180,21 @@ class AuthControllerIT {
                 .content("{ \"email\": "))
             .hasStatus(400)
             .bodyJson().extractingPath("$.message").isEqualTo("Malformed JSON request body");
+    }
+
+    @Test
+    void shouldAnswerInvalidCredentialsWith401() {
+        given(authenticateUserUseCase.execute(any(), any())).willThrow(new InvalidCredentialsException());
+
+        assertThat(mockMvc.post().uri("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "ash@pallet.town", "password": "charmander1" }
+                    """))
+            .hasStatus(401)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "UNAUTHENTICATED", "message": "Invalid email or password" }
+                """);
     }
 }
