@@ -59,4 +59,13 @@ describe('SignInPage', () => {
     expect(screen.getByLabelText('Email')).toHaveAccessibleDescription('Email is required')
     expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is required')
   })
+
+  it('links to creating an account without losing where the user came from', () => {
+    renderApp('/login?returnTo=/pokemon/25')
+
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Create an account' })).toHaveAttribute(
+      'href',
+      '/register?returnTo=%2Fpokemon%2F25',
+    )
+  })
 })
