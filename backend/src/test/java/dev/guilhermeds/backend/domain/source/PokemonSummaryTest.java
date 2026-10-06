@@ -6,8 +6,10 @@ import dev.guilhermeds.backend.domain.model.PokemonType;
 import dev.guilhermeds.backend.domain.model.Weight;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PokemonSummaryTest {
@@ -25,5 +27,20 @@ class PokemonSummaryTest {
             .hasMessage("name must not be null");
         assertThatThrownBy(() -> new PokemonSummary(NUMBER, "pikachu", "sprite.png", "Mouse Pokémon", null, TYPES, ABILITIES))
             .hasMessage("weight must not be null");
+    }
+
+    @Test
+    void shouldKeepItsOwnCopyOfTheTypesAndAbilities() {
+        var types = new ArrayList<>(TYPES);
+        var abilities = new ArrayList<>(ABILITIES);
+        var summary = new PokemonSummary(NUMBER, "pikachu", "sprite.png", "Mouse Pokémon", WEIGHT, types, abilities);
+
+        types.add(new PokemonType("fairy"));
+        abilities.clear();
+
+        assertThat(summary.types()).containsExactly(new PokemonType("electric"));
+        assertThat(summary.abilities()).containsExactly(new Ability("static", false));
+        assertThatThrownBy(() -> summary.types().add(new PokemonType("fairy")))
+            .isInstanceOf(UnsupportedOperationException.class);
     }
 }
