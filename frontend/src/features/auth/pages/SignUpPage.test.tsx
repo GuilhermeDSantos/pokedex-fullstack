@@ -93,4 +93,13 @@ describe('SignUpPage', () => {
     expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is required')
     expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-invalid')
   })
+
+  it('links to signing in without losing where the user came from', () => {
+    renderApp('/register?returnTo=/pokemon/25')
+
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Sign in instead' })).toHaveAttribute(
+      'href',
+      '/login?returnTo=%2Fpokemon%2F25',
+    )
+  })
 })
