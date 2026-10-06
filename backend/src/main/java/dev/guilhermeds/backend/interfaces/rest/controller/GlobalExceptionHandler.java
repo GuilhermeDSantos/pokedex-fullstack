@@ -8,6 +8,7 @@ import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import dev.guilhermeds.backend.interfaces.rest.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -37,6 +38,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ErrorResponse> handleDomain(DomainException exception) {
         return error(HttpStatus.UNPROCESSABLE_CONTENT, "DOMAIN_ERROR", exception.getMessage());
+    }
+
+    // The parser's message can contain the raw payload, so it's never echoed.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMalformedBody(HttpMessageNotReadableException exception) {
+        return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Malformed JSON request body");
     }
 
     private static ResponseEntity<ErrorResponse> error(HttpStatus status, String code, String message) {
