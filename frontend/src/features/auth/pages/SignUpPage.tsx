@@ -98,6 +98,7 @@ export function SignUpPage() {
               autoComplete="new-password"
               value={password}
               onChange={setPassword}
+              hint="At least 8 characters, with a letter and a digit"
               error={errors.password}
             />
             <Button type="submit" pending={signUpMutation.isPending}>
