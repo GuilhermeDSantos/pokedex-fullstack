@@ -14,6 +14,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -61,6 +62,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ErrorResponse> handleInvalidParameter(Exception exception) {
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request parameter");
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUnknownPath(NoResourceFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Resource not found");
     }
 
     private static ResponseEntity<ErrorResponse> error(HttpStatus status, String code, String message) {
