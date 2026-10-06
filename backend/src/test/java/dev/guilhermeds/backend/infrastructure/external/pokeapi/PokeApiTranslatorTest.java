@@ -4,6 +4,7 @@ import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.Weight;
 import java.util.List;
 import dev.guilhermeds.backend.domain.model.PokemonType;
+import dev.guilhermeds.backend.domain.model.Ability;
 import org.junit.jupiter.api.Test;
 
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.pokemon;
@@ -54,7 +55,7 @@ class PokeApiTranslatorTest {
     void shouldAcceptAPokemonWithoutASprite() {
         var pikachu = pokemon(25);
         var withoutSprite = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(),
-            new PokeApiPokemonJson.Sprites(null), pikachu.types());
+            new PokeApiPokemonJson.Sprites(null), pikachu.types(), pikachu.abilities());
 
         assertThat(translator.toSummary(withoutSprite, species(25)).spriteUrl()).isNull();
     }
@@ -64,9 +65,20 @@ class PokeApiTranslatorTest {
     void shouldListTheTypesInSlotOrder() {
         var bulbasaur = pokemon(1);
         var shuffled = new PokeApiPokemonJson(bulbasaur.id(), bulbasaur.name(), bulbasaur.weight(), bulbasaur.sprites(),
-            bulbasaur.types().reversed());
+            bulbasaur.types().reversed(), bulbasaur.abilities());
 
         assertThat(translator.toSummary(shuffled, species(1)).types())
             .containsExactly(new PokemonType("grass"), new PokemonType("poison"));
+    }
+
+    // The brief's skills (D-010), in slot order, keeping which one is hidden.
+    @Test
+    void shouldListTheAbilitiesInSlotOrderWithTheHiddenOneMarked() {
+        var pikachu = pokemon(25);
+        var shuffled = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(), pikachu.sprites(),
+            pikachu.types(), pikachu.abilities().reversed());
+
+        assertThat(translator.toSummary(shuffled, species(25)).abilities())
+            .containsExactly(new Ability("static", false), new Ability("lightning-rod", true));
     }
 }
