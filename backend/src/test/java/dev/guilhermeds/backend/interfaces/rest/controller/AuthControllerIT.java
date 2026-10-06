@@ -10,6 +10,7 @@ import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
 import dev.guilhermeds.backend.interfaces.rest.mapper.AuthRestMapper;
 import dev.guilhermeds.backend.interfaces.rest.security.ErrorResponseAuthenticationEntryPoint;
 import org.junit.jupiter.api.Test;
+import dev.guilhermeds.backend.domain.exception.WeakPasswordException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -100,5 +101,22 @@ class AuthControllerIT {
                 .content("{ \"email\": "))
             .hasStatus(400)
             .bodyJson().extractingPath("$.message").isEqualTo("Malformed JSON request body");
+    }
+
+    @Test
+    void shouldAnswerADomainValidationFailureWith400() {
+        given(registerUserUseCase.execute(any(), any(), any())).willThrow(new WeakPasswordException(8, 72));
+
+        assertThat(mockMvc.post().uri("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "ash@pallet.town", "name": "Ash Ketchum", "password": "pikachu" }
+                    """))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR",
+                  "message": "Password must have at least 8 characters, a letter and a digit, and at most 72 bytes" }
+                """);
     }
 }
