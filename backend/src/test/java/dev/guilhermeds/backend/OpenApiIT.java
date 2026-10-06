@@ -43,4 +43,17 @@ class OpenApiIT {
             .hasStatusOk()
             .bodyText().contains("swagger-ui");
     }
+
+    @Test
+    void shouldDescribeTheApiAndMarkProtectedRoutesWithTheBearerScheme() {
+        var contract = mockMvc.get().uri("/v3/api-docs").exchange();
+
+        assertThat(contract).bodyJson().extractingPath("$.info.title").isEqualTo("Pokémon Catalog API");
+
+        assertThat(contract).bodyJson().extractingPath("$.components.securitySchemes.bearer-jwt.scheme")
+            .isEqualTo("bearer");
+        assertThat(contract).bodyJson().extractingPath("$.paths['/api/v1/auth/me'].get.security[0].bearer-jwt")
+            .isNotNull();
+        assertThat(contract).bodyJson().doesNotHavePath("$.paths['/api/v1/auth/login'].post.security");
+    }
 }
