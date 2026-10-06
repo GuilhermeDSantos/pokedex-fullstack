@@ -11,8 +11,9 @@ type TextFieldProps = {
   error?: string
 }
 
-export function TextField({ label, name, value, onChange, type = 'text', autoComplete }: TextFieldProps) {
+export function TextField({ label, name, value, onChange, type = 'text', autoComplete, error }: TextFieldProps) {
   const inputId = useId()
+  const errorId = `${inputId}-error`
   return (
     <div className={styles.field}>
       <label htmlFor={inputId} className={styles.label}>
@@ -25,8 +26,15 @@ export function TextField({ label, name, value, onChange, type = 'text', autoCom
         value={value}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         className={styles.input}
       />
+      {error && (
+        <p id={errorId} className={styles.error}>
+          {error}
+        </p>
+      )}
     </div>
   )
 }
