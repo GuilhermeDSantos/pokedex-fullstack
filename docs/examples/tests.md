@@ -302,7 +302,10 @@ own rows, never on absolute counts.
 
 **Translation**: plain JUnit against recorded JSON (`src/test/resources/pokeapi/pokemon-25.json`,
 `pokemon-species-25.json`, `evolution-chain-10.json`, plus an Eevee chain for branching). Record
-them once with `curl` and commit them. Tests never hit the network.
+them once with `curl` and commit them. Tests never hit the network. Pokémon responses are trimmed
+of `moves`, `game_indices` and `sprites.versions` (unused, ~95% of the size); everything else stays
+as served. `PokeApiFixtures` (test source set) reads them with Jackson. When a rule depends on
+order (slots), the test reverses the real array, because PokeAPI happens to send it sorted.
 
 ```java
 // test/.../infrastructure/external/pokeapi/PokeApiTranslatorTest.java

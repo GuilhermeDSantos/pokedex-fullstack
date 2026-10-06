@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.2 (PokeAPI fixtures and the translator). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.3 (the PokeAPI HTTP client). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -218,9 +218,16 @@ Backend:
       `PokemonSourceUnavailableException`. Data that comes from PokeAPI and breaks a rule is a
       mapping bug (`IllegalArgumentException`, 500), not a 400. `PokemonIdentifier` and
       `findByIdentifier` move to S3.1: only the detail route uses them.
-- [ ] S2.2 Record PokeAPI fixtures with `curl` under `src/test/resources/pokeapi/` (a list page,
-      bulbasaur, pikachu with their species). `PokeApiTranslator` for summaries + tests (units,
-      English genus as category, slot order, null sprite).
+- [x] S2.2 Fixtures recorded from pokeapi.co with `curl` under `src/test/resources/pokeapi/` (a list
+      page, bulbasaur and pikachu with their species), trimmed of `moves`, `game_indices` and
+      `sprites.versions` (unused, ~95% of the size), everything else as served. The field names and
+      units in `domain-model.md` → PokeAPI mapping were checked against these real responses and
+      match. `PokeApiTranslator` (pure, in `infrastructure/external/pokeapi`, JSON shapes as
+      package-private records) → `PokemonSummary`, test-first: number and name, hectograms → kg,
+      English genus as category (none → `null`), default front sprite (none → `null`), types and
+      abilities in slot order (proven with reversed input, since the real arrays come sorted), the
+      hidden ability marked. No id parsing from list URLs: `findAll` fetches each Pokémon, whose
+      JSON has its `id`.
 - [ ] S2.3 Add `spring-boot-starter-restclient` and `spring-boot-starter-restclient-test` (Boot 4
       split them out, see backend.md). `PokeApiClient` (`RestClient`, timeouts, 404 → empty,
       failures → `PokemonSourceUnavailableException`) + `@RestClientTest`.
