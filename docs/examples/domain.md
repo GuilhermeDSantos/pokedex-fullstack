@@ -287,10 +287,13 @@ public record RawPassword(String value) {
     public RawPassword {
         if (value == null
             || value.length() < MIN_LENGTH
-            || value.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES
             || value.chars().noneMatch(Character::isLetter)
             || value.chars().noneMatch(Character::isDigit)) {
-            throw new WeakPasswordException(MIN_LENGTH, MAX_BYTES);
+            throw new WeakPasswordException(MIN_LENGTH);
+        }
+        // Its own message: users can't count bytes, so "too long" is all they need to know.
+        if (value.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES) {
+            throw new PasswordTooLongException();
         }
     }
 

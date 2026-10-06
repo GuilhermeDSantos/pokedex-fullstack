@@ -98,7 +98,7 @@ repository of their own.
 | `CustomAttributes(String localizedName, String region, Set<Tag> tags)` | strings trimmed, blank → `null`, ≤ `MAX_TEXT_LENGTH` (100) chars each; ≤ `MAX_TAGS` (10) tags → `InvalidCustomAttributesException` (Validation). `CustomAttributes.empty()` |
 | `Email(String value)` | null rejected; trimmed, lower-cased, basic format, ≤ `MAX_LENGTH` (254) → `InvalidEmailException` (Validation) |
 | `FullName(String value)` | the user's name, free text as they write it (one field, no first/last split); null rejected; trimmed, `MIN_LENGTH`..`MAX_LENGTH` (2..100) chars → `InvalidFullNameException` (Validation) |
-| `RawPassword(String value)` | ≥ 8 chars and ≤ 72 **bytes** in UTF-8 (BCrypt's limit is in bytes: Spring Security 7.1.1 `BCrypt.hashpw` throws above it), at least one letter and one digit → `WeakPasswordException` (Validation). **`toString()` is redacted.** Never stored and never logged |
+| `RawPassword(String value)` | ≥ 8 chars and ≤ 72 **bytes** in UTF-8 (BCrypt's limit is in bytes: Spring Security 7.1.1 `BCrypt.hashpw` throws above it), at least one letter and one digit → `WeakPasswordException` ("at least 8 characters, including a letter and a digit"); over 72 bytes → `PasswordTooLongException` ("Password is too long": the byte limit is an implementation detail users can't act on). Both are Validation. **`toString()` is redacted.** Never stored and never logged |
 | `PasswordHash(String value)` | non-blank. Opaque to the domain |
 
 ### `LocalPokemon` behaviour
@@ -175,7 +175,7 @@ DomainException (abstract)                          → 422 DOMAIN_ERROR (catch-
 ├── ValidationException (abstract)                  → 400 VALIDATION_ERROR
 │   ├── InvalidPokedexNumberException, InvalidPokemonIdentifierException, InvalidPageRequestException
 │   ├── InvalidTagException, InvalidCustomAttributesException
-│   └── InvalidEmailException, InvalidFullNameException, WeakPasswordException
+│   └── InvalidEmailException, InvalidFullNameException, WeakPasswordException, PasswordTooLongException
 └── UnauthenticatedException (abstract)             → 401 UNAUTHENTICATED
     ├── InvalidCredentialsException                 (same message for unknown email and wrong password)
     └── UnknownAccountException                     (valid token, but the account no longer exists — D-033)

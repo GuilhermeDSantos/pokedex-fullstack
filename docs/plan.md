@@ -198,6 +198,10 @@ handlers mirror the API contract):
       reload keeps the session, sign out, wrong password, sign in, duplicate email (upper-case,
       normalized by the backend) → email field. Clearing the session on a 401 from a protected call
       moves to S4.5: before the first protected write there is no call that can trigger it.
+      The developer rejected the password message ("…and at most 72 bytes") on review: a BCrypt
+      detail users can't act on. Split into `WeakPasswordException` (what to do) and
+      `PasswordTooLongException` ("Password is too long"), and the sign-up form now shows the rule up
+      front as a `TextField` hint (described after any error).
       **Open (FE-5):** Chrome itself logs "Failed to load resource" for every 4xx, so the expected
       400/401/409 of these error paths show in the console. App code can't suppress it.
 

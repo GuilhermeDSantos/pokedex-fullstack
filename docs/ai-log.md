@@ -31,6 +31,19 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-06 — The developer rejected a password message that talked about bytes
+- **Context:** S1.1 wrote it, S1.10 put it on screen (TR-AUTH-1, FE-2).
+- **AI proposed:** One `WeakPasswordException` for every password rule: "Password must have at
+  least 8 characters, a letter and a digit, and at most 72 bytes".
+- **Problem:** Seen in the browser, the developer called it nonsense: "72 bytes" is BCrypt's input
+  limit, an implementation detail no user can count or act on, mixed into the message for the
+  common mistake. The tests had pinned the text, so they passed; nobody had read it as a user.
+- **Resolution:** Two exceptions: `WeakPasswordException` ("at least 8 characters, including a
+  letter and a digit") and `PasswordTooLongException` ("Password is too long"). The sign-up form
+  now shows the rule before the user types (`TextField` hint), so the error is rarely needed.
+- **Lesson:** Error messages are UI copy. Read them where the user reads them, not only in an
+  assertion.
+
 ### 2026-10-06 — returnTo: the obvious check missed a known bypass
 - **Context:** S1.10, sending the user back after signing in (TR-AUTH, FE-3).
 - **AI proposed:** Accept a `returnTo` that starts with `/` and not `//`.
