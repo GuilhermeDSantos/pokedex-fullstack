@@ -82,4 +82,15 @@ describe('SignUpPage', () => {
     await waitFor(() => expect(screen.getByLabelText('Name')).toHaveAccessibleDescription('must not be blank'))
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
+
+  it('asks for the missing fields before calling the server', async () => {
+    renderApp('/register')
+
+    await userEvent.type(screen.getByLabelText('Email'), 'ash@pallet.town')
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(screen.getByLabelText('Name')).toHaveAccessibleDescription('Name is required')
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Password is required')
+    expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-invalid')
+  })
 })
