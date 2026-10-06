@@ -61,4 +61,25 @@ describe('SignUpPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(policy)
   })
+
+  it('maps the server field errors onto the fields', async () => {
+    server.use(
+      http.post('/api/v1/auth/register', () =>
+        HttpResponse.json(
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'Request body is invalid',
+            fieldErrors: [{ field: 'name', message: 'must not be blank' }],
+          },
+          { status: 400 },
+        ),
+      ),
+    )
+    renderApp('/register')
+
+    await signUp('Ash Ketchum', 'ash@pallet.town', 'pikachu123')
+
+    await waitFor(() => expect(screen.getByLabelText('Name')).toHaveAccessibleDescription('must not be blank'))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
 })
