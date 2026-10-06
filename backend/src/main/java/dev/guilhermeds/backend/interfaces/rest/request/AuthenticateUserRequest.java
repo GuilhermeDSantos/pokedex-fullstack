@@ -1,4 +1,9 @@
 package dev.guilhermeds.backend.interfaces.rest.request;
 
-public record AuthenticateUserRequest(String email, String password) {
+import jakarta.validation.constraints.NotBlank;
+
+public record AuthenticateUserRequest(
+    @NotBlank String email,
+    @NotBlank String password
+) {
 }

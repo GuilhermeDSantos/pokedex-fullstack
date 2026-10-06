@@ -44,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AccessTokenResponse login(@RequestBody AuthenticateUserRequest request) {
+    public AccessTokenResponse login(@RequestBody @Valid AuthenticateUserRequest request) {
         return mapper.toResponse(authenticateUserUseCase.execute(mapper.toInput(request), Instant.now(clock)));
     }
 }
