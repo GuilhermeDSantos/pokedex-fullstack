@@ -72,7 +72,8 @@ public class PokeApiTranslator {
     }
 
     private static EvolutionStage stage(PokeApiEvolutionChainJson.Link link) {
-        return new EvolutionStage(link.species().name(), numberFromUrl(link.species().url()), List.of());
+        return new EvolutionStage(link.species().name(), numberFromUrl(link.species().url()),
+            link.evolvesTo().stream().map(PokeApiTranslator::stage).toList());
     }
 
     // A chain names each species only by its URL (".../pokemon-species/172/"); the id is the Pokédex number.
