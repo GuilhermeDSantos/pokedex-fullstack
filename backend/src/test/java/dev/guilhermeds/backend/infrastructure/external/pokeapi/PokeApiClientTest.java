@@ -73,4 +73,14 @@ class PokeApiClientTest {
 
         assertThat(client.fetchSpecies(url).genera()).isNotEmpty();
     }
+
+    @Test
+    void shouldReportPokeApiAsUnavailableWhenTheSpeciesItLinkedIsMissing() {
+        var url = BASE_URL + "/pokemon-species/25/";
+        server.expect(requestTo(url)).andRespond(withResourceNotFound());
+
+        assertThatThrownBy(() -> client.fetchSpecies(url))
+            .isInstanceOf(PokemonSourceUnavailableException.class)
+            .hasMessage("PokeAPI returned incomplete data");
+    }
 }
