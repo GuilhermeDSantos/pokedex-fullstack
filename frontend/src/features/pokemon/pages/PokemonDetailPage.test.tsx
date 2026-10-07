@@ -116,4 +116,16 @@ describe('PokemonDetailPage', () => {
     await router.navigate('/pokemon/raichu')
     expect(await screen.findByText('No image')).toBeInTheDocument()
   })
+
+  // ---- the local record (US-03) --------------------------------------------------------------
+
+  it('invites a visitor to sign in to sync, coming back to this Pokémon afterwards', async () => {
+    renderApp('/pokemon/pikachu')
+
+    const local = await screen.findByRole('region', { name: 'Local data' })
+    expect(within(local).getByRole('link', { name: 'Log in to sync' })).toHaveAttribute(
+      'href',
+      '/login?returnTo=%2Fpokemon%2Fpikachu',
+    )
+  })
 })
