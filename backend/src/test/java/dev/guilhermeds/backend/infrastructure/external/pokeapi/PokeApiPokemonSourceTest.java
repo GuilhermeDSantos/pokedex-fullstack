@@ -1,6 +1,7 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
+import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.domain.pagination.PageRequest;
 import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
 import dev.guilhermeds.backend.domain.source.PokemonSummary;
@@ -17,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.evolutionChain;
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.pokemon;
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.species;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,6 +117,23 @@ class PokeApiPokemonSourceTest {
         assertThatThrownBy(() -> source.findAll(new PageRequest(0, 1)))
             .isExactlyInstanceOf(PokemonSourceUnavailableException.class)
             .hasMessage("PokeAPI is unavailable right now");
+    }
+
+    // ---- one Pokémon (US-02) ------------------------------------------------------------------
+
+    // Each call follows the URL the previous answer gave: Pokémon → species → evolution chain.
+    @Test
+    void shouldBuildTheDetailFromThePokemonItsSpeciesAndItsChain() {
+        given(client.fetchPokemon("pikachu")).willReturn(Optional.of(pokemon(25)));
+        given(client.fetchSpecies(pokemon(25).species().url())).willReturn(species(25));
+        given(client.fetchEvolutionChain(species(25).evolutionChain().url())).willReturn(evolutionChain(10));
+
+        var detail = source.findByIdentifier(new PokemonIdentifier("Pikachu"));
+
+        assertThat(detail).hasValueSatisfying(pikachu -> {
+            assertThat(pikachu.number()).isEqualTo(new PokedexNumber(25));
+            assertThat(pikachu.evolutionChain().speciesName()).isEqualTo("pichu");
+        });
     }
 
     private void givenPokemon(String name, int id) {
