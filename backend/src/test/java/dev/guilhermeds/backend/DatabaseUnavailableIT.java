@@ -47,4 +47,18 @@ class DatabaseUnavailableIT {
             .bodyJson().extractingPath("$.code").isEqualTo("DATA_UNAVAILABLE");
         assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(10));
     }
+
+    // Registering opens a transaction first, so the failure shows up there, before any repository.
+    @Test
+    void shouldAnswerARegistrationWith503WhenTheDatabaseIsDown() {
+        postgres.stop();
+
+        assertThat(mockMvc.post().uri("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "brock@pewter.city", "name": "Brock", "password": "onix12345" }
+                    """))
+            .hasStatus(503)
+            .bodyJson().extractingPath("$.code").isEqualTo("DATA_UNAVAILABLE");
+    }
 }
