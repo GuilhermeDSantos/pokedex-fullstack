@@ -61,4 +61,14 @@ class DatabaseUnavailableIT {
             .hasStatus(503)
             .bodyJson().extractingPath("$.code").isEqualTo("DATA_UNAVAILABLE");
     }
+
+    // By number, so no call to PokeAPI: the local record's own repository answers.
+    @Test
+    void shouldAnswerALocalRecordWith503WhenTheDatabaseIsDown() {
+        postgres.stop();
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/25/local"))
+            .hasStatus(503)
+            .bodyJson().extractingPath("$.code").isEqualTo("DATA_UNAVAILABLE");
+    }
 }
