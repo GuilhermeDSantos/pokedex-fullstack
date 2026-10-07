@@ -2,6 +2,7 @@ package dev.guilhermeds.backend.interfaces.rest.mapper;
 
 import dev.guilhermeds.backend.application.dto.AbilityOutput;
 import dev.guilhermeds.backend.application.dto.EvolutionStageOutput;
+import dev.guilhermeds.backend.application.dto.LocalAttributesOutput;
 import dev.guilhermeds.backend.application.dto.LocalPokemonOutput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
@@ -9,6 +10,7 @@ import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.interfaces.rest.response.AbilityResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.EvolutionStageResponse;
+import dev.guilhermeds.backend.interfaces.rest.response.LocalAttributesResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.LocalPokemonResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.PageResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.PokemonDetailResponse;
@@ -25,16 +27,22 @@ public class PokemonRestMapper {
     }
 
     public PokemonDetailResponse toResponse(PokemonDetailOutput pokemon) {
-        return new PokemonDetailResponse(pokemon.pokedexNumber(), pokemon.name(), pokemon.category(),
+        return new PokemonDetailResponse(pokemon.pokedexNumber(), pokemon.name(), pokemon.displayName(), pokemon.category(),
             pokemon.heightMeters(), pokemon.weightKilograms(), pokemon.spriteUrl(), pokemon.artworkUrl(), pokemon.types(),
             pokemon.abilities().stream().map(this::toResponse).toList(),
             pokemon.stats().stream().map(this::toResponse).toList(),
-            pokemon.description(), toResponse(pokemon.evolutionChain()));
+            pokemon.description(), toResponse(pokemon.evolutionChain()),
+            pokemon.local() == null ? null : toResponse(pokemon.local()));
     }
 
     public LocalPokemonResponse toResponse(LocalPokemonOutput local) {
         return new LocalPokemonResponse(local.pokedexNumber(), local.localizedName(), local.region(), local.tags(),
             local.syncedAt(), local.updatedAt());
+    }
+
+    private LocalAttributesResponse toResponse(LocalAttributesOutput local) {
+        return new LocalAttributesResponse(local.localizedName(), local.region(), local.tags(), local.syncedAt(),
+            local.updatedAt());
     }
 
     private StatResponse toResponse(StatOutput stat) {
