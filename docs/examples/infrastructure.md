@@ -105,7 +105,9 @@ public interface LocalPokemonJpaRepository extends JpaRepository<LocalPokemonEnt
 
     Optional<LocalPokemonEntity> findByPokedexNumber(int pokedexNumber);
 
-    List<LocalPokemonEntity> findAllByPokedexNumberIn(Collection<Integer> pokedexNumbers);   // Slice 6
+    // The tags come in the same query: a list page loads up to 50 records at once.
+    @Query("select pokemon from LocalPokemonEntity pokemon left join fetch pokemon.tags where pokemon.pokedexNumber in :numbers")
+    List<LocalPokemonEntity> findAllWithTagsByPokedexNumberIn(@Param("numbers") Collection<Integer> numbers);
 }
 ```
 
@@ -159,13 +161,10 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
         return reachable(() -> jpaRepository.findByPokedexNumber(number.value()).map(mapper::toDomain));
     }
 
-    @Override   // Slice 6
+    @Override
     public List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers) {
-        if (numbers.isEmpty()) {
-            return List.of();   // explicit: an empty IN () is invalid SQL on some databases
-        }
         var values = numbers.stream().map(PokedexNumber::value).toList();
-        return jpaRepository.findAllByPokedexNumberIn(values).stream().map(mapper::toDomain).toList();
+        return reachable(() -> jpaRepository.findAllWithTagsByPokedexNumberIn(values).stream().map(mapper::toDomain).toList());
     }
 
     @Override

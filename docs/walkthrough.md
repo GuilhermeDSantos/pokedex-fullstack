@@ -20,8 +20,8 @@ claim should point at something concrete: a file, a test, a row in
    - The layer diagram and the Dependency Rule. `domain` and `application` are framework-free (D-001).
    - Input ports + interactors + composition root (D-003), and why there's no presenter (D-002).
    - Output ports: repositories, `PokemonRepository`, `UnitOfWork`, `PasswordHasher`, `TokenIssuer`.
-   - The merge: a use case combines the PokeAPI port and the repository. `displayName` is a domain
-     rule on `LocalPokemon`.
+   - The merge: a use case combines the PokeAPI port and the repository; the list page asks for
+     its 20 records in one query, tags included (a join fetch, proven by counting statements).
    - **Data model** (TR-DB-1/2): `local_pokemons` (the Pokédex number + the custom attributes, D-039)
      with its tags table, and `user_accounts` as the user-management collection. Unique keys,
      `@Version`, Flyway-owned.
@@ -53,8 +53,8 @@ claim should point at something concrete: a file, a test, a row in
 ## Demo script
 
 1. `docker compose up --build` is already running, so show the containers healthy.
-2. Logged out: browse the list. Seeded Pokémon already show their localized name and a "synced"
-   badge. Paginate, open Eevee (branching evolution), and show a cached second load.
+2. Logged out: browse the list. Seeded Pokémon already show their localized name under the name.
+   Paginate, open Eevee (branching evolution), and show a cached second load.
 3. Open Pikachu (deliberately not in the seed): no local data, and no controls for a visitor. Sign
    in with the demo credentials from the README → back on Pikachu, now with "Sync to local database".
 4. Sync → 201: the page is the same Pokémon, now ours too (no fields set yet). (Optional: `curl`

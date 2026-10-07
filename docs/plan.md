@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 5 — Edit and remove our fields.** Next task: S6.1 (Slice 6, edits show up everywhere). Slice 5 works end to end on Docker: the full CRUD of our record from the detail page (sync, edit, remove); the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 6 — The list shows our localized names.** Next task: D.1 (the demo seed). Slice 6 works end to end on Docker: a card shows our localized name under the name, and an edit is on the list as soon as the user goes back. Slice 5: the full CRUD of our record from the detail page; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -394,15 +394,18 @@ title, and our localized name sits under it. Only the localized name joins the l
 tags stay on the detail. No "synced" badge: the screen doesn't show where data comes from.
 
 Backend:
-- [ ] S6.1 Drop `displayName` (domain, outputs, detail response): the screens always title a
+- [x] S6.1 Drop `displayName` (domain, outputs, detail response): the screens always title a
       Pokémon with its name, so nothing reads it.
-- [ ] S6.2 The list merge: `findAllByPokedexNumbers` (one query per page, tags included) + IT, and
-      `BrowsePokemon` gives each card its `localizedName`. Controller IT for the new field.
+- [x] S6.2 The list merge: `findAllByPokedexNumbers` (one query per page, tags included) + IT, and
+      `BrowsePokemon` gives each card its `localizedName`. Controller IT for the new field. The IT
+      counts SQL statements (Hibernate statistics): a `join fetch` makes it exactly one; Spring
+      Data's derived query took two for two records.
 
 Frontend:
-- [ ] S6.3 The card shows the localized name under the name. Sync, edit and remove refresh the
+- [x] S6.3 The card shows the localized name under the name. Sync, edit and remove refresh the
       cached list pages too, so going back to the list never flashes the old name. Tests: the
-      localized name renders on its card only, an edit is on the list when going back.
+      localized name renders on its card only, an edit is on the list when going back (the test
+      waits for the background refetch, then checks the list with no wait). Checked on Docker.
 
 ---
 

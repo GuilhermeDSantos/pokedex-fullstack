@@ -71,9 +71,10 @@ No Redux/Zustand. Nothing needs it, and saying *why* is a good review answer. Ne
 data into `useState`. Derive it instead.
 
 Query keys are centralized per feature (`pokemonKeys.page(page, size)`,
-`pokemonKeys.detail(identifier)`). Sync, update and remove invalidate that Pokémon's detail **and**
-the list pages, because the list shows `displayName` and `synced`. The backend merges PokeAPI and
-local data, so the frontend never stitches two sources together.
+`pokemonKeys.detail(identifier)`). Sync, update and remove call `refreshOurData`: the detail on
+screen refetches, and the cached list pages refetch right away too (`refetchType: 'all'`), because
+the cards show our localized names. The backend merges PokeAPI and local data, so the frontend never
+stitches two sources together.
 
 ## HTTP layer (`shared/api/httpClient.ts`)
 
@@ -196,7 +197,7 @@ Two pages for the product, plus auth (D-030).
 
 | Path | Page | Access |
 |---|---|---|
-| `/?page=` | **PokemonListPage**: cards with sprite, display name (original name small underneath when different), number, category, weight in kg, abilities, a "synced" badge (US-01) | public |
+| `/?page=` | **PokemonListPage**: cards with sprite, name (our localized name under it when set), number, category, weight in kg, abilities (US-01) | public |
 | `/pokemon/:identifier` | **PokemonDetailPage**: artwork, stats, description, evolution tree (US-02), with our fields merged in | public view |
 | `/login`, `/register` | auth | public |
 | `*` | NotFoundPage | public |

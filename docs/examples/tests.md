@@ -82,13 +82,6 @@ class LocalPokemonTest {
         assertThat(pikachu.getSyncedAt()).isEqualTo(NOW);
         assertThat(pikachu.getUpdatedAt()).isEqualTo(NOW);
     }
-
-    // Like a nickname: shown as "Pica", still Pikachu underneath.
-    @Test
-    void shouldDisplayTheLocalizedNameWhenThereIsOneAndTheCanonicalNameOtherwise() {
-        assertThat(LocalPokemonFixture.syncedPikachu().displayName("pikachu")).isEqualTo("pikachu");
-        assertThat(LocalPokemonFixture.renamedPikachu().displayName("pikachu")).isEqualTo("Pica");
-    }
 }
 
 // test/.../domain/model/TagTest.java — VO edge cases as a parameterized table
@@ -200,7 +193,7 @@ class GetPokemonInteractorTest {
         var output = interactor.execute(new GetPokemonInput("pikachu"));
 
         assertThat(output.name()).isEqualTo("pikachu");
-        assertThat(output.displayName()).isEqualTo("Pica");
+        assertThat(output.local().localizedName()).isEqualTo("Pica");
         assertThat(output.local().region()).isEqualTo("Kanto");
         assertThat(output.stats()).hasSize(6);   // from PokeAPI, not from the local record
     }
@@ -213,7 +206,7 @@ class GetPokemonInteractorTest {
         var output = interactor.execute(new GetPokemonInput("pikachu"));
 
         assertThat(output.local()).isNull();
-        assertThat(output.displayName()).isEqualTo("pikachu");
+        assertThat(output.name()).isEqualTo("pikachu");
     }
 }
 ```
@@ -359,7 +352,7 @@ class PokemonControllerIT {
         mockMvc.perform(get("/api/v1/pokemon/pikachu"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("pikachu"))
-            .andExpect(jsonPath("$.displayName").value("Pica"))
+            .andExpect(jsonPath("$.local.localizedName").value("Pica"))
             .andExpect(jsonPath("$.local.region").value("Kanto"));
     }
 

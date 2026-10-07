@@ -59,11 +59,6 @@ public class LocalPokemon {
         this.updatedAt = now;
     }
 
-    // The canonical name comes from the caller, which reads it from the canonical data.
-    public String displayName(String canonicalName) {
-        return customAttributes.localizedName() != null ? customAttributes.localizedName() : canonicalName;
-    }
-
     public LocalPokemonId getId() { return id; }
     public PokedexNumber getPokedexNumber() { return pokedexNumber; }
     public CustomAttributes getCustomAttributes() { return customAttributes; }
@@ -112,8 +107,8 @@ public class LocalPokemon {
 The builder's methods are named after fields (`id(...)`), not `setId(...)`, so the
 `no_setters_in_domain` ArchUnit rule (name-based) stays satisfied without exceptions.
 
-`displayName(canonicalName)` is a business rule ("what name do we show?"), so it lives here, and
-the output DTOs only call it, passing the name they read from PokeAPI. Neither the controller nor the frontend decides it.
+Which name titles a Pokémon is not a rule of this aggregate: the screens always use PokeAPI's name
+and show the localized one under it, so `LocalPokemon` only holds the localized name.
 
 ## Value Objects
 
@@ -332,7 +327,7 @@ public interface LocalPokemonRepository {
 
     void delete(LocalPokemon pokemon);
 
-    // Slice 6, the list merge: the local records for one page of results, in a single query.
+    // A list page: the records of all its Pokémon in one call, never one per card.
     List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);
 }
 ```

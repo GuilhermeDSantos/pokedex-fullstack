@@ -349,7 +349,7 @@ public record LocalPokemonOutput(int pokedexNumber, String localizedName, String
 }
 
 // application/dto/PokemonDetailOutput.java — PokeAPI data merged with the local record
-public record PokemonDetailOutput(int pokedexNumber, String name, String displayName,
+public record PokemonDetailOutput(int pokedexNumber, String name,
                                   String category, BigDecimal heightMeters, BigDecimal weightKilograms,
                                   String spriteUrl, String artworkUrl, List<String> types,
                                   List<AbilityOutput> abilities, List<StatOutput> stats,
@@ -361,7 +361,6 @@ public record PokemonDetailOutput(int pokedexNumber, String name, String display
         return new PokemonDetailOutput(
             detail.number().value(),
             profile.name(),
-            local.map(record -> record.displayName(profile.name())).orElse(profile.name()),
             profile.category(),
             profile.height().meters(),
             profile.weight().kilograms(),
@@ -389,8 +388,8 @@ public record PageOutput<T>(List<T> content, int page, int size, long totalEleme
 }
 ```
 
-`PokemonSummaryOutput.from(summary, local)` follows the same shape: `displayName` plus a `synced`
-boolean.
+`PokemonSummaryOutput.from(summary, local)` follows the same shape, with just the card's
+`localizedName` (`null` when not synced or not set).
 
 ## Composition root — `UseCaseConfig`
 
