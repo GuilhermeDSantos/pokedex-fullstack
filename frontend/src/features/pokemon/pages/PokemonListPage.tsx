@@ -43,7 +43,7 @@ export function PokemonListPage() {
         </ul>
       )}
       {data && data.content.length > 0 && (
-        <Pagination page={page} totalPages={data.totalPages} />
+        <Pagination page={page} totalPages={data.totalPages} hrefFor={(target) => `/?page=${target}`} />
       )}
     </Stack>
   )
