@@ -124,11 +124,11 @@ class PokemonControllerIT {
 
     @Test
     void shouldDescribeOnePokemonToAnyone() {
-        given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu",
+        given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu", "pikachu",
             "Mouse Pokémon", new BigDecimal("0.4"), new BigDecimal("6.0"), "https://img/25.png", "https://img/25-art.png",
             List.of("electric"), List.of(new AbilityOutput("static", false)), List.of(new StatOutput("HP", 35)),
             "It keeps its tail raised.", new EvolutionStageOutput("pichu", 172,
-                List.of(new EvolutionStageOutput("pikachu", 25, List.of())))));
+                List.of(new EvolutionStageOutput("pikachu", 25, List.of()))), null));
 
         assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu"))
             .hasStatusOk()

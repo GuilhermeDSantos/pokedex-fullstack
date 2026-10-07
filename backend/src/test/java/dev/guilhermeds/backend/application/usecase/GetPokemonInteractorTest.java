@@ -6,6 +6,7 @@ import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.application.mapper.PokemonMapper;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
 import dev.guilhermeds.backend.domain.model.Ability;
+import dev.guilhermeds.backend.fixture.LocalPokemonFixture;
 import dev.guilhermeds.backend.domain.model.BaseStat;
 import dev.guilhermeds.backend.domain.model.Height;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
@@ -16,6 +17,7 @@ import dev.guilhermeds.backend.domain.model.StatName;
 import dev.guilhermeds.backend.domain.model.Weight;
 import dev.guilhermeds.backend.domain.model.EvolutionStage;
 import dev.guilhermeds.backend.domain.model.PokemonDetail;
+import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
 import dev.guilhermeds.backend.domain.repository.PokemonRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,11 +50,14 @@ class GetPokemonInteractorTest {
     @Mock
     private PokemonRepository pokemonRepository;
 
+    @Mock
+    private LocalPokemonRepository localPokemonRepository;
+
     private GetPokemonInteractor interactor;
 
     @BeforeEach
     void setUp() {
-        interactor = new GetPokemonInteractor(pokemonRepository, new PokemonMapper());
+        interactor = new GetPokemonInteractor(pokemonRepository, localPokemonRepository, new PokemonMapper());
     }
 
     @Test
@@ -78,5 +84,30 @@ class GetPokemonInteractorTest {
             .isInstanceOf(InvalidPokemonIdentifierException.class);
 
         verifyNoInteractions(pokemonRepository);
+    }
+
+    // One Pokémon for the client: the canonical data, plus our record when there is one (D-030).
+    @Test
+    void shouldMergeOurRecordAndShowItsLocalizedName() {
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PIKACHU);
+        given(localPokemonRepository.findByPokedexNumber(new PokedexNumber(25)))
+            .willReturn(Optional.of(LocalPokemonFixture.renamedPikachu()));
+
+        var output = interactor.execute(new GetPokemonInput("pikachu"));
+
+        assertThat(output.displayName()).isEqualTo("Pica");
+        assertThat(output.name()).isEqualTo("pikachu");
+        assertThat(output.local()).isNotNull();
+        assertThat(output.local().region()).isEqualTo("Kanto");
+    }
+
+    @Test
+    void shouldShowTheCanonicalNameAndNoLocalPartWhenNotSynced() {
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PIKACHU);
+
+        var output = interactor.execute(new GetPokemonInput("pikachu"));
+
+        assertThat(output.displayName()).isEqualTo("pikachu");
+        assertThat(output.local()).isNull();
     }
 }
