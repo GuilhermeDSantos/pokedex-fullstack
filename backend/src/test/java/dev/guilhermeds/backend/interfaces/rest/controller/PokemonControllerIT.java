@@ -17,6 +17,7 @@ import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
+import dev.guilhermeds.backend.domain.exception.LocalPokemonNotFoundException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
@@ -284,5 +285,15 @@ class PokemonControllerIT {
                 { "pokedexNumber": 25, "localizedName": "Pica", "region": "Kanto", "tags": [ "mascot", "starter" ],
                   "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" }
                 """);
+    }
+
+    @Test
+    void shouldAnswerTheLocalRecordOfAPokemonThatWasNeverSyncedWith404() {
+        given(getLocalPokemonUseCase.execute(new GetLocalPokemonInput("26")))
+            .willThrow(new LocalPokemonNotFoundException(new PokedexNumber(26)));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/26/local"))
+            .hasStatus(404)
+            .bodyJson().extractingPath("$.message").isEqualTo("Pokémon #26 is not in the local database");
     }
 }
