@@ -16,5 +16,8 @@ public record PokemonProfile(String name, String category, Height height, Weight
         types = List.copyOf(types);
         abilities = List.copyOf(abilities);
         stats = stats.stream().sorted(Comparator.comparing(BaseStat::name)).toList();
+        if (!stats.stream().map(BaseStat::name).toList().equals(List.of(StatName.values()))) {
+            throw new IllegalArgumentException("a profile has exactly one value per stat");
+        }
     }
 }
