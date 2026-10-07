@@ -20,6 +20,10 @@ public class RemoveLocalPokemonInteractor implements RemoveLocalPokemonUseCase {
 
     @Override
     public void execute(RemoveLocalPokemonInput input) {
-        throw new UnsupportedOperationException("not implemented yet");
+        var number = mapper.toPokedexNumber(input.pokedexNumber());
+        unitOfWork.inTransaction(() -> {
+            // Found first: removing what was never synced is a 404, not a 204 that claims it worked.
+            localPokemonRepository.delete(localPokemonRepository.getByPokedexNumber(number));
+        });
     }
 }
