@@ -6,11 +6,10 @@ import dev.guilhermeds.backend.domain.model.Email;
 import dev.guilhermeds.backend.domain.model.UserAccount;
 import dev.guilhermeds.backend.domain.model.UserId;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
+import dev.guilhermeds.backend.infrastructure.persistence.DatabaseFailures;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.UserAccountEntityMapper;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -50,12 +49,14 @@ public class JpaUserAccountRepository implements UserAccountRepository {
         return reachable(() -> jpaRepository.findByEmail(email.value()).map(mapper::toDomain));
     }
 
-    // A database that is down surfaces as either one, depending on whether a transaction was being opened.
     private static <T> T reachable(Supplier<T> call) {
         try {
             return call.get();
-        } catch (DataAccessResourceFailureException | CannotCreateTransactionException exception) {
-            throw new UserAccountDataUnavailableException(exception);
+        } catch (RuntimeException exception) {
+            if (DatabaseFailures.isUnreachable(exception)) {
+                throw new UserAccountDataUnavailableException(exception);
+            }
+            throw exception;
         }
     }
 

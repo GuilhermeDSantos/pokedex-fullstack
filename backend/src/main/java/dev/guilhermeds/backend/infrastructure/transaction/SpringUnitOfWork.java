@@ -1,9 +1,10 @@
 package dev.guilhermeds.backend.infrastructure.transaction;
 
 import dev.guilhermeds.backend.application.port.UnitOfWork;
+import dev.guilhermeds.backend.domain.exception.DataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.TransactionUnavailableException;
+import dev.guilhermeds.backend.infrastructure.persistence.DatabaseFailures;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -22,8 +23,14 @@ public class SpringUnitOfWork implements UnitOfWork {
     public <T> T inTransaction(Supplier<T> work) {
         try {
             return transactionTemplate.execute(status -> work.get());
-        } catch (CannotCreateTransactionException exception) {
-            throw new TransactionUnavailableException(exception);
+        } catch (DataUnavailableException alreadyNamed) {
+            // A repository inside the work already said which data was unreachable: keep that.
+            throw alreadyNamed;
+        } catch (RuntimeException exception) {
+            if (DatabaseFailures.isUnreachable(exception)) {
+                throw new TransactionUnavailableException(exception);
+            }
+            throw exception;
         }
     }
 }
