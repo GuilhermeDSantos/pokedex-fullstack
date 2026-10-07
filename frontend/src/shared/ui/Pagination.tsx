@@ -11,11 +11,11 @@ type PaginationProps = {
 export function Pagination({ page, totalPages, hrefFor }: PaginationProps) {
   return (
     <nav aria-label="Pagination" className={styles.pagination}>
-      <Link to={hrefFor(page - 1)}>Previous page</Link>
+      {page > 1 && <Link to={hrefFor(page - 1)}>Previous page</Link>}
       <span>
         Page {page} of {totalPages}
       </span>
-      <Link to={hrefFor(page + 1)}>Next page</Link>
+      {page < totalPages && <Link to={hrefFor(page + 1)}>Next page</Link>}
     </nav>
   )
 }
