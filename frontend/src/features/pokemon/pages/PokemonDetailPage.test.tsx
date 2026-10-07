@@ -327,4 +327,32 @@ describe('PokemonDetailPage', () => {
     expect(screen.queryByText('Kanto')).not.toBeInTheDocument()
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
+
+  it('removes nothing when the user cancels the confirmation', async () => {
+    let deleted = false
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)),
+      http.delete('/api/v1/pokemon/25/local', () => {
+        deleted = true
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }))
+    await userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(screen.getByText('Kanto')).toBeInTheDocument()
+    expect(deleted).toBe(false)
+  })
+
+  it('shows our fields to a visitor without the controls to change them', async () => {
+    server.use(http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)))
+    renderApp('/pokemon/pikachu')
+
+    expect(await screen.findByText('Kanto')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument()
+  })
 })
