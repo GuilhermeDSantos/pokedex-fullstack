@@ -1,4 +1,4 @@
-import { screen, waitForElementToBeRemoved, within } from '@testing-library/react'
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
@@ -173,5 +173,25 @@ describe('PokemonDetailPage', () => {
     const local = screen.getByRole('region', { name: 'Local data' })
     expect(await within(local).findByText('Kanto')).toBeInTheDocument()
     expect(within(local).getByRole('status')).toHaveTextContent('Someone synced this Pokémon just before you.')
+  })
+
+  // The token expired, or the account is gone (D-033): the session is over, so sign in again and come back.
+  it('signs the user out and sends them to sign in when the sync is refused as unauthenticated', async () => {
+    server.use(
+      http.post('/api/v1/pokemon/pikachu/local', () =>
+        HttpResponse.json(
+          { code: 'UNAUTHENTICATED', message: 'Authentication is required to access this resource', fieldErrors: [] },
+          { status: 401 },
+        ),
+      ),
+    )
+    const { router } = renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Sync to local database' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
+    expect(router.state.location.search).toBe('?returnTo=%2Fpokemon%2Fpikachu')
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
+    expect(sessionStorage.length).toBe(0)
   })
 })
