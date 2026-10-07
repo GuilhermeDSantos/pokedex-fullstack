@@ -349,7 +349,7 @@ query per page. If PokeAPI is down, even synced Pokémon return 503 on the merge
 (`GET …/local` still works). Falling back to the snapshot is parked.
 
 ## D-031 — The local record stores a scalar snapshot, not the full profile
-**Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** US-03, TR-DB-1, TR-DB-2 · **Supersedes:** part of D-006
+**Status:** Superseded by D-039 · **Date:** 2026-10-06 · **Requirements:** US-03, TR-DB-1, TR-DB-2 · **Supersedes:** part of D-006
 **Context:** With merged reads (D-030), types, abilities, stats and the evolution chain are always
 read from PokeAPI. Storing them locally would mean three more child tables, embeddables and
 ordering rules, for data no screen reads from the database.
@@ -395,6 +395,22 @@ endpoint would get its security retrofitted.
 **Consequences:** Frontend foundations (router, query client, test setup, HTTP client) land in
 Slice 1. The list and detail come from PokeAPI only in Slices 2–3, and local data joins them in
 Slices 4 and 6.
+
+## D-039 — The local record keeps the Pokémon's identity and our own fields; PokeAPI stays the source of truth
+**Status:** Accepted (the developer's model, decided while designing Slice 4) · **Date:** 2026-10-07 · **Requirements:** US-03, US-03.a, TR-DB-1, TR-DB-2 · **Supersedes:** D-031
+**Context:** The brief asks to "persist Pokémon data" locally and says that replication exists to
+add proprietary fields. D-031 copied a scalar snapshot (category, height, weight, images,
+description) that no screen reads: every read comes from PokeAPI (D-030), so the copy would only
+go stale.
+**Decision:** `local_pokemons` keeps the identity (Pokédex number and the original name, both unique)
+plus our fields: localized name, region, tags (a value collection with an index on `tag`, so a
+future search by tag is one indexed query). Like a nickname in Pokémon Go: Pikachu can be shown as
+"Pica", and it is still Pikachu underneath; everything else always comes from PokeAPI.
+**Alternatives considered:** The scalar snapshot (D-031): duplicated, unread data. The whole profile:
+three more tables of copies. Tags as their own entity: no identity or lifecycle in the brief, and
+an N:N between aggregates; it becomes one when tags need metadata or a controlled vocabulary.
+**Consequences:** No `PokemonSnapshot`. The table still has a primary key and descriptive
+attributes (TR-DB-2). An offline fallback would need more than the identity (parked anyway).
 
 ## D-038 — Boot 4's RestClient starters for the PokeAPI client
 **Status:** Accepted (listed in the plan's S2.3, which the developer approved) · **Date:** 2026-10-07 · dependencies · **Requirements:** FR-0, US-01
