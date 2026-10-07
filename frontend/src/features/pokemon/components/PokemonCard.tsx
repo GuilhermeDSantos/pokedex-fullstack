@@ -1,10 +1,11 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
 import { formatKilograms, formatName, formatPokedexNumber } from '../../../shared/lib/format'
-import { Badge } from '../../../shared/ui/Badge'
 import { Card } from '../../../shared/ui/Card'
 import type { PokemonSummary } from '../api/pokemonApi'
+import { AbilityList } from './AbilityList'
 import styles from './PokemonCard.module.css'
+import { TypeList } from './TypeList'
 
 const SPRITE_SIZE = 96
 
@@ -31,21 +32,8 @@ export function PokemonCard({ pokemon }: { pokemon: PokemonSummary }) {
       </h2>
       <p>{pokemon.category ?? 'Category unknown'}</p>
       <p>{formatKilograms(pokemon.weightKilograms)}</p>
-      <ul aria-label="Types" className={styles.types}>
-        {pokemon.types.map((type) => (
-          <li key={type}>
-            <Badge>{formatName(type)}</Badge>
-          </li>
-        ))}
-      </ul>
-      <ul aria-label="Abilities" className={styles.abilities}>
-        {pokemon.abilities.map((ability) => (
-          <li key={ability.name}>
-            {formatName(ability.name)}
-            {ability.hidden && ' (hidden)'}
-          </li>
-        ))}
-      </ul>
+      <TypeList types={pokemon.types} />
+      <AbilityList abilities={pokemon.abilities} />
     </Card>
   )
 }

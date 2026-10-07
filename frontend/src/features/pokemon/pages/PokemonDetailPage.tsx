@@ -1,13 +1,14 @@
 import { Link, useParams } from 'react-router'
 import { ApiError } from '../../../shared/api/ApiError'
 import { formatKilograms, formatMeters, formatName, formatPokedexNumber } from '../../../shared/lib/format'
-import { Badge } from '../../../shared/ui/Badge'
 import { ErrorState } from '../../../shared/ui/ErrorState'
 import { Heading } from '../../../shared/ui/Heading'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { Stack } from '../../../shared/ui/Stack'
+import { AbilityList } from '../components/AbilityList'
 import { EvolutionTree } from '../components/EvolutionTree'
 import { PokemonStats } from '../components/PokemonStats'
+import { TypeList } from '../components/TypeList'
 import { usePokemon } from '../hooks/usePokemon'
 import styles from './PokemonDetailPage.module.css'
 
@@ -45,13 +46,7 @@ export function PokemonDetailPage() {
       <Stack>
         <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>
         <Heading level={1}>{name}</Heading>
-        <ul aria-label="Types" className={styles.inline}>
-          {pokemon.types.map((type) => (
-            <li key={type}>
-              <Badge>{formatName(type)}</Badge>
-            </li>
-          ))}
-        </ul>
+        <TypeList types={pokemon.types} />
         <p>{pokemon.description}</p>
         <ul aria-label="Facts" className={styles.facts}>
           <li>
@@ -68,14 +63,7 @@ export function PokemonDetailPage() {
           </li>
         </ul>
         <Heading level={2}>Abilities</Heading>
-        <ul aria-label="Abilities" className={styles.inline}>
-          {pokemon.abilities.map((ability) => (
-            <li key={ability.name}>
-              {formatName(ability.name)}
-              {ability.hidden && ' (hidden)'}
-            </li>
-          ))}
-        </ul>
+        <AbilityList abilities={pokemon.abilities} />
         <Heading level={2}>Base stats</Heading>
         <PokemonStats stats={pokemon.stats} />
         <Heading level={2}>Evolution</Heading>
