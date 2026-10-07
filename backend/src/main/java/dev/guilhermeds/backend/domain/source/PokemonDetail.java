@@ -5,7 +5,7 @@ import dev.guilhermeds.backend.domain.model.PokemonProfile;
 
 import java.util.Objects;
 
-// One Pokémon as PokeAPI knows it (US-02): its profile and the lineage it belongs to.
+// One Pokémon as the source knows it (US-02): its profile and the lineage it belongs to.
 public record PokemonDetail(PokedexNumber number, PokemonProfile profile, EvolutionStage evolutionChain) {
 
     public PokemonDetail {

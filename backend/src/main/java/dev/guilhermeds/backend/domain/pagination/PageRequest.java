@@ -5,7 +5,7 @@ import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 public record PageRequest(int page, int size) {
 
     public static final int MIN_SIZE = 1;
-    // Each item of a PokeAPI list page costs two upstream calls.
+    // Each item of a page costs two calls to the source.
     public static final int MAX_SIZE = 50;
 
     public PageRequest {
