@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { PIKACHU_DETAIL } from '../../../test/fixtures/pokemon'
 import { server } from '../../../test/msw/server'
@@ -66,5 +67,21 @@ describe('PokemonDetailPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pokémon not found' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back to the Pokémon list' })).toHaveAttribute('href', '/')
+  })
+
+  it('explains when the catalog is unavailable and loads the Pokémon on retry', async () => {
+    const unavailable = 'The Pokémon catalog is unavailable right now. Please try again in a moment.'
+    server.use(
+      http.get(
+        '/api/v1/pokemon/pikachu',
+        () => HttpResponse.json({ code: 'SOURCE_UNAVAILABLE', message: unavailable, fieldErrors: [] }, { status: 503 }),
+        { once: true },
+      ),
+    )
+    renderApp('/pokemon/pikachu')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(unavailable)
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pikachu' })).toBeInTheDocument()
   })
 })
