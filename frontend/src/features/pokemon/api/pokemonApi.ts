@@ -70,6 +70,10 @@ export function updateLocalPokemon(pokedexNumber: number, edit: LocalEdit, acces
   return request<LocalPokemon>(`/pokemon/${pokedexNumber}/local`, { method: 'PUT', body: edit, accessToken })
 }
 
+export function removeLocalPokemon(pokedexNumber: number, accessToken: string): Promise<void> {
+  return request<void>(`/pokemon/${pokedexNumber}/local`, { method: 'DELETE', accessToken })
+}
+
 export function fetchPokemonPage(page: number, size: number): Promise<PageResponse<PokemonSummary>> {
   return request<PageResponse<PokemonSummary>>(`/pokemon?${new URLSearchParams({ page: String(page), size: String(size) })}`)
 }
