@@ -6,6 +6,7 @@ import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
 import type { LocalAttributes } from '../api/pokemonApi'
 import { useUpdateLocalPokemon } from '../hooks/useUpdateLocalPokemon'
+import styles from './LocalForm.module.css'
 
 type LocalFormProps = {
   pokedexNumber: number
@@ -73,10 +74,12 @@ export function LocalForm({ pokedexNumber, local, onDone }: LocalFormProps) {
           hint="Separate tags with commas"
           error={errors.tags}
         />
-        <Button type="submit" pending={update.isPending}>
-          Save
-        </Button>
-        <Button onClick={onDone}>Cancel</Button>
+        <div className={styles.actions}>
+          <Button type="submit" pending={update.isPending}>
+            Save
+          </Button>
+          <Button onClick={onDone}>Cancel</Button>
+        </div>
       </Stack>
     </form>
   )

@@ -10,6 +10,7 @@ import type { PokemonDetail } from '../api/pokemonApi'
 import { useRemoveLocalPokemon } from '../hooks/useRemoveLocalPokemon'
 import { useSyncPokemon } from '../hooks/useSyncPokemon'
 import { LocalForm } from './LocalForm'
+import styles from './LocalActions.module.css'
 
 export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
   const { pathname } = useLocation()
@@ -23,16 +24,18 @@ export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
     <>
       {pokemon.local === null && !session && <Link to={withReturnTo('/login', pathname)}>Log in to sync</Link>}
       {pokemon.local === null && session && (
-        <Button pending={sync.isPending} onClick={() => sync.mutate()}>
-          Sync to local database
-        </Button>
+        <div className={styles.actions}>
+          <Button pending={sync.isPending} onClick={() => sync.mutate()}>
+            Sync to local database
+          </Button>
+        </div>
       )}
       {syncedMeanwhile && <p role="status">Someone synced this Pokémon just before you.</p>}
       {pokemon.local !== null && session && !editing && (
-        <>
+        <div className={styles.actions}>
           <Button onClick={() => setEditing(true)}>Edit</Button>
           <Button onClick={() => setConfirmingRemoval(true)}>Remove</Button>
-        </>
+        </div>
       )}
       {confirmingRemoval && (
         <ConfirmDialog
