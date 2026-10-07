@@ -3,6 +3,7 @@ package dev.guilhermeds.backend.application.usecase;
 import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
 import dev.guilhermeds.backend.application.mapper.PokemonMapper;
 import dev.guilhermeds.backend.application.port.UnitOfWork;
+import dev.guilhermeds.backend.domain.exception.InvalidPokedexNumberException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
@@ -52,10 +53,10 @@ class SyncPokemonInteractorTest {
 
     @Test
     void shouldRecordThePokemonUnderItsNumberWithTheGivenIdAndTime() {
-        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PokemonFixture.pikachuDetail());
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("25"))).willReturn(PokemonFixture.pikachuDetail());
         given(localPokemonRepository.save(any(LocalPokemon.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        var output = interactor.execute(new SyncPokemonInput("Pikachu"), PIKACHU_ID, NOW);
+        var output = interactor.execute(new SyncPokemonInput("25"), PIKACHU_ID, NOW);
 
         assertThat(output.pokedexNumber()).isEqualTo(25);
         assertThat(output.tags()).isEmpty();
@@ -66,11 +67,11 @@ class SyncPokemonInteractorTest {
     // The unique number in the database still decides when two syncs race; this gives the usual case its 409.
     @Test
     void shouldRefuseAPokemonThatIsAlreadySynced() {
-        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PokemonFixture.pikachuDetail());
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("25"))).willReturn(PokemonFixture.pikachuDetail());
         given(localPokemonRepository.findByPokedexNumber(new PokedexNumber(25)))
             .willReturn(Optional.of(LocalPokemonFixture.syncedPikachu()));
 
-        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("pikachu"), PIKACHU_ID, NOW))
+        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("25"), PIKACHU_ID, NOW))
             .isInstanceOf(PokemonAlreadySyncedException.class);
 
         then(localPokemonRepository).should(never()).save(any());
@@ -78,12 +79,21 @@ class SyncPokemonInteractorTest {
 
     @Test
     void shouldNotOpenATransactionForAPokemonTheCanonicalDataDoesNotKnow() {
-        var missingno = new PokemonIdentifier("missingno");
-        given(pokemonRepository.getByIdentifier(missingno)).willThrow(new PokemonNotFoundException(missingno));
+        var unknown = new PokemonIdentifier("99999");
+        given(pokemonRepository.getByIdentifier(unknown)).willThrow(new PokemonNotFoundException(unknown));
 
-        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("missingno"), PIKACHU_ID, NOW))
+        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("99999"), PIKACHU_ID, NOW))
             .isInstanceOf(PokemonNotFoundException.class);
 
         verifyNoInteractions(unitOfWork, localPokemonRepository);
+    }
+
+    // Synced by number like every /local route (D-040): a name is a 400 before anything is asked.
+    @Test
+    void shouldRejectANameBeforeAskingTheCanonicalData() {
+        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("pikachu"), PIKACHU_ID, NOW))
+            .isInstanceOf(InvalidPokedexNumberException.class);
+
+        verifyNoInteractions(pokemonRepository, unitOfWork, localPokemonRepository);
     }
 }
