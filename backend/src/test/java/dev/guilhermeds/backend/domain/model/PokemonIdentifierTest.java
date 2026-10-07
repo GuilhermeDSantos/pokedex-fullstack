@@ -27,4 +27,14 @@ class PokemonIdentifierTest {
             .isInstanceOf(ValidationException.class)
             .hasMessage("A Pokémon is identified by its name or its Pokédex number");
     }
+
+    // The local records are looked up by number or by name, whichever the URL carries.
+    @Test
+    void shouldTellANumberFromAName() {
+        assertThat(new PokemonIdentifier("25").isNumber()).isTrue();
+        assertThat(new PokemonIdentifier("25").asNumber()).isEqualTo(new PokedexNumber(25));
+        assertThat(new PokemonIdentifier("pikachu").isNumber()).isFalse();
+        assertThatThrownBy(() -> new PokemonIdentifier("pikachu").asNumber())
+            .isInstanceOf(IllegalStateException.class);
+    }
 }
