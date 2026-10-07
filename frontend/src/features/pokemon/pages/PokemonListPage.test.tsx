@@ -2,7 +2,7 @@ import { screen, waitForElementToBeRemoved, within } from '@testing-library/reac
 import { http, HttpResponse } from 'msw'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { PIKACHU, pageOf } from '../../../test/fixtures/pokemon'
+import { BULBASAUR, PIKACHU, pageOf } from '../../../test/fixtures/pokemon'
 import { server } from '../../../test/msw/server'
 import { renderApp } from '../../../test/renderApp'
 
@@ -50,5 +50,19 @@ describe('PokemonListPage', () => {
 
     expect(await screen.findByText('No Pokémon on this page.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Go to the first page' })).toHaveAttribute('href', '/')
+  })
+
+  // The URL counts pages from 1, as people do; the API counts from 0.
+  it('shows the page the URL asks for', async () => {
+    server.use(
+      http.get('/api/v1/pokemon', ({ request }) => {
+        const page = Number(new URL(request.url).searchParams.get('page'))
+        return HttpResponse.json(pageOf(page === 2 ? [PIKACHU] : [BULBASAUR], { page }))
+      }),
+    )
+    renderApp('/?page=3')
+
+    expect(await screen.findByRole('article', { name: 'Pikachu' })).toBeInTheDocument()
+    expect(within(screen.getByRole('navigation', { name: 'Pagination' })).getByText('Page 3 of 68')).toBeInTheDocument()
   })
 })
