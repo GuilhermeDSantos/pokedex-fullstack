@@ -13,6 +13,7 @@ public record CustomAttributes(String localizedName, String region, Set<Tag> tag
     public CustomAttributes {
         localizedName = optionalText(localizedName, "Localized name");
         region = optionalText(region, "Region");
+        tags = Set.copyOf(tags);
         if (tags.size() > MAX_TAGS) {
             throw new InvalidCustomAttributesException("A Pokémon has at most " + MAX_TAGS + " tags");
         }
