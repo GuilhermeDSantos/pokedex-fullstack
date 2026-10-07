@@ -23,7 +23,8 @@ public class PokemonController {
     }
 
     @GetMapping
-    public PageResponse<PokemonSummaryResponse> list(@RequestParam int page, @RequestParam int size) {
+    public PageResponse<PokemonSummaryResponse> list(@RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "20") int size) {
         return mapper.toPageResponse(browsePokemonUseCase.execute(new BrowsePokemonInput(page, size)));
     }
 }
