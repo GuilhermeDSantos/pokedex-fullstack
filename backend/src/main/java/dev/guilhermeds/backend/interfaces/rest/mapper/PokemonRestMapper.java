@@ -61,7 +61,7 @@ public class PokemonRestMapper {
     }
 
     private PokemonSummaryResponse toResponse(PokemonSummaryOutput card) {
-        return new PokemonSummaryResponse(card.pokedexNumber(), card.name(), card.spriteUrl(), card.category(),
+        return new PokemonSummaryResponse(card.pokedexNumber(), card.name(), card.localizedName(), card.spriteUrl(), card.category(),
             card.weightKilograms(), card.types(), card.abilities().stream().map(this::toResponse).toList());
     }
 
