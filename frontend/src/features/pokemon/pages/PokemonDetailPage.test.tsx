@@ -150,4 +150,28 @@ describe('PokemonDetailPage', () => {
     expect(await within(local).findByText('Kanto')).toBeInTheDocument()
     expect(within(local).queryByRole('button', { name: 'Sync to local database' })).not.toBeInTheDocument()
   })
+
+  // Someone else synced it first: not an error for this user, just show the record that now exists.
+  it('shows the existing record with a note when the Pokémon was synced meanwhile', async () => {
+    let syncedElsewhere = false
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () =>
+        HttpResponse.json(syncedElsewhere ? SYNCED_PIKACHU_DETAIL : PIKACHU_DETAIL),
+      ),
+      http.post('/api/v1/pokemon/pikachu/local', () => {
+        syncedElsewhere = true
+        return HttpResponse.json(
+          { code: 'CONFLICT', message: 'Pokémon #25 is already in the local database', fieldErrors: [] },
+          { status: 409 },
+        )
+      }),
+    )
+    renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Sync to local database' }))
+
+    const local = screen.getByRole('region', { name: 'Local data' })
+    expect(await within(local).findByText('Kanto')).toBeInTheDocument()
+    expect(within(local).getByRole('status')).toHaveTextContent('Someone synced this Pokémon just before you.')
+  })
 })
