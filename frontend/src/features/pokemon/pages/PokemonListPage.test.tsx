@@ -100,4 +100,14 @@ describe('PokemonListPage', () => {
 
     expect(window.scrollTo).toHaveBeenCalledWith(0, 0)
   })
+
+  it("opens a Pokémon's detail from its card", async () => {
+    server.use(http.get('/api/v1/pokemon', () => HttpResponse.json(pageOf([PIKACHU]))))
+    const { router } = renderApp('/')
+
+    const card = await screen.findByRole('article', { name: 'Pikachu' })
+    await userEvent.click(within(card).getByRole('link', { name: 'Pikachu' }))
+
+    expect(router.state.location.pathname).toBe('/pokemon/pikachu')
+  })
 })
