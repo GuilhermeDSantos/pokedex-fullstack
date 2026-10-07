@@ -3,8 +3,8 @@ package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.domain.pagination.PageRequest;
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
-import dev.guilhermeds.backend.domain.source.PokemonSummary;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
+import dev.guilhermeds.backend.domain.model.PokemonSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,16 +27,16 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-class PokeApiPokemonSourceTest {
+class PokeApiPokemonRepositoryTest {
 
     @Mock
     private PokeApiClient client;
 
-    private PokeApiPokemonSource source;
+    private PokeApiPokemonRepository repository;
 
     @BeforeEach
     void setUp() {
-        source = new PokeApiPokemonSource(client, new PokeApiTranslator(), properties(10));
+        repository = new PokeApiPokemonRepository(client, new PokeApiTranslator(), properties(10));
     }
 
     @Test
@@ -45,7 +45,7 @@ class PokeApiPokemonSourceTest {
         givenPokemon("bulbasaur", 1);
         givenPokemon("pikachu", 25);
 
-        var page = source.findAll(new PageRequest(0, 2));
+        var page = repository.findAll(new PageRequest(0, 2));
 
         assertThat(page.totalElements()).isEqualTo(1351);
         assertThat(page.content()).extracting(PokemonSummary::number)
@@ -70,7 +70,7 @@ class PokeApiPokemonSourceTest {
         given(client.fetchSpecies(pokemon(1).species().url())).willReturn(species(1));
         given(client.fetchSpecies(pokemon(25).species().url())).willReturn(species(25));
 
-        var page = source.findAll(new PageRequest(0, 2));
+        var page = repository.findAll(new PageRequest(0, 2));
 
         assertThat(page.content()).extracting(PokemonSummary::number)
             .containsExactly(new PokedexNumber(1), new PokedexNumber(25));
@@ -79,7 +79,7 @@ class PokeApiPokemonSourceTest {
     // PokeAPI is a free public service: a page of 50 must not fire 100 calls at once (D-018).
     @Test
     void shouldNeverRunMoreCallsAtOnceThanTheConfiguredMaximum() {
-        var limited = new PokeApiPokemonSource(client, new PokeApiTranslator(), properties(2));
+        var limited = new PokeApiPokemonRepository(client, new PokeApiTranslator(), properties(2));
         var inFlight = new AtomicInteger();
         var peak = new AtomicInteger();
         given(client.fetchPage(0, 4)).willReturn(page(1351, "a", "b", "c", "d"));
@@ -102,8 +102,8 @@ class PokeApiPokemonSourceTest {
         given(client.fetchPage(0, 1)).willReturn(page(1351, "missingno"));
         given(client.fetchPokemon("missingno")).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> source.findAll(new PageRequest(0, 1)))
-            .isInstanceOf(PokemonSourceUnavailableException.class);
+        assertThatThrownBy(() -> repository.findAll(new PageRequest(0, 1)))
+            .isInstanceOf(PokemonDataUnavailableException.class);
     }
 
     // The failure a worker thread hit reaches the caller as itself, so it still maps to a 503.
@@ -112,10 +112,10 @@ class PokeApiPokemonSourceTest {
         given(client.fetchPage(0, 1)).willReturn(page(1351, "pikachu"));
         given(client.fetchPokemon("pikachu")).willReturn(Optional.of(pokemon(25)));
         given(client.fetchSpecies(pokemon(25).species().url()))
-            .willThrow(new PokemonSourceUnavailableException("PokeAPI is unavailable right now"));
+            .willThrow(new PokemonDataUnavailableException("PokeAPI is unavailable right now"));
 
-        assertThatThrownBy(() -> source.findAll(new PageRequest(0, 1)))
-            .isExactlyInstanceOf(PokemonSourceUnavailableException.class)
+        assertThatThrownBy(() -> repository.findAll(new PageRequest(0, 1)))
+            .isExactlyInstanceOf(PokemonDataUnavailableException.class)
             .hasMessage("PokeAPI is unavailable right now");
     }
 
@@ -128,7 +128,7 @@ class PokeApiPokemonSourceTest {
         given(client.fetchSpecies(pokemon(25).species().url())).willReturn(species(25));
         given(client.fetchEvolutionChain(species(25).evolutionChain().url())).willReturn(evolutionChain(10));
 
-        var detail = source.findByIdentifier(new PokemonIdentifier("Pikachu"));
+        var detail = repository.findByIdentifier(new PokemonIdentifier("Pikachu"));
 
         assertThat(detail).hasValueSatisfying(pikachu -> {
             assertThat(pikachu.number()).isEqualTo(new PokedexNumber(25));
@@ -140,7 +140,7 @@ class PokeApiPokemonSourceTest {
     void shouldFindNothingWhenPokeApiDoesNotKnowThePokemon() {
         given(client.fetchPokemon("missingno")).willReturn(Optional.empty());
 
-        assertThat(source.findByIdentifier(new PokemonIdentifier("missingno"))).isEmpty();
+        assertThat(repository.findByIdentifier(new PokemonIdentifier("missingno"))).isEmpty();
     }
 
     private void givenPokemon(String name, int id) {

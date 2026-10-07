@@ -1,8 +1,10 @@
-package dev.guilhermeds.backend.domain.source;
+package dev.guilhermeds.backend.domain.repository;
 
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
+import dev.guilhermeds.backend.domain.model.PokemonDetail;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
+import dev.guilhermeds.backend.domain.model.PokemonSummary;
 import dev.guilhermeds.backend.domain.pagination.Page;
 import dev.guilhermeds.backend.domain.pagination.PageRequest;
 import org.junit.jupiter.api.Test;
@@ -11,10 +13,10 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class PokemonSourceTest {
+class PokemonRepositoryTest {
 
-    // A source that knows no Pokémon at all: enough to exercise the port's own default method.
-    private final PokemonSource emptySource = new PokemonSource() {
+    // A repository that knows no Pokémon at all: enough to exercise the port's own default method.
+    private final PokemonRepository emptySource = new PokemonRepository() {
         @Override
         public Page<PokemonSummary> findAll(PageRequest pageRequest) {
             throw new UnsupportedOperationException("not used here");

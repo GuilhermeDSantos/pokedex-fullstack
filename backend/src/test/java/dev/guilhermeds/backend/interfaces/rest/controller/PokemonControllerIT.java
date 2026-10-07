@@ -14,7 +14,7 @@ import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
 import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
 import dev.guilhermeds.backend.interfaces.rest.mapper.PokemonRestMapper;
@@ -106,7 +106,7 @@ class PokemonControllerIT {
     @Test
     void shouldAnswer503WhenPokeApiIsUnavailable() {
         given(browsePokemonUseCase.execute(new BrowsePokemonInput(0, 20)))
-            .willThrow(new PokemonSourceUnavailableException("PokeAPI listed a Pokémon it can't return: missingno"));
+            .willThrow(new PokemonDataUnavailableException("PokeAPI listed a Pokémon it can't return: missingno"));
 
         var result = mockMvc.get().uri("/api/v1/pokemon").exchange();
 
@@ -172,7 +172,7 @@ class PokemonControllerIT {
     @Test
     void shouldAnswer503WhenPokeApiIsUnavailableForADetail() {
         given(getPokemonUseCase.execute(new GetPokemonInput("pikachu")))
-            .willThrow(new PokemonSourceUnavailableException("PokeAPI is unavailable right now"));
+            .willThrow(new PokemonDataUnavailableException("PokeAPI is unavailable right now"));
 
         assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu"))
             .hasStatus(503)

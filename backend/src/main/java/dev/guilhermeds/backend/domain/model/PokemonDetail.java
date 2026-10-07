@@ -1,11 +1,11 @@
-package dev.guilhermeds.backend.domain.source;
+package dev.guilhermeds.backend.domain.model;
 
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonProfile;
 
 import java.util.Objects;
 
-// One Pokémon as the source knows it (US-02): its profile and the lineage it belongs to.
+// One Pokémon in full (US-02): its profile and the lineage it belongs to.
 public record PokemonDetail(PokedexNumber number, PokemonProfile profile, EvolutionStage evolutionChain) {
 
     public PokemonDetail {

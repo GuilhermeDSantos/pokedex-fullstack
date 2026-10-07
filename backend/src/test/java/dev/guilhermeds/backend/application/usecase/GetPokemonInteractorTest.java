@@ -14,9 +14,9 @@ import dev.guilhermeds.backend.domain.model.PokemonProfile;
 import dev.guilhermeds.backend.domain.model.PokemonType;
 import dev.guilhermeds.backend.domain.model.StatName;
 import dev.guilhermeds.backend.domain.model.Weight;
-import dev.guilhermeds.backend.domain.source.EvolutionStage;
-import dev.guilhermeds.backend.domain.source.PokemonDetail;
-import dev.guilhermeds.backend.domain.source.PokemonSource;
+import dev.guilhermeds.backend.domain.model.EvolutionStage;
+import dev.guilhermeds.backend.domain.model.PokemonDetail;
+import dev.guilhermeds.backend.domain.repository.PokemonRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,19 +45,19 @@ class GetPokemonInteractorTest {
             new EvolutionStage("pikachu", new PokedexNumber(25), List.of()))));
 
     @Mock
-    private PokemonSource source;
+    private PokemonRepository pokemonRepository;
 
     private GetPokemonInteractor interactor;
 
     @BeforeEach
     void setUp() {
-        interactor = new GetPokemonInteractor(source, new PokemonMapper());
+        interactor = new GetPokemonInteractor(pokemonRepository, new PokemonMapper());
     }
 
     @Test
     void shouldDescribeThePokemonTheIdentifierNames() {
         // getByIdentifier is a default method: Mockito doesn't run default bodies, so it's stubbed directly.
-        given(source.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PIKACHU);
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PIKACHU);
 
         var output = interactor.execute(new GetPokemonInput("Pikachu"));
 
@@ -77,6 +77,6 @@ class GetPokemonInteractorTest {
         assertThatThrownBy(() -> interactor.execute(new GetPokemonInput("pika chu")))
             .isInstanceOf(InvalidPokemonIdentifierException.class);
 
-        verifyNoInteractions(source);
+        verifyNoInteractions(pokemonRepository);
     }
 }

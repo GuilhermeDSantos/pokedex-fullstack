@@ -9,8 +9,8 @@ import dev.guilhermeds.backend.domain.model.PokemonType;
 import dev.guilhermeds.backend.domain.model.Weight;
 import dev.guilhermeds.backend.domain.pagination.Page;
 import dev.guilhermeds.backend.domain.pagination.PageRequest;
-import dev.guilhermeds.backend.domain.source.PokemonSource;
-import dev.guilhermeds.backend.domain.source.PokemonSummary;
+import dev.guilhermeds.backend.domain.repository.PokemonRepository;
+import dev.guilhermeds.backend.domain.model.PokemonSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,18 +33,18 @@ class BrowsePokemonInteractorTest {
         List.of(new Ability("static", false), new Ability("lightning-rod", true)));
 
     @Mock
-    private PokemonSource source;
+    private PokemonRepository pokemonRepository;
 
     private BrowsePokemonInteractor interactor;
 
     @BeforeEach
     void setUp() {
-        interactor = new BrowsePokemonInteractor(source);
+        interactor = new BrowsePokemonInteractor(pokemonRepository);
     }
 
     @Test
     void shouldReturnTheRequestedPageOfCards() {
-        given(source.findAll(new PageRequest(1, 20))).willReturn(new Page<>(List.of(PIKACHU), 1351));
+        given(pokemonRepository.findAll(new PageRequest(1, 20))).willReturn(new Page<>(List.of(PIKACHU), 1351));
 
         var output = interactor.execute(new BrowsePokemonInput(1, 20));
 
@@ -69,6 +69,6 @@ class BrowsePokemonInteractorTest {
         assertThatThrownBy(() -> interactor.execute(new BrowsePokemonInput(0, 51)))
             .isInstanceOf(InvalidPageRequestException.class);
 
-        verifyNoInteractions(source);
+        verifyNoInteractions(pokemonRepository);
     }
 }

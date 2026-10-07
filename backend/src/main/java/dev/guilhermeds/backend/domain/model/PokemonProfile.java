@@ -4,7 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-// The full view of a Pokémon (US-02). Category, images and description are nullable: the source has gaps.
+// The full view of a Pokémon (US-02). Category, images and description are nullable: the canonical data has gaps.
 public record PokemonProfile(String name, String category, Height height, Weight weight, String spriteUrl,
                              String artworkUrl, List<PokemonType> types, List<Ability> abilities, List<BaseStat> stats,
                              String description) {

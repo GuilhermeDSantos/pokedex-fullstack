@@ -1,6 +1,6 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -54,12 +54,12 @@ public class PokeApiClient {
             return Optional.empty();
         } catch (RestClientException e) {
             log.warn("PokeAPI call failed: {}", uri);
-            throw new PokemonSourceUnavailableException("PokeAPI is unavailable right now", e);
+            throw new PokemonDataUnavailableException("PokeAPI is unavailable right now", e);
         }
     }
 
     private <T> T getRequired(String uri, Class<T> type, Object... variables) {
         return get(uri, type, variables)
-            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
+            .orElseThrow(() -> new PokemonDataUnavailableException("PokeAPI returned incomplete data"));
     }
 }

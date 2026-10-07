@@ -1,6 +1,6 @@
 package dev.guilhermeds.backend.application.dto;
 
-import dev.guilhermeds.backend.domain.source.EvolutionStage;
+import dev.guilhermeds.backend.domain.model.EvolutionStage;
 
 import java.util.List;
 

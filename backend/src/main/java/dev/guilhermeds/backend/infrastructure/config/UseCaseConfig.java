@@ -16,7 +16,7 @@ import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserInteractor;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
-import dev.guilhermeds.backend.domain.source.PokemonSource;
+import dev.guilhermeds.backend.domain.repository.PokemonRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -47,8 +47,8 @@ public class UseCaseConfig {
     }
 
     @Bean
-    BrowsePokemonUseCase browsePokemonUseCase(PokemonSource source) {
-        return new BrowsePokemonInteractor(source);
+    BrowsePokemonUseCase browsePokemonUseCase(PokemonRepository pokemonRepository) {
+        return new BrowsePokemonInteractor(pokemonRepository);
     }
 
     @Bean
@@ -57,7 +57,7 @@ public class UseCaseConfig {
     }
 
     @Bean
-    GetPokemonUseCase getPokemonUseCase(PokemonSource source, PokemonMapper mapper) {
-        return new GetPokemonInteractor(source, mapper);
+    GetPokemonUseCase getPokemonUseCase(PokemonRepository pokemonRepository, PokemonMapper mapper) {
+        return new GetPokemonInteractor(pokemonRepository, mapper);
     }
 }

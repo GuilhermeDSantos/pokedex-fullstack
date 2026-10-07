@@ -1,7 +1,7 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
 import com.sun.net.httpserver.HttpServer;
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +54,7 @@ class PokeApiClientTimeoutIT {
     void shouldGiveUpOnASlowPokeApiAndReportItUnavailable() {
         var started = System.nanoTime();
 
-        assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonSourceUnavailableException.class);
+        assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonDataUnavailableException.class);
         assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(SLOW_ANSWER);
     }
 

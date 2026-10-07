@@ -1,6 +1,6 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
@@ -53,7 +53,7 @@ class PokeApiClientTest {
         server.expect(requestTo(BASE_URL + "/pokemon/25")).andRespond(withServerError());
 
         assertThatThrownBy(() -> client.fetchPokemon("25"))
-            .isInstanceOf(PokemonSourceUnavailableException.class)
+            .isInstanceOf(PokemonDataUnavailableException.class)
             .hasMessage("PokeAPI is unavailable right now");
     }
 
@@ -61,7 +61,7 @@ class PokeApiClientTest {
     void shouldReportPokeApiAsUnavailableWhenItCannotBeReached() {
         server.expect(requestTo(BASE_URL + "/pokemon/25")).andRespond(withException(new SocketTimeoutException("Read timed out")));
 
-        assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonSourceUnavailableException.class);
+        assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonDataUnavailableException.class);
     }
 
     // Followed by the URL the Pokémon response gave: alternate forms have a different species id.
@@ -80,7 +80,7 @@ class PokeApiClientTest {
         server.expect(requestTo(url)).andRespond(withResourceNotFound());
 
         assertThatThrownBy(() -> client.fetchSpecies(url))
-            .isInstanceOf(PokemonSourceUnavailableException.class)
+            .isInstanceOf(PokemonDataUnavailableException.class)
             .hasMessage("PokeAPI returned incomplete data");
     }
 

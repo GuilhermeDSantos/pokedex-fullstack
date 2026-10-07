@@ -2,7 +2,7 @@ package dev.guilhermeds.backend.domain.model;
 
 import java.util.Locale;
 
-// Comes from the source, not from a user: a blank one is a mapping bug, not a 400.
+// Canonical data, never typed by a user: a blank one is a mapping bug, not a 400.
 public record PokemonType(String name) {
 
     public PokemonType {

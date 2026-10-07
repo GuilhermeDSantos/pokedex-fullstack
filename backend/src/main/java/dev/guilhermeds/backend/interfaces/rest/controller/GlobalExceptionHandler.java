@@ -5,7 +5,7 @@ import dev.guilhermeds.backend.domain.exception.DomainException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
 import dev.guilhermeds.backend.domain.exception.ValidationException;
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.interfaces.rest.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +50,8 @@ public class GlobalExceptionHandler {
     }
 
     // The message can name internal details (a Pokémon PokeAPI couldn't return), so it only goes to the log.
-    @ExceptionHandler(PokemonSourceUnavailableException.class)
-    public ResponseEntity<ErrorResponse> handleSourceUnavailable(PokemonSourceUnavailableException exception) {
+    @ExceptionHandler(PokemonDataUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleSourceUnavailable(PokemonDataUnavailableException exception) {
         log.warn("PokeAPI unavailable: {}", exception.getMessage());
         return error(HttpStatus.SERVICE_UNAVAILABLE, "SOURCE_UNAVAILABLE",
             "The Pokémon catalog is unavailable right now. Please try again in a moment.");

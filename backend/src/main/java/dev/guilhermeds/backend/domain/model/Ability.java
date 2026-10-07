@@ -1,6 +1,6 @@
 package dev.guilhermeds.backend.domain.model;
 
-// The brief's "skills" (D-010). Comes from the source, so a blank name is a mapping bug, not a 400.
+// The brief's "skills" (D-010). Canonical data, never typed by a user, so a blank name is a mapping bug, not a 400.
 public record Ability(String name, boolean hidden) {
 
     public Ability {

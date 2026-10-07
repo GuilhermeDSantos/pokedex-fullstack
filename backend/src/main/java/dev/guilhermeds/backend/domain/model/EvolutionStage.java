@@ -1,4 +1,4 @@
-package dev.guilhermeds.backend.domain.source;
+package dev.guilhermeds.backend.domain.model;
 
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 

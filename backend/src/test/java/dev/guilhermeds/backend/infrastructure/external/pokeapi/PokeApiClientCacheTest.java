@@ -1,6 +1,6 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.infrastructure.config.CacheConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,7 +76,7 @@ class PokeApiClientCacheTest {
         server.expect(once(), requestTo(BASE_URL + "/pokemon/25"))
             .andRespond(withSuccess(json("pokemon-25.json"), MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonSourceUnavailableException.class);
+        assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonDataUnavailableException.class);
         assertThat(client.fetchPokemon("25")).isPresent();
     }
 

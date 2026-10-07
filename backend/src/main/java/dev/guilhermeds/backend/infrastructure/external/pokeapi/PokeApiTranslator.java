@@ -8,9 +8,9 @@ import dev.guilhermeds.backend.domain.model.PokemonProfile;
 import dev.guilhermeds.backend.domain.model.PokemonType;
 import dev.guilhermeds.backend.domain.model.StatName;
 import dev.guilhermeds.backend.domain.model.Weight;
-import dev.guilhermeds.backend.domain.source.EvolutionStage;
-import dev.guilhermeds.backend.domain.source.PokemonDetail;
-import dev.guilhermeds.backend.domain.source.PokemonSummary;
+import dev.guilhermeds.backend.domain.model.EvolutionStage;
+import dev.guilhermeds.backend.domain.model.PokemonDetail;
+import dev.guilhermeds.backend.domain.model.PokemonSummary;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;

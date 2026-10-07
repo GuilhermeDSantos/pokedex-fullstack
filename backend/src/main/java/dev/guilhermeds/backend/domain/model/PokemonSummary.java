@@ -1,4 +1,4 @@
-package dev.guilhermeds.backend.domain.source;
+package dev.guilhermeds.backend.domain.model;
 
 import dev.guilhermeds.backend.domain.model.Ability;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
@@ -8,7 +8,7 @@ import dev.guilhermeds.backend.domain.model.Weight;
 import java.util.List;
 import java.util.Objects;
 
-// One list card (US-01): sprite, category, mass and skills. Sprite and category are nullable: the source has gaps.
+// One list card (US-01): sprite, category, mass and skills. Sprite and category are nullable: the canonical data has gaps.
 public record PokemonSummary(PokedexNumber number, String name, String spriteUrl, String category, Weight weight,
                              List<PokemonType> types, List<Ability> abilities) {
 

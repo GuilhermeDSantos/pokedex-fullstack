@@ -3,10 +3,10 @@ package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.domain.pagination.Page;
 import dev.guilhermeds.backend.domain.pagination.PageRequest;
-import dev.guilhermeds.backend.domain.source.PokemonDetail;
-import dev.guilhermeds.backend.domain.source.PokemonSource;
-import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
-import dev.guilhermeds.backend.domain.source.PokemonSummary;
+import dev.guilhermeds.backend.domain.model.PokemonDetail;
+import dev.guilhermeds.backend.domain.repository.PokemonRepository;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
+import dev.guilhermeds.backend.domain.model.PokemonSummary;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -16,16 +16,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
 
-// The PokemonSource port on PokeAPI. No @Cacheable here: caching lives on the client (D-012).
+// The PokemonRepository port on PokeAPI. No @Cacheable here: caching lives on the client (D-012).
 @Component
-public class PokeApiPokemonSource implements PokemonSource {
+public class PokeApiPokemonRepository implements PokemonRepository {
 
     private final PokeApiClient client;
     private final PokeApiTranslator translator;
     // Shared by every request, so the cap holds across concurrent users too.
     private final Semaphore pokeApiCalls;
 
-    public PokeApiPokemonSource(PokeApiClient client, PokeApiTranslator translator, PokeApiProperties properties) {
+    public PokeApiPokemonRepository(PokeApiClient client, PokeApiTranslator translator, PokeApiProperties properties) {
         this.client = client;
         this.translator = translator;
         this.pokeApiCalls = new Semaphore(properties.maxConcurrency());
@@ -39,7 +39,7 @@ public class PokeApiPokemonSource implements PokemonSource {
             var cards = page.results().stream()
                 .map(entry -> executor.submit(() -> withinTheCap(() -> summaryOf(entry.name()))))
                 .toList();
-            return new Page<>(cards.stream().map(PokeApiPokemonSource::join).toList(), page.count());
+            return new Page<>(cards.stream().map(PokeApiPokemonRepository::join).toList(), page.count());
         }
     }
 
@@ -65,7 +65,7 @@ public class PokeApiPokemonSource implements PokemonSource {
     // The list only names each Pokémon; its card needs the Pokémon and its species.
     private PokemonSummary summaryOf(String name) {
         var pokemon = client.fetchPokemon(name)
-            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI listed a Pokémon it can't return: " + name));
+            .orElseThrow(() -> new PokemonDataUnavailableException("PokeAPI listed a Pokémon it can't return: " + name));
         return translator.toSummary(pokemon, client.fetchSpecies(pokemon.species().url()));
     }
 
@@ -76,10 +76,10 @@ public class PokeApiPokemonSource implements PokemonSource {
             if (e.getCause() instanceof RuntimeException failure) {
                 throw failure;
             }
-            throw new PokemonSourceUnavailableException("PokeAPI call failed", e.getCause());
+            throw new PokemonDataUnavailableException("PokeAPI call failed", e.getCause());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new PokemonSourceUnavailableException("Interrupted while calling PokeAPI", e);
+            throw new PokemonDataUnavailableException("Interrupted while calling PokeAPI", e);
         }
     }
 }

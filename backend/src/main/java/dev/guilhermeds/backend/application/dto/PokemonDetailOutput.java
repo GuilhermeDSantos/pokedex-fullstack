@@ -1,7 +1,7 @@
 package dev.guilhermeds.backend.application.dto;
 
 import dev.guilhermeds.backend.domain.model.PokemonType;
-import dev.guilhermeds.backend.domain.source.PokemonDetail;
+import dev.guilhermeds.backend.domain.model.PokemonDetail;
 
 import java.math.BigDecimal;
 import java.util.List;
