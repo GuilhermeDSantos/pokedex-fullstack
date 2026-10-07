@@ -40,6 +40,12 @@ public class PokeApiClient {
         return getRequired(url, PokeApiSpeciesJson.class);
     }
 
+    // Like the species: the URL comes from PokeAPI itself, so a 404 means its data is broken.
+    @Cacheable("pokeapi-evolution-chains")
+    PokeApiEvolutionChainJson fetchEvolutionChain(String url) {
+        return getRequired(url, PokeApiEvolutionChainJson.class);
+    }
+
     // 404 → empty; anything else that isn't a 2xx, a timeout or an I/O error → unavailable.
     private <T> Optional<T> get(String uri, Class<T> type, Object... variables) {
         try {

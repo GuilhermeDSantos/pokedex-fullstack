@@ -1,7 +1,7 @@
 spring:
   cache:
     type: caffeine
-    cache-names: pokeapi-pages, pokeapi-pokemon, pokeapi-species
+    cache-names: pokeapi-pages, pokeapi-pokemon, pokeapi-species, pokeapi-evolution-chains
     caffeine:
       # PokeAPI's data is effectively static; exceptions are never cached, so an outage isn't remembered.
       spec: maximumSize=2000,expireAfterWrite=6h
