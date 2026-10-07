@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatKilograms, formatName, formatPokedexNumber } from './format'
+import { formatKilograms, formatMeters, formatName, formatPokedexNumber } from './format'
 
 describe('formatName', () => {
   it.each([
@@ -28,5 +28,14 @@ describe('formatKilograms', () => {
     [100, '100.0 kg'],
   ])('shows %f as %s', (kilograms, label) => {
     expect(formatKilograms(kilograms)).toBe(label)
+  })
+})
+
+describe('formatMeters', () => {
+  it.each([
+    [0.4, '0.4 m'],
+    [2, '2.0 m'],
+  ])('shows %f as %s', (meters, label) => {
+    expect(formatMeters(meters)).toBe(label)
   })
 })
