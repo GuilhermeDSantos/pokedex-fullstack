@@ -1,6 +1,7 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
+import dev.guilhermeds.backend.domain.exception.DataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.ValidationException;
 import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
 import dev.guilhermeds.backend.domain.exception.DomainException;
@@ -86,6 +87,22 @@ class GlobalExceptionHandlerIT {
             .isLenientlyEqualTo("""
                 { "code": "DOMAIN_ERROR", "message": "Probe 42 cannot do that", "fieldErrors": [] }
                 """);
+    }
+
+    // Whatever store is down, the client gets the same neutral 503; which one, and why, is in the log.
+    @Test
+    void shouldMapAnyDataUnavailableCategoryTo503WithoutItsDetails() {
+        var result = mockMvc.get().uri("/probe/data-unavailable").exchange();
+
+        assertThat(result)
+            .hasStatus(503)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "DATA_UNAVAILABLE",
+                  "message": "The service is temporarily unavailable. Please try again in a moment.",
+                  "fieldErrors": [] }
+                """);
+        assertThat(result).bodyText().doesNotContain("probe-store");
     }
 
     @Test
@@ -210,9 +227,20 @@ class GlobalExceptionHandlerIT {
             throw new ProbeConflictException();
         }
 
+        @GetMapping("/probe/data-unavailable")
+        void dataUnavailable() {
+            throw new ProbeDataUnavailableException();
+        }
+
         @GetMapping("/probe/not-found")
         void notFound() {
             throw new ProbeNotFoundException();
+        }
+    }
+
+    static class ProbeDataUnavailableException extends DataUnavailableException {
+        ProbeDataUnavailableException() {
+            super("probe-store refused the connection", new IllegalStateException("connection refused"));
         }
     }
 

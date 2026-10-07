@@ -114,8 +114,8 @@ class PokemonControllerIT {
             .hasStatus(503)
             .bodyJson()
             .isLenientlyEqualTo("""
-                { "code": "SOURCE_UNAVAILABLE",
-                  "message": "The Pokémon catalog is unavailable right now. Please try again in a moment." }
+                { "code": "DATA_UNAVAILABLE",
+                  "message": "The service is temporarily unavailable. Please try again in a moment." }
                 """);
         assertThat(result).bodyText().doesNotContain("missingno");
     }
@@ -176,6 +176,6 @@ class PokemonControllerIT {
 
         assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu"))
             .hasStatus(503)
-            .bodyJson().extractingPath("$.code").isEqualTo("SOURCE_UNAVAILABLE");
+            .bodyJson().extractingPath("$.code").isEqualTo("DATA_UNAVAILABLE");
     }
 }
