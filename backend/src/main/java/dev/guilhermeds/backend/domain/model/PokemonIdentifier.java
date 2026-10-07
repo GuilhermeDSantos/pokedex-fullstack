@@ -16,4 +16,16 @@ public record PokemonIdentifier(String value) {
             throw new InvalidPokemonIdentifierException();
         }
     }
+
+    public boolean isNumber() {
+        return value.chars().allMatch(Character::isDigit);
+    }
+
+    // Only for a number; "0" is still rejected by PokedexNumber itself (400).
+    public PokedexNumber asNumber() {
+        if (!isNumber()) {
+            throw new IllegalStateException("identifier is a name, not a number: " + value);
+        }
+        return new PokedexNumber(Integer.parseInt(value));
+    }
 }
