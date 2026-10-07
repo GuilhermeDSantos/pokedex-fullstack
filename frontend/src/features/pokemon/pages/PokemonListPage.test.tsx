@@ -76,4 +76,17 @@ describe('PokemonListPage', () => {
     expect(router.state.location.search).toBe('?page=4')
     expect(await screen.findByText('Page 4 of 68')).toBeInTheDocument()
   })
+
+  it.each(['abc', '0', '-2', '1.5'])('treats ?page=%s as the first page', async (page) => {
+    server.use(
+      http.get('/api/v1/pokemon', ({ request }) =>
+        new URL(request.url).searchParams.get('page') === '0'
+          ? HttpResponse.json(pageOf([BULBASAUR]))
+          : HttpResponse.json({ code: 'VALIDATION_ERROR', message: 'Invalid request parameter', fieldErrors: [] }, { status: 400 }),
+      ),
+    )
+    renderApp(`/?page=${page}`)
+
+    expect(await screen.findByRole('article', { name: 'Bulbasaur' })).toBeInTheDocument()
+  })
 })
