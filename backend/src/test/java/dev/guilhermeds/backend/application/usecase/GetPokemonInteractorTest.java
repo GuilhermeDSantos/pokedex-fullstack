@@ -4,6 +4,7 @@ import dev.guilhermeds.backend.application.dto.EvolutionStageOutput;
 import dev.guilhermeds.backend.application.dto.GetPokemonInput;
 import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.application.mapper.PokemonMapper;
+import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
 import dev.guilhermeds.backend.domain.model.Ability;
 import dev.guilhermeds.backend.domain.model.BaseStat;
 import dev.guilhermeds.backend.domain.model.Height;
@@ -27,7 +28,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class GetPokemonInteractorTest {
@@ -67,5 +70,13 @@ class GetPokemonInteractorTest {
         assertThat(output.stats()).first().isEqualTo(new StatOutput("HP", 50));
         assertThat(output.evolutionChain()).isEqualTo(new EvolutionStageOutput("pichu", 172,
             List.of(new EvolutionStageOutput("pikachu", 25, List.of()))));
+    }
+
+    @Test
+    void shouldRejectAMalformedIdentifierBeforeCallingPokeApi() {
+        assertThatThrownBy(() -> interactor.execute(new GetPokemonInput("pika chu")))
+            .isInstanceOf(InvalidPokemonIdentifierException.class);
+
+        verifyNoInteractions(source);
     }
 }
