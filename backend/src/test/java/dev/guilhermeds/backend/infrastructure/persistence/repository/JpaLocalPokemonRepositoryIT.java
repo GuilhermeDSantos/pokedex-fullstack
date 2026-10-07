@@ -2,8 +2,10 @@ package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
+import dev.guilhermeds.backend.domain.model.CustomAttributes;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.LocalPokemonId;
+import dev.guilhermeds.backend.domain.model.Tag;
 import dev.guilhermeds.backend.fixture.LocalPokemonFixture;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.LocalPokemonEntityMapper;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 import static dev.guilhermeds.backend.fixture.LocalPokemonFixture.NOW;
@@ -61,5 +65,26 @@ class JpaLocalPokemonRepositoryIT {
             .isInstanceOf(PokemonAlreadySyncedException.class)
             .isInstanceOf(ConflictException.class)
             .hasMessage("Pokémon #25 is already in the local database");
+    }
+
+    // Each edit loads the record and saves it back (US-04): the second one must not trip over the first.
+    @Test
+    void shouldSaveEveryEditOfTheSameRecord() {
+        repository.save(LocalPokemonFixture.syncedPikachu());
+        var lastEdit = new CustomAttributes("Pica", "Johto", Set.of(new Tag("electric")));
+
+        edit(new CustomAttributes("Pikachu BR", "Kanto", Set.of(new Tag("starter"))), NOW.plusSeconds(60));
+        edit(lastEdit, NOW.plusSeconds(120));
+
+        assertThat(repository.findByPokedexNumber(PIKACHU_NUMBER)).hasValueSatisfying(reloaded -> {
+            assertThat(reloaded.getCustomAttributes()).isEqualTo(lastEdit);
+            assertThat(reloaded.getUpdatedAt()).isEqualTo(NOW.plusSeconds(120));
+        });
+    }
+
+    private void edit(CustomAttributes attributes, Instant now) {
+        var pikachu = repository.getByPokedexNumber(PIKACHU_NUMBER);
+        pikachu.updateCustomAttributes(attributes, now);
+        repository.save(pikachu);
     }
 }
