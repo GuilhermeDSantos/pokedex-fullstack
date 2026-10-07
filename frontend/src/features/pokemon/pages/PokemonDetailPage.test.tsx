@@ -149,6 +149,23 @@ describe('PokemonDetailPage', () => {
     expect(screen.queryByRole('button', { name: 'Sync to local database' })).not.toBeInTheDocument()
   })
 
+  // The same Pokémon can be open under its number: the page still shows the new record.
+  it('shows our record after a sync from a page opened by Pokédex number', async () => {
+    let synced = false
+    server.use(
+      http.get('/api/v1/pokemon/25', () => HttpResponse.json(synced ? SYNCED_PIKACHU_DETAIL : PIKACHU_DETAIL)),
+      http.post('/api/v1/pokemon/25/local', () => {
+        synced = true
+        return HttpResponse.json(SYNCED_PIKACHU_DETAIL.local, { status: 201 })
+      }),
+    )
+    renderApp('/pokemon/25', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Sync to local database' }))
+
+    expect(await screen.findByText('Kanto')).toBeInTheDocument()
+  })
+
   // Someone else synced it first: not an error for this user, just show the record that now exists.
   it('shows the existing record with a note when the Pokémon was synced meanwhile', async () => {
     let syncedElsewhere = false
