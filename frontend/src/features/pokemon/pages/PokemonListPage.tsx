@@ -1,4 +1,6 @@
+import { Link } from 'react-router'
 import { ErrorState } from '../../../shared/ui/ErrorState'
+import { EmptyState } from '../../../shared/ui/EmptyState'
 import { Heading } from '../../../shared/ui/Heading'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { Stack } from '../../../shared/ui/Stack'
@@ -25,7 +27,10 @@ export function PokemonListPage() {
         </div>
       )}
       {error && <ErrorState message={error.message} onRetry={() => void refetch()} />}
-      {data && (
+      {data?.content.length === 0 && (
+        <EmptyState message="No Pokémon on this page." action={<Link to="/">Go to the first page</Link>} />
+      )}
+      {data && data.content.length > 0 && (
         <ul className={styles.grid}>
           {data.content.map((pokemon) => (
             <li key={pokemon.pokedexNumber}>
