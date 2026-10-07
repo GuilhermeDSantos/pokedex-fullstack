@@ -17,6 +17,7 @@ import dev.guilhermeds.backend.application.usecase.GetLocalPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
+import dev.guilhermeds.backend.domain.exception.InvalidPokedexNumberException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
 import dev.guilhermeds.backend.domain.exception.LocalPokemonNotFoundException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
@@ -217,13 +218,12 @@ class PokemonControllerIT {
 
     // ---- the local record (US-03) -----------------------------------------------------------------
 
-    // Location uses the Pokédex number, whatever the client called the Pokémon.
     @Test
     void shouldSyncAPokemonForASignedInUser() {
-        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pikachu")), any(), eq(NOW)))
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("25")), any(), eq(NOW)))
             .willReturn(new LocalPokemonOutput(25, null, null, List.of(), NOW, NOW));
 
-        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt()))
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/25/local").with(jwt()))
             .hasStatus(201)
             .hasHeader("Location", "http://localhost/api/v1/pokemon/25/local")
             .bodyJson()
@@ -235,7 +235,7 @@ class PokemonControllerIT {
 
     @Test
     void shouldRequireATokenToSync() {
-        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local"))
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/25/local"))
             .hasStatus(401)
             .bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
         verifyNoInteractions(syncPokemonUseCase);
@@ -243,36 +243,39 @@ class PokemonControllerIT {
 
     @Test
     void shouldAnswerASyncOfAnUnknownPokemonWith404() {
-        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("missingno")), any(), any()))
-            .willThrow(new PokemonNotFoundException(new PokemonIdentifier("missingno")));
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("99999")), any(), any()))
+            .willThrow(new PokemonNotFoundException(new PokemonIdentifier("99999")));
 
-        assertThat(mockMvc.post().uri("/api/v1/pokemon/missingno/local").with(jwt())).hasStatus(404);
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/99999/local").with(jwt())).hasStatus(404);
     }
 
     @Test
     void shouldAnswerASecondSyncWith409() {
-        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pikachu")), any(), any()))
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("25")), any(), any()))
             .willThrow(new PokemonAlreadySyncedException(new PokedexNumber(25)));
 
-        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt()))
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/25/local").with(jwt()))
             .hasStatus(409)
             .bodyJson().extractingPath("$.message").isEqualTo("Pokémon #25 is already in the local database");
     }
 
+    // Our records are addressed by Pokédex number only (D-040).
     @Test
-    void shouldAnswerASyncOfAMalformedIdentifierWith400() {
-        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pika!")), any(), any()))
-            .willThrow(new InvalidPokemonIdentifierException());
+    void shouldAnswerASyncByNameWith400() {
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pikachu")), any(), any()))
+            .willThrow(new InvalidPokedexNumberException(PokedexNumber.MIN_VALUE));
 
-        assertThat(mockMvc.post().uri("/api/v1/pokemon/pika!/local").with(jwt())).hasStatus(400);
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt()))
+            .hasStatus(400)
+            .bodyJson().extractingPath("$.message").isEqualTo("Pokédex number must be a whole number, at least 1");
     }
 
     @Test
     void shouldAnswerASyncWith503WhenTheDataIsUnavailable() {
-        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pikachu")), any(), any()))
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("25")), any(), any()))
             .willThrow(new PokemonDataUnavailableException("PokeAPI is unavailable right now"));
 
-        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt())).hasStatus(503);
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/25/local").with(jwt())).hasStatus(503);
     }
 
     @Test
@@ -287,6 +290,14 @@ class PokemonControllerIT {
                 { "pokedexNumber": 25, "localizedName": "Pica", "region": "Kanto", "tags": [ "mascot", "starter" ],
                   "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" }
                 """);
+    }
+
+    @Test
+    void shouldAnswerTheLocalRecordByNameWith400() {
+        given(getLocalPokemonUseCase.execute(new GetLocalPokemonInput("pikachu")))
+            .willThrow(new InvalidPokedexNumberException(PokedexNumber.MIN_VALUE));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu/local")).hasStatus(400);
     }
 
     @Test
