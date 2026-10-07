@@ -6,11 +6,14 @@ import dev.guilhermeds.backend.application.port.TokenIssuer;
 import dev.guilhermeds.backend.application.port.UnitOfWork;
 import dev.guilhermeds.backend.application.usecase.AuthenticateUserInteractor;
 import dev.guilhermeds.backend.application.usecase.AuthenticateUserUseCase;
+import dev.guilhermeds.backend.application.usecase.BrowsePokemonInteractor;
+import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserInteractor;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserInteractor;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
+import dev.guilhermeds.backend.domain.source.PokemonSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -38,5 +41,10 @@ public class UseCaseConfig {
     @Bean
     GetCurrentUserUseCase getCurrentUserUseCase(UserAccountRepository repository, UserAccountMapper mapper) {
         return new GetCurrentUserInteractor(repository, mapper);
+    }
+
+    @Bean
+    BrowsePokemonUseCase browsePokemonUseCase(PokemonSource source) {
+        return new BrowsePokemonInteractor(source);
     }
 }
