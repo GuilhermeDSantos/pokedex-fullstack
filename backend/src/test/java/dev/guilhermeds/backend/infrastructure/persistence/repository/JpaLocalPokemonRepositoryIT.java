@@ -134,6 +134,14 @@ class JpaLocalPokemonRepositoryIT {
         assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
     }
 
+    // A page past the end of the list has no numbers to ask for.
+    @Test
+    void shouldFindNothingForNoNumbers() {
+        repository.save(LocalPokemonFixture.renamedPikachu());
+
+        assertThat(repository.findAllByPokedexNumbers(List.of())).isEmpty();
+    }
+
     // Removed with its tags; the Pokémon can then be synced again (CRUD-D).
     @Test
     void shouldDeleteTheRecordWithItsTags() {
