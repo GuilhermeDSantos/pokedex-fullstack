@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitForElementToBeRemoved, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
@@ -83,5 +83,12 @@ describe('PokemonDetailPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(unavailable)
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Pikachu' })).toBeInTheDocument()
+  })
+
+  it('shows a placeholder while the Pokémon loads', async () => {
+    renderApp('/pokemon/pikachu')
+
+    await waitForElementToBeRemoved(screen.getByRole('status', { name: 'Loading Pokémon' }))
+    expect(screen.getByRole('heading', { level: 1, name: 'Pikachu' })).toBeInTheDocument()
   })
 })
