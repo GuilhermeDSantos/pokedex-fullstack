@@ -9,6 +9,7 @@ import { AbilityList } from '../components/AbilityList'
 import { EvolutionTree } from '../components/EvolutionTree'
 import { LocalSection } from '../components/LocalSection'
 import { PokemonStats } from '../components/PokemonStats'
+import { TagList } from '../components/TagList'
 import { TypeList } from '../components/TypeList'
 import { usePokemon } from '../hooks/usePokemon'
 import styles from './PokemonDetailPage.module.css'
@@ -53,6 +54,7 @@ export function PokemonDetailPage() {
         <Heading level={1}>{name}</Heading>
         {pokemon.local?.localizedName && <p className={styles.localizedName}>{pokemon.local.localizedName}</p>}
         <TypeList types={pokemon.types} />
+        <LocalSection pokemon={pokemon} />
         <p>{pokemon.description}</p>
         <ul aria-label="Facts" className={styles.facts}>
           <li>
@@ -67,6 +69,12 @@ export function PokemonDetailPage() {
             <span className={styles.label}>Weight</span>
             {formatKilograms(pokemon.weightKilograms)}
           </li>
+          {pokemon.local?.region && (
+            <li>
+              <span className={styles.label}>Region</span>
+              {pokemon.local.region}
+            </li>
+          )}
         </ul>
         <Heading level={2}>Abilities</Heading>
         <AbilityList abilities={pokemon.abilities} />
@@ -74,7 +82,12 @@ export function PokemonDetailPage() {
         <PokemonStats stats={pokemon.stats} />
         <Heading level={2}>Evolution</Heading>
         <EvolutionTree root={pokemon.evolutionChain} current={pokemon.name} />
-        <LocalSection pokemon={pokemon} />
+        {pokemon.local && pokemon.local.tags.length > 0 && (
+          <>
+            <Heading level={2}>Tags</Heading>
+            <TagList tags={pokemon.local.tags} />
+          </>
+        )}
       </Stack>
     </article>
   )
