@@ -63,4 +63,14 @@ class PokeApiClientTest {
 
         assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonSourceUnavailableException.class);
     }
+
+    // Followed by the URL the Pokémon response gave: alternate forms have a different species id.
+    @Test
+    void shouldFetchTheSpeciesFromTheUrlPokeApiGave() {
+        var url = BASE_URL + "/pokemon-species/25/";
+        server.expect(requestTo(url))
+            .andRespond(withSuccess(new ClassPathResource("pokeapi/pokemon-species-25.json"), MediaType.APPLICATION_JSON));
+
+        assertThat(client.fetchSpecies(url).genera()).isNotEmpty();
+    }
 }
