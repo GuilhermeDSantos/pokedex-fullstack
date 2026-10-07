@@ -24,4 +24,17 @@ describe('PokemonCard', () => {
 
     expect(screen.getByText('Category unknown')).toBeInTheDocument()
   })
+
+  // As on the detail: the name is the title, our localized name sits right under it.
+  it('shows our localized name under the name when there is one', () => {
+    renderCard({ ...PIKACHU, localizedName: 'Pica' })
+
+    expect(screen.getByRole('heading', { name: 'Pikachu' }).nextElementSibling).toHaveTextContent('Pica')
+  })
+
+  it('shows no second name when there is no localized one', () => {
+    renderCard(PIKACHU)
+
+    expect(screen.getByRole('heading', { name: 'Pikachu' }).nextElementSibling).toHaveTextContent('Mouse Pokémon')
+  })
 })
