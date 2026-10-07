@@ -55,8 +55,8 @@ claim should point at something concrete: a file, a test, a row in
 1. `docker compose up --build` is already running, so show the containers healthy.
 2. Logged out: browse the list. Seeded Pokémon already show their localized name and a "synced"
    badge. Paginate, open Eevee (branching evolution), and show a cached second load.
-3. Open Pikachu (deliberately not in the seed): no local data. "Log in to sync" → login with the
-   demo credentials from the README → back on Pikachu.
+3. Open Pikachu (deliberately not in the seed): no local data, and no controls for a visitor. Sign
+   in with the demo credentials from the README → back on Pikachu, now with "Sync to local database".
 4. Sync → 201: the page is the same Pokémon, now ours too (no fields set yet). (Optional: `curl`
    the same sync → 409.)
 5. Edit: localized name "Pikachu BR", a region and tags. Save: "Pikachu BR" appears under the

@@ -208,10 +208,11 @@ response:
 - The **region** is one more fact, next to category, height and weight.
 - The **tags** close the page, as badges like the types.
 - A field that isn't set is simply not shown.
-- `local === null`: **"Sync to local database"** under the types (US-03). Logged out, it's a "Log in
-  to sync" link to `/login` with a `returnTo`.
-- `local !== null`: **Edit** (an inline form, US-04) and **Remove** (confirm dialog) in the same
-  place. Logged out, the data shows without them.
+- The record's actions sit on the title row, aligned right (below the title on narrow screens), and
+  only for a signed-in user: a visitor sees the data and no controls at all.
+- `local === null`: **"Sync to local database"** (US-03).
+- `local !== null`: **Edit** (the form opens in a dialog, US-04) and **Remove** (a `danger` button,
+  confirmed in a `ConfirmDialog`). Dialogs start focused on their first control; Escape closes them.
 
 Sync → 409 ("already synced", e.g. someone else just did it) refetches the detail and shows the
 existing local data, with an inline note. It's not treated as a generic error.

@@ -383,6 +383,9 @@ Frontend:
       The HTTP client resolves a 204 with nothing. Tests: save sends the PUT and shows the new
       values, a 400 lands on its field, a field-less 400 above the form, cancelling removes
       nothing, confirming removes, visitors get no controls. Checked in the browser on Docker.
+      After review: the actions moved to the title row (`Button` variants, Remove as `danger`, a
+      pencil icon in inline SVG), the form opens in a `Dialog` (extracted from `ConfirmDialog`),
+      and a visitor sees no sync control at all (the "Log in to sync" link is gone).
 
 ## Slice 6 — Edits show up everywhere (US-01, US-02, US-03.a)
 

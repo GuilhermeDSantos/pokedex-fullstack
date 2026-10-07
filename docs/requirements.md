@@ -81,7 +81,7 @@ to a decision in [`decisions.md`](decisions.md).
 |---|---|---|---|
 | FE-1 | Modern framework (React) integrated with the backend | 🟨 | React 19 + Vite, React Router, TanStack Query; sign up / sign in / sign out against the real API (S1.10) |
 | FE-2 | **Responsive** and **user-centric** design | 🟨 | live resize in the demo (~360 px → desktop), four async states per view |
-| FE-3 | **CRUD** matching the functional use cases | ✅ | detail page: Sync (C), our fields merged into the page (R), Edit in an inline form (U), Remove after a `ConfirmDialog` (D). `PokemonDetailPage.test.tsx`; checked in the browser on Docker |
+| FE-3 | **CRUD** matching the functional use cases | ✅ | detail page: Sync (C), our fields merged into the page (R), Edit in a dialog (U), Remove after a `ConfirmDialog` (D). `PokemonDetailPage.test.tsx`; checked in the browser on Docker |
 | FE-4 | **Clean component organization** and **efficient state management** | ⬜ | [`standards/frontend.md`](standards/frontend.md) |
 | FE-5 | *Optional but desired:* **no warnings in the browser console** | 🟨 | console guard in `src/test/setup.ts` (fails any test that warns); manual pass per page |
 

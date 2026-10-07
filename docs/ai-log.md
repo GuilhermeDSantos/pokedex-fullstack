@@ -31,6 +31,18 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — The buttons worked, but sat in the content; the developer asked for a place
+- **Context:** Reviewing S5.4 in the browser (FE-2, FE-3).
+- **AI proposed:** The record's controls in the flow of the page, under the types, and an inline
+  form that pushed the content down; a "Log in to sync" link for visitors.
+- **Problem:** The developer found the placement odd and asked for options. The AI advised against
+  a sidebar (navigation, not per-record actions) and an icon-only corner button (hard to discover,
+  needs a label anyway). The developer also found "Log in to sync" strange for a visitor.
+- **Resolution:** An action bar on the title row (Edit with a pencil icon, Remove as a `danger`
+  button), the form in a `Dialog`, and nothing at all for visitors.
+- **Lesson:** Tests prove the controls work, not that they sit where a user looks for them. Every
+  slice ends with a look in the browser.
+
 ### 2026-10-07 — The AI ran a formatter the project doesn't have
 - **Context:** Building the edit form (S5.4, FE-3).
 - **AI proposed:** Formatting a new component with `npx prettier --write`.
