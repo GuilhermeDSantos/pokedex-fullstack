@@ -2,7 +2,8 @@ import { screen, waitForElementToBeRemoved, within } from '@testing-library/reac
 import { http, HttpResponse } from 'msw'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { PIKACHU_DETAIL } from '../../../test/fixtures/pokemon'
+import { PIKACHU_DETAIL, SYNCED_PIKACHU_DETAIL } from '../../../test/fixtures/pokemon'
+import { ASH_SESSION } from '../../../test/fixtures/session'
 import { server } from '../../../test/msw/server'
 import { renderApp } from '../../../test/renderApp'
 
@@ -127,5 +128,26 @@ describe('PokemonDetailPage', () => {
       'href',
       '/login?returnTo=%2Fpokemon%2Fpikachu',
     )
+  })
+
+  it('syncs the Pokémon for a signed-in user and then shows our record', async () => {
+    let synced = false
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(synced ? SYNCED_PIKACHU_DETAIL : PIKACHU_DETAIL)),
+      http.post('/api/v1/pokemon/pikachu/local', ({ request }) => {
+        if (request.headers.get('Authorization') !== `Bearer ${ASH_SESSION.accessToken}`) {
+          return HttpResponse.json({ code: 'UNAUTHENTICATED', message: 'No token', fieldErrors: [] }, { status: 401 })
+        }
+        synced = true
+        return HttpResponse.json(SYNCED_PIKACHU_DETAIL.local, { status: 201 })
+      }),
+    )
+    renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Sync to local database' }))
+
+    const local = screen.getByRole('region', { name: 'Local data' })
+    expect(await within(local).findByText('Kanto')).toBeInTheDocument()
+    expect(within(local).queryByRole('button', { name: 'Sync to local database' })).not.toBeInTheDocument()
   })
 })
