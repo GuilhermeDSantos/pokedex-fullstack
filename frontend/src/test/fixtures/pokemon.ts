@@ -78,3 +78,15 @@ export const SYNCED_PIKACHU_DETAIL: PokemonDetail = {
     updatedAt: '2026-01-15T10:00:00Z',
   },
 }
+
+export const EDITED_PIKACHU_DETAIL: PokemonDetail = {
+  ...PIKACHU_DETAIL,
+  displayName: 'Pikachu BR',
+  local: {
+    localizedName: 'Pikachu BR',
+    region: 'Johto',
+    tags: ['electric'],
+    syncedAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-01-15T11:00:00Z',
+  },
+}

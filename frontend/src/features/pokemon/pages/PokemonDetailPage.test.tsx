@@ -2,7 +2,7 @@ import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-lib
 import { http, HttpResponse } from 'msw'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { PIKACHU_DETAIL, SYNCED_PIKACHU_DETAIL } from '../../../test/fixtures/pokemon'
+import { EDITED_PIKACHU_DETAIL, PIKACHU_DETAIL, SYNCED_PIKACHU_DETAIL } from '../../../test/fixtures/pokemon'
 import { ASH_SESSION } from '../../../test/fixtures/session'
 import { server } from '../../../test/msw/server'
 import { renderApp } from '../../../test/renderApp'
@@ -228,5 +228,39 @@ describe('PokemonDetailPage', () => {
 
     const title = await screen.findByRole('heading', { level: 1, name: 'Pikachu' })
     expect(title.nextElementSibling).toHaveTextContent('Pica')
+  })
+
+  // ---- editing and removing our record (US-04, CRUD-D) -----------------------------------------
+
+  it('lets a signed-in user edit our fields and then shows the saved values', async () => {
+    let detail = SYNCED_PIKACHU_DETAIL
+    let sent: unknown = null
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(detail)),
+      http.put('/api/v1/pokemon/25/local', async ({ request }) => {
+        sent = await request.json()
+        detail = EDITED_PIKACHU_DETAIL
+        return HttpResponse.json({ pokedexNumber: 25, ...EDITED_PIKACHU_DETAIL.local })
+      }),
+    )
+    renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    const localizedName = screen.getByRole('textbox', { name: 'Localized name' })
+    const region = screen.getByRole('textbox', { name: 'Region' })
+    const tags = screen.getByRole('textbox', { name: 'Tags' })
+    expect(localizedName).toHaveValue('Pica')
+    expect(tags).toHaveValue('mascot, starter')
+    await userEvent.clear(localizedName)
+    await userEvent.type(localizedName, 'Pikachu BR')
+    await userEvent.clear(region)
+    await userEvent.type(region, 'Johto')
+    await userEvent.clear(tags)
+    await userEvent.type(tags, 'electric')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('Johto')).toBeInTheDocument()
+    expect(sent).toEqual({ localizedName: 'Pikachu BR', region: 'Johto', tags: ['electric'] })
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
   })
 })
