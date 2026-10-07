@@ -3,9 +3,11 @@ package dev.guilhermeds.backend.application.usecase;
 import dev.guilhermeds.backend.application.dto.GetLocalPokemonInput;
 import dev.guilhermeds.backend.application.mapper.PokemonMapper;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
+import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
 import dev.guilhermeds.backend.domain.repository.PokemonRepository;
 import dev.guilhermeds.backend.fixture.LocalPokemonFixture;
+import dev.guilhermeds.backend.fixture.PokemonFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,5 +42,14 @@ class GetLocalPokemonInteractorTest {
         assertThat(output.localizedName()).isEqualTo("Pica");
         assertThat(output.tags()).containsExactly("mascot", "starter");
         verifyNoInteractions(pokemonRepository);
+    }
+
+    // The record keeps no name (D-039): the canonical data says which number a name is.
+    @Test
+    void shouldResolveANameThroughTheCanonicalDataFirst() {
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PokemonFixture.pikachuDetail());
+        given(localPokemonRepository.getByPokedexNumber(new PokedexNumber(25))).willReturn(LocalPokemonFixture.renamedPikachu());
+
+        assertThat(interactor.execute(new GetLocalPokemonInput("Pikachu")).pokedexNumber()).isEqualTo(25);
     }
 }
