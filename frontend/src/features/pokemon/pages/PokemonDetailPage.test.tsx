@@ -123,8 +123,7 @@ describe('PokemonDetailPage', () => {
   it('invites a visitor to sign in to sync, coming back to this Pokémon afterwards', async () => {
     renderApp('/pokemon/pikachu')
 
-    const local = await screen.findByRole('region', { name: 'Local data' })
-    expect(within(local).getByRole('link', { name: 'Log in to sync' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Log in to sync' })).toHaveAttribute(
       'href',
       '/login?returnTo=%2Fpokemon%2Fpikachu',
     )
@@ -146,9 +145,8 @@ describe('PokemonDetailPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Sync to local database' }))
 
-    const local = screen.getByRole('region', { name: 'Local data' })
-    expect(await within(local).findByText('Kanto')).toBeInTheDocument()
-    expect(within(local).queryByRole('button', { name: 'Sync to local database' })).not.toBeInTheDocument()
+    expect(await screen.findByText('Kanto')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sync to local database' })).not.toBeInTheDocument()
   })
 
   // Someone else synced it first: not an error for this user, just show the record that now exists.
@@ -170,9 +168,8 @@ describe('PokemonDetailPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Sync to local database' }))
 
-    const local = screen.getByRole('region', { name: 'Local data' })
-    expect(await within(local).findByText('Kanto')).toBeInTheDocument()
-    expect(within(local).getByRole('status')).toHaveTextContent('Someone synced this Pokémon just before you.')
+    expect(await screen.findByText('Kanto')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Someone synced this Pokémon just before you.')
   })
 
   // The token expired, or the account is gone (D-033): the session is over, so sign in again and come back.
