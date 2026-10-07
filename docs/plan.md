@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 2 — Browse the list.** Next task: S3.2 (PokeAPI detail: fixtures, translator, findByIdentifier). Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 3 — View a Pokémon.** Next task: S4.1 (Slice 4, sync a Pokémon into the local database). Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -291,16 +291,33 @@ Backend:
       stat), `PokemonDetail`. `PokemonNotFoundException` and the port's `findByIdentifier` /
       `getByIdentifier` move to S3.2, with the adapter that implements them, so no step leaves the
       port unimplemented.
-- [ ] S3.2 Fixtures for eevee (branching chain) and an evolution chain. `PokeApiTranslator` for
-      details + tests (flavor-text normalization, highest English version, branching evolution
-      tree, null artwork). `PokeApiPokemonSource.findByIdentifier`, cached through the client, with
-      the test that goes through the port's `getByIdentifier` (the self-invocation trap).
-- [ ] S3.3 `GetPokemonInteractor` (TDD), then `GET /pokemon/{identifier}` + IT (200, 400, 404, 503).
+- [x] S3.2 Fixtures: eevee and the evolution chains 10 (pichu → pikachu → raichu) and 67 (eevee →
+      8 branches), checked against the real API: stats come as `special-attack` etc., a chain names
+      each species only by URL (the Pokédex number is parsed from it), and old flavor texts carry
+      `\f` and soft hyphens. `PokeApiTranslator.toDetail`: height in m, official artwork, stats in
+      the games' order, the newest English description (highest version id, order not trusted)
+      with breaks and form feeds read as single spaces and soft hyphens dropped, the whole lineage
+      tree, null artwork or description accepted. Client `fetchEvolutionChain` (cached,
+      `pokeapi-evolution-chains`). Port `findByIdentifier` + default `getByIdentifier` →
+      `PokemonNotFoundException` (404). `PokeApiPokemonSource.findByIdentifier` follows Pokémon →
+      species → chain by the URLs PokeAPI gave; a repeated `getByIdentifier` (the default method's
+      self-call) is served from the cache.
+- [x] S3.3 `GetPokemonInteractor` (TDD; the identifier built by a pure `PokemonMapper`; a malformed
+      one never reaches PokeAPI) and `GET /api/v1/pokemon/{identifier}`: `PokemonControllerIT` 200
+      (strict shape), 404, 400, 503. Checked on Docker against the real PokeAPI: eevee's 8 branches,
+      `missingno` → 404, `pika chu` → 400.
 
 Frontend:
-- [ ] S3.4 Detail page: artwork, name and number, stats, description, the evolution tree
-      (branching), loading/error/not-found states. A card on the list opens it. Tests: every US-02
-      field renders, a branching chain renders every branch, 404 → not-found state.
+- [x] S3.4 `PokemonDetailPage` on `/pokemon/:identifier`, test-first: artwork (else the sprite,
+      else "No image"), name, number, types, description, category/height/weight, abilities, the
+      six base stats with the games' labels, and the evolution tree (every branch a link, the
+      current one `aria-current`); loading skeleton, 404 → "Pokémon not found" with a link back,
+      other errors → `ErrorState` with retry. The list card's name links to it. `TypeList` and
+      `AbilityList` shared by card and detail. Found in the browser pass: TanStack Query retried
+      the 404 too (with backoff, paused while the tab is hidden), so "not found" never showed;
+      `retryPolicy` now never retries a 4xx (the 5xx count stays for U.4). Checked on Docker:
+      list → Ivysaur, Eevee's 8 branches → Sylveon (scrolled to the top), `missingno` → not found
+      within a second.
 
 ## Slice 4 — Sync a Pokémon into the local database (US-03, TR-DAL, TR-API-1)
 

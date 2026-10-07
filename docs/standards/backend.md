@@ -329,8 +329,8 @@ Exact patterns, not suggestions.
     (either may be `null` → handle explicitly).
   - Category = English entry of `pokemon-species.genera[].genus` (e.g. "Seed Pokémon").
   - Description = the English `flavor_text_entries[]` entry with the highest version id (from
-    `version.url`), normalized (`\n`, `\f`, soft hyphen →
-    single spaces).
+    `version.url`), normalized: `\n` and `\f` read as single spaces, soft hyphens (U+00AD) are
+    dropped (they only mark where a word may break).
   - Evolution lineage = recursive walk of `evolution-chain.chain.evolves_to[]` (it branches — Eevee).
 - Errors: PokeAPI 404 → empty, which the port turns into `PokemonNotFoundException`; timeout / 5xx /
   I/O → `PokemonSourceUnavailableException`. Never let a `RestClientException` escape the adapter.

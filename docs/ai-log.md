@@ -31,6 +31,23 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — Slice 3: four slips of the AI's own, and a 404 that never showed
+- **Context:** Slice 3, a Pokémon's detail (US-02).
+- **AI proposed:** The detail through the same TDD rhythm as the list.
+- **Problem:** (1) A helper script the AI wrote to sort imports silently dropped a `java.util.List`
+  import, so a red step failed to compile for the wrong reason. (2) A test meant to contain line
+  breaks held `\\n` (a literal backslash-n). (3) The backend standard said soft hyphens become
+  spaces, which would print "POKé MON"; they mark where a word may break and must be dropped. (4)
+  In the browser, `/pokemon/missingno` kept showing the skeleton: TanStack Query retries every
+  error by default, a 404 included, with backoff and paused while the tab is hidden. The page test
+  used a client with retries off, so it couldn't see it.
+- **Resolution:** The sorter keeps every import (red step redone so it fails on the missing
+  feature); the escapes were fixed before the green; the rule now drops soft hyphens, in code,
+  test and standard; `retryPolicy` never retries a 4xx, unit-tested and wired into the app's
+  query client, and "not found" now shows within a second.
+- **Lesson:** Tooling the AI writes for itself needs the same suspicion as product code. And a test
+  setup that switches a library default off can hide exactly the behaviour users will meet.
+
 ### 2026-10-07 — The list page: the tests passed, the browser found the bug
 - **Context:** S2.6, the list page (US-01, FE-2).
 - **AI proposed:** A list page whose tests covered the fields, loading, error with retry, empty,

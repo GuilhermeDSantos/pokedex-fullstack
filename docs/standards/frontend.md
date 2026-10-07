@@ -104,6 +104,9 @@ no CORS in dev. In Docker, nginx proxies `/api` to the backend container.
 
 - **Mobile-first and responsive.** CSS Grid/Flexbox, `rem` units, breakpoints at ~640/1024px, and
   no horizontal scroll at 360px width. The card grid goes 1 → 2 → 3–4 columns.
+- **Retries:** `app/retryPolicy.ts` never retries a 4xx (a 404 answers the same every time, and
+  retrying would hide the not-found state behind seconds of skeletons); server and network
+  failures keep the default retries until the UI pass tunes them (U.4).
 - **Every async view has all four states:** loading (skeletons, not spinners, for lists), error
   (an `ErrorState` with the backend message and a Retry button), empty (an `EmptyState` with a next
   action), and success.
