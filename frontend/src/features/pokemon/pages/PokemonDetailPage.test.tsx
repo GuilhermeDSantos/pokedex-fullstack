@@ -102,4 +102,18 @@ describe('PokemonDetailPage', () => {
     expect(screen.getByRole('list', { name: 'Types' })).toHaveTextContent('Electric')
     expect(screen.getByRole('list', { name: 'Abilities' })).toHaveTextContent('StaticLightning Rod (hidden)')
   })
+
+  it('falls back to the sprite without artwork, and to a placeholder without either', async () => {
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json({ ...PIKACHU_DETAIL, artworkUrl: null })),
+      http.get('/api/v1/pokemon/raichu', () =>
+        HttpResponse.json({ ...PIKACHU_DETAIL, name: 'raichu', artworkUrl: null, spriteUrl: null }),
+      ),
+    )
+    const { router } = renderApp('/pokemon/pikachu')
+
+    expect(await screen.findByRole('img', { name: 'Pikachu sprite' })).toHaveAttribute('src', 'https://img.test/25.png')
+    await router.navigate('/pokemon/raichu')
+    expect(await screen.findByText('No image')).toBeInTheDocument()
+  })
 })
