@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 4 — Sync a Pokémon.** Next task: S5.1 (Slice 5, edit and remove the local data). Slice 4 works end to end on Docker: sign in from the detail page, sync, and the local section appears. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 4 — Sync a Pokémon.** Next task: S5.1 (Slice 5, edit and remove the local data). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -348,12 +348,14 @@ Backend:
       response.
 
 Frontend:
-- [x] S4.5 Local section of the detail page: **Sync to local database** when `local` is null ("Log
+- [x] S4.5 Our fields on the detail page: **Sync to local database** when `local` is null ("Log
       in to sync" with `returnTo` when signed out). A 409 (someone just synced it) refetches and
       shows the local data with an inline note. A 401 on the sync (expired token, or the account is
       gone, D-033) clears the session and goes to `/login` with `returnTo` (moved here from S1.10).
-      Tests: signed out → "Log in to sync", sync → local section appears, 409 → refetch + note,
+      Tests: signed out → "Log in to sync", sync → our fields appear, 409 → refetch + note,
       401 → signed out and sent to sign in.
+      After review, no "Local data" block: the name stays the title with the localized name under
+      it, the region joins the facts and the tags close the page as badges (`frontend.md`).
 
 ## Slice 5 — Edit and remove the local data (US-04, US-04.a–c, TR-API-1, FE-3)
 
@@ -373,8 +375,9 @@ Frontend:
 
 ## Slice 6 — Edits show up everywhere (US-01, US-02, US-03.a)
 
-The list and the detail reflect the local data: the edited name replaces the original one, and the
-original stays visible underneath.
+The list and the detail reflect the local data. On the detail the name stays the title, with the
+localized name under it (the developer's call in the S4 review); the list card should follow the
+same rule, which S6 settles.
 
 Backend:
 - [ ] S6.1 Domain (TDD): `LocalPokemon.displayName()` (localized name when set, otherwise the

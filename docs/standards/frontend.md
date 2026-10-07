@@ -31,7 +31,7 @@ frontend/src
 │   ├── pokemon/            # US-01…US-04 — one resource, two pages
 │   │   ├── api/            # pokemonApi.ts: typed calls + DTO types (mirror backend responses)
 │   │   ├── hooks/          # usePokemonPage, usePokemon, useSyncPokemon, useUpdateLocal, useRemoveLocal
-│   │   ├── components/     # PokemonCard, StatBars, EvolutionTree, TypeBadge, LocalSection, LocalForm, TagInput
+│   │   ├── components/     # PokemonCard, StatBars, EvolutionTree, BadgeList, SyncAction, LocalForm, TagInput
 │   │   └── pages/          # PokemonListPage, PokemonDetailPage
 │   └── auth/
 │       ├── api/  lib/  pages/
@@ -197,15 +197,21 @@ Two pages for the product, plus auth (D-030).
 | Path | Page | Access |
 |---|---|---|
 | `/?page=` | **PokemonListPage**: cards with sprite, display name (original name small underneath when different), number, category, weight in kg, abilities, a "synced" badge (US-01) | public |
-| `/pokemon/:identifier` | **PokemonDetailPage**: artwork, stats, description, evolution tree (US-02), plus the **local section** | public view |
+| `/pokemon/:identifier` | **PokemonDetailPage**: artwork, stats, description, evolution tree (US-02), with our fields merged in | public view |
 | `/login`, `/register` | auth | public |
 | `*` | NotFoundPage | public |
 
-The **local section** of the detail page decides everything from `local` in the response:
-- `local === null`: shows **"Sync to local database"** (US-03). Logged out, the button reads "Log in
-  to sync" and goes to `/login` with a `returnTo`.
-- `local !== null`: shows the localized name, region and tags, with **Edit** (an inline form, US-04)
-  and **Remove** (confirm dialog). Logged out, it shows the data without the buttons.
+The detail page shows **one Pokémon**, not PokeAPI's data plus a "local" block: our fields sit
+where they belong, and the reader never sees two sources. Everything comes from `local` in the
+response:
+- The title is always the Pokémon's name. The **localized name** sits right under it, in muted text.
+- The **region** is one more fact, next to category, height and weight.
+- The **tags** close the page, as badges like the types.
+- A field that isn't set is simply not shown.
+- `local === null`: **"Sync to local database"** under the types (US-03). Logged out, it's a "Log in
+  to sync" link to `/login` with a `returnTo`.
+- `local !== null`: **Edit** (an inline form, US-04) and **Remove** (confirm dialog) in the same
+  place. Logged out, the data shows without them.
 
 Sync → 409 ("already synced", e.g. someone else just did it) refetches the detail and shows the
 existing local data, with an inline note. It's not treated as a generic error.

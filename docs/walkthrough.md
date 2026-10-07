@@ -57,10 +57,11 @@ claim should point at something concrete: a file, a test, a row in
    badge. Paginate, open Eevee (branching evolution), and show a cached second load.
 3. Open Pikachu (deliberately not in the seed): no local data. "Log in to sync" → login with the
    demo credentials from the README → back on Pikachu.
-4. Sync → 201, and the local section appears. (Optional: `curl` the same sync → 409.)
-5. Edit: localized name "Pikachu BR", a region and tags. Save, and the title changes, with "pikachu"
-   underneath. Show a validation error (an invalid tag → 400 with the field message). Back to the
-   list: the card shows the new name.
+4. Sync → 201: the page is the same Pokémon, now ours too (no fields set yet). (Optional: `curl`
+   the same sync → 409.)
+5. Edit: localized name "Pikachu BR", a region and tags. Save: "Pikachu BR" appears under the
+   title, the region joins the facts, and the tags close the page. Show a validation error (an
+   invalid tag → 400 with the field message). Back to the list: the card shows the new name.
 6. Remove with confirmation, and the detail goes back to "not synced".
 7. DevTools open throughout: **an empty console**. Resize to mobile width.
 8. Optional: Swagger UI, and `curl` showing malformed JSON → 400, `PUT` on a Pokémon that isn't

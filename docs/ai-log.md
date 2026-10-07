@@ -31,6 +31,19 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — The detail page showed two sources; the developer asked for one Pokémon
+- **Context:** Reviewing S4.5 in the browser (US-02, US-03, FE-3).
+- **AI proposed:** A "Local data" section at the end of the detail page, with its own heading and
+  "Localized name / Region / Tags" (and "Not set" placeholders), and the localized name replacing
+  the title.
+- **Problem:** The developer pointed out it undoes the system's best idea: the backend merges
+  PokeAPI and our record so the reader sees one Pokémon, and the screen split it back into two.
+- **Resolution:** The name stays the title with the localized name under it in muted text, the
+  region is one more fact, the tags close the page as badges (one `BadgeList` for types and tags),
+  and unset fields aren't shown. The sync control moved under the types as `SyncAction`.
+- **Lesson:** A merged API is only half the design. The screen has to keep the merge, or the
+  model's main idea never reaches the user.
+
 ### 2026-10-07 — Slice 4: the developer took the name out, and the full suite found a 500
 - **Context:** Designing and building the local record and the sync (US-03, TR-DB-1/2, TR-ERR).
 - **AI proposed:** Keep the Pokédex number **and** the original name in `local_pokemons`, both
