@@ -11,6 +11,13 @@ describe('httpClient', () => {
     await expect(request('/auth/me')).resolves.toEqual({ name: 'Ash Ketchum' })
   })
 
+  // A DELETE answers 204 with no body: there is nothing to parse.
+  it('resolves with nothing when the response has no content', async () => {
+    server.use(http.delete('/api/v1/pokemon/25/local', () => new HttpResponse(null, { status: 204 })))
+
+    await expect(request('/pokemon/25/local', { method: 'DELETE' })).resolves.toBeUndefined()
+  })
+
   it('sends a body as JSON', async () => {
     server.use(
       http.post('/api/v1/auth/login', async ({ request: received }) => {
