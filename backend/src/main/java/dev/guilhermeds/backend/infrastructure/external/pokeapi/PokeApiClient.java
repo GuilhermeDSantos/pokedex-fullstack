@@ -24,8 +24,7 @@ public class PokeApiClient {
 
     // Any offset is a valid page (past the end it's just empty), so a 404 means PokeAPI is broken.
     PokeApiPageJson fetchPage(long offset, int limit) {
-        return get("/pokemon?offset={offset}&limit={limit}", PokeApiPageJson.class, offset, limit)
-            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
+        return getRequired("/pokemon?offset={offset}&limit={limit}", PokeApiPageJson.class, offset, limit);
     }
 
     Optional<PokeApiPokemonJson> fetchPokemon(String identifier) {
@@ -34,8 +33,7 @@ public class PokeApiClient {
 
     // A 404 here means PokeAPI linked to a species it doesn't have: its data is broken, not our request.
     PokeApiSpeciesJson fetchSpecies(String url) {
-        return get(url, PokeApiSpeciesJson.class)
-            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
+        return getRequired(url, PokeApiSpeciesJson.class);
     }
 
     // 404 → empty; anything else that isn't a 2xx, a timeout or an I/O error → unavailable.
@@ -48,5 +46,10 @@ public class PokeApiClient {
             log.warn("PokeAPI call failed: {}", uri);
             throw new PokemonSourceUnavailableException("PokeAPI is unavailable right now", e);
         }
+    }
+
+    private <T> T getRequired(String uri, Class<T> type, Object... variables) {
+        return get(uri, type, variables)
+            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
     }
 }
