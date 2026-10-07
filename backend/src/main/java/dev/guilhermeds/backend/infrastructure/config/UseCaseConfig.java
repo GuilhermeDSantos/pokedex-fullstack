@@ -75,8 +75,8 @@ public class UseCaseConfig {
     }
 
     @Bean
-    GetLocalPokemonUseCase getLocalPokemonUseCase(PokemonRepository pokemonRepository,
-                                                  LocalPokemonRepository localPokemonRepository, PokemonMapper mapper) {
-        return new GetLocalPokemonInteractor(pokemonRepository, localPokemonRepository, mapper);
+    GetLocalPokemonUseCase getLocalPokemonUseCase(LocalPokemonRepository localPokemonRepository,
+                                                  PokemonMapper mapper) {
+        return new GetLocalPokemonInteractor(localPokemonRepository, mapper);
     }
 }

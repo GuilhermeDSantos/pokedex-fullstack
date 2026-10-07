@@ -72,8 +72,8 @@ public class PokemonController {
         return ResponseEntity.created(location).body(mapper.toResponse(synced));
     }
 
-    @GetMapping("/{identifier}/local")
-    public LocalPokemonResponse getLocal(@PathVariable String identifier) {
-        return mapper.toResponse(getLocalPokemonUseCase.execute(new GetLocalPokemonInput(identifier)));
+    @GetMapping("/{number}/local")
+    public LocalPokemonResponse getLocal(@PathVariable String number) {
+        return mapper.toResponse(getLocalPokemonUseCase.execute(new GetLocalPokemonInput(number)));
     }
 }
