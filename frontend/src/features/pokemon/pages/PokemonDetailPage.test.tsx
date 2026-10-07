@@ -289,4 +289,22 @@ describe('PokemonDetailPage', () => {
     expect(region).toHaveAttribute('aria-invalid', 'true')
     expect(region).toHaveValue('Kanto and beyond')
   })
+
+  // The tag format is the domain's rule (D-028): its message names no field, so the form shows it.
+  it('shows a rejection that names no field above the form', async () => {
+    const message = 'A tag uses only letters, digits and hyphens, starts with a letter or a digit, and has at most 30 characters'
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)),
+      http.put('/api/v1/pokemon/25/local', () =>
+        HttpResponse.json({ code: 'VALIDATION_ERROR', message, fieldErrors: [] }, { status: 400 }),
+      ),
+    )
+    renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Tags' }), ', not a tag')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+  })
 })
