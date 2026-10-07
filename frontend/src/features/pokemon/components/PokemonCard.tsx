@@ -30,6 +30,7 @@ export function PokemonCard({ pokemon }: { pokemon: PokemonSummary }) {
       <h2 id={titleId} className={styles.name}>
         <Link to={`/pokemon/${pokemon.name}`}>{name}</Link>
       </h2>
+      {pokemon.localizedName && <p className={styles.localizedName}>{pokemon.localizedName}</p>}
       <p>{pokemon.category ?? 'Category unknown'}</p>
       <p>{formatKilograms(pokemon.weightKilograms)}</p>
       <BadgeList label="Types" items={pokemon.types} />
