@@ -27,7 +27,7 @@ export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
         </div>
       )}
       {syncedMeanwhile && <p role="status">Someone synced this Pokémon just before you.</p>}
-      {pokemon.local !== null && session && !editing && (
+      {pokemon.local !== null && session && (
         <div className={styles.actions}>
           <Button onClick={() => setEditing(true)}>Edit</Button>
           <Button onClick={() => setConfirmingRemoval(true)}>Remove</Button>

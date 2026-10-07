@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../../shared/api/ApiError'
 import { Button } from '../../../shared/ui/Button'
+import { Dialog } from '../../../shared/ui/Dialog'
 import { FormError } from '../../../shared/ui/FormError'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
@@ -55,32 +56,34 @@ export function LocalForm({ pokedexNumber, local, onDone }: LocalFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate aria-label="Edit our fields">
-      <Stack>
-        {formError && <FormError message={formError} />}
-        <TextField
-          label="Localized name"
-          name="localizedName"
-          value={localizedName}
-          onChange={setLocalizedName}
-          error={errors.localizedName}
-        />
-        <TextField label="Region" name="region" value={region} onChange={setRegion} error={errors.region} />
-        <TextField
-          label="Tags"
-          name="tags"
-          value={tags}
-          onChange={setTags}
-          hint="Separate tags with commas"
-          error={errors.tags}
-        />
-        <div className={styles.actions}>
-          <Button type="submit" pending={update.isPending}>
-            Save
-          </Button>
-          <Button onClick={onDone}>Cancel</Button>
-        </div>
-      </Stack>
-    </form>
+    <Dialog title="Edit our fields" onClose={onDone}>
+      <form onSubmit={handleSubmit} noValidate>
+        <Stack>
+          {formError && <FormError message={formError} />}
+          <TextField
+            label="Localized name"
+            name="localizedName"
+            value={localizedName}
+            onChange={setLocalizedName}
+            error={errors.localizedName}
+          />
+          <TextField label="Region" name="region" value={region} onChange={setRegion} error={errors.region} />
+          <TextField
+            label="Tags"
+            name="tags"
+            value={tags}
+            onChange={setTags}
+            hint="Separate tags with commas"
+            error={errors.tags}
+          />
+          <div className={styles.actions}>
+            <Button type="submit" pending={update.isPending}>
+              Save
+            </Button>
+            <Button onClick={onDone}>Cancel</Button>
+          </div>
+        </Stack>
+      </form>
+    </Dialog>
   )
 }
