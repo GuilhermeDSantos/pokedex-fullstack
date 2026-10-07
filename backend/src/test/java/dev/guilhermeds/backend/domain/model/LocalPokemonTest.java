@@ -24,22 +24,6 @@ class LocalPokemonTest {
         assertThat(pikachu.getUpdatedAt()).isEqualTo(NOW);
     }
 
-    // Like a nickname: shown as "Pica", still Pikachu underneath.
-    @Test
-    void shouldDisplayTheLocalizedNameWhenThereIsOneAndTheCanonicalNameOtherwise() {
-        var synced = LocalPokemon.create(PIKACHU_ID, PIKACHU_NUMBER, NOW);
-        var renamed = LocalPokemon.builder()
-            .id(PIKACHU_ID)
-            .pokedexNumber(PIKACHU_NUMBER)
-            .customAttributes(new CustomAttributes("Pica", null, Set.of()))
-            .syncedAt(NOW)
-            .updatedAt(NOW)
-            .build();
-
-        assertThat(synced.displayName("pikachu")).isEqualTo("pikachu");
-        assertThat(renamed.displayName("pikachu")).isEqualTo("Pica");
-    }
-
     // PUT semantics (US-04): the form sends all of our fields, so what it leaves out is cleared.
     @Test
     void shouldReplaceAllOfOurFieldsAndRecordWhenTheyChanged() {

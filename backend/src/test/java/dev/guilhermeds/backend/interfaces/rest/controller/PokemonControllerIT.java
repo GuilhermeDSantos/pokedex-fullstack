@@ -188,7 +188,7 @@ class PokemonControllerIT {
             .bodyJson()
             .isStrictlyEqualTo("""
                 {
-                  "pokedexNumber": 25, "name": "pikachu", "displayName": "pikachu", "category": "Mouse Pokémon",
+                  "pokedexNumber": 25, "name": "pikachu", "category": "Mouse Pokémon",
                   "heightMeters": 0.4, "weightKilograms": 6.0,
                   "spriteUrl": "https://img/25.png", "artworkUrl": "https://img/25-art.png",
                   "types": [ "electric" ], "abilities": [ { "name": "static", "hidden": false } ],
@@ -454,7 +454,7 @@ class PokemonControllerIT {
         assertThat(mockMvc.delete().uri("/api/v1/pokemon/25/local").with(jwt())).hasStatus(503);
     }
 
-    // One Pokémon for the client: our record rides along, and its localized name is the one to show.
+    // One Pokémon for the client: our record rides along with the canonical data (D-030).
     @Test
     void shouldIncludeOurRecordInTheDetailWhenThePokemonIsSynced() {
         given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu",
@@ -467,7 +467,7 @@ class PokemonControllerIT {
             .hasStatusOk()
             .bodyJson()
             .isLenientlyEqualTo("""
-                { "displayName": "Pica",
+                { "name": "pikachu",
                   "local": { "localizedName": "Pica", "region": "Kanto", "tags": [ "starter" ],
                              "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" } }
                 """);

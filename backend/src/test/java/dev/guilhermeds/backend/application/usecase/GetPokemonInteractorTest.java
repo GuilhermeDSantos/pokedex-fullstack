@@ -88,26 +88,26 @@ class GetPokemonInteractorTest {
 
     // One Pokémon for the client: the canonical data, plus our record when there is one (D-030).
     @Test
-    void shouldMergeOurRecordAndShowItsLocalizedName() {
+    void shouldMergeOurRecord() {
         given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PIKACHU);
         given(localPokemonRepository.findByPokedexNumber(new PokedexNumber(25)))
             .willReturn(Optional.of(LocalPokemonFixture.renamedPikachu()));
 
         var output = interactor.execute(new GetPokemonInput("pikachu"));
 
-        assertThat(output.displayName()).isEqualTo("Pica");
         assertThat(output.name()).isEqualTo("pikachu");
         assertThat(output.local()).isNotNull();
+        assertThat(output.local().localizedName()).isEqualTo("Pica");
         assertThat(output.local().region()).isEqualTo("Kanto");
     }
 
     @Test
-    void shouldShowTheCanonicalNameAndNoLocalPartWhenNotSynced() {
+    void shouldHaveNoLocalPartWhenNotSynced() {
         given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PIKACHU);
 
         var output = interactor.execute(new GetPokemonInput("pikachu"));
 
-        assertThat(output.displayName()).isEqualTo("pikachu");
+        assertThat(output.name()).isEqualTo("pikachu");
         assertThat(output.local()).isNull();
     }
 }
