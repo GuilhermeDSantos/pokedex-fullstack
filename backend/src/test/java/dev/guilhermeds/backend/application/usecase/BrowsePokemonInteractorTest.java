@@ -2,6 +2,7 @@ package dev.guilhermeds.backend.application.usecase;
 
 import dev.guilhermeds.backend.application.dto.AbilityOutput;
 import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
+import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.model.Ability;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonType;
@@ -20,7 +21,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class BrowsePokemonInteractorTest {
@@ -58,5 +61,14 @@ class BrowsePokemonInteractorTest {
             assertThat(card.abilities())
                 .containsExactly(new AbilityOutput("static", false), new AbilityOutput("lightning-rod", true));
         });
+    }
+
+    // Each card costs two PokeAPI calls, so a bad page request must fail before any of them.
+    @Test
+    void shouldRejectAnOversizedPageBeforeCallingPokeApi() {
+        assertThatThrownBy(() -> interactor.execute(new BrowsePokemonInput(0, 51)))
+            .isInstanceOf(InvalidPageRequestException.class);
+
+        verifyNoInteractions(source);
     }
 }
