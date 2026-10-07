@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.function.Supplier;
 
 // The PokemonSource port on PokeAPI. No @Cacheable here: caching lives on the client (D-012).
 @Component
@@ -17,10 +19,13 @@ public class PokeApiPokemonSource implements PokemonSource {
 
     private final PokeApiClient client;
     private final PokeApiTranslator translator;
+    // Shared by every request, so the cap holds across concurrent users too.
+    private final Semaphore pokeApiCalls;
 
-    public PokeApiPokemonSource(PokeApiClient client, PokeApiTranslator translator) {
+    public PokeApiPokemonSource(PokeApiClient client, PokeApiTranslator translator, PokeApiProperties properties) {
         this.client = client;
         this.translator = translator;
+        this.pokeApiCalls = new Semaphore(properties.maxConcurrency());
     }
 
     @Override
@@ -29,9 +34,18 @@ public class PokeApiPokemonSource implements PokemonSource {
         // Two calls per card: fetched concurrently on virtual threads, joined in PokeAPI's order (D-018).
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var cards = page.results().stream()
-                .map(entry -> executor.submit(() -> summaryOf(entry.name())))
+                .map(entry -> executor.submit(() -> withinTheCap(() -> summaryOf(entry.name()))))
                 .toList();
             return new Page<>(cards.stream().map(PokeApiPokemonSource::join).toList(), page.count());
+        }
+    }
+
+    private PokemonSummary withinTheCap(Supplier<PokemonSummary> call) throws InterruptedException {
+        pokeApiCalls.acquire();
+        try {
+            return call.get();
+        } finally {
+            pokeApiCalls.release();
         }
     }
 
