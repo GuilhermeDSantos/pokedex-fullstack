@@ -21,12 +21,16 @@ import dev.guilhermeds.backend.application.usecase.UpdateLocalPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokedexNumberException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
+import dev.guilhermeds.backend.domain.exception.InvalidTagException;
+import dev.guilhermeds.backend.domain.exception.LocalPokemonDataUnavailableException;
+import dev.guilhermeds.backend.domain.exception.LocalPokemonModifiedConcurrentlyException;
 import dev.guilhermeds.backend.domain.exception.LocalPokemonNotFoundException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
+import dev.guilhermeds.backend.domain.model.Tag;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
 import dev.guilhermeds.backend.interfaces.rest.mapper.PokemonRestMapper;
@@ -335,6 +339,60 @@ class PokemonControllerIT {
                 { "pokedexNumber": 25, "localizedName": "Pikachu BR", "region": "Kanto", "tags": [ "electric", "starter" ],
                   "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" }
                 """);
+    }
+
+    @Test
+    void shouldRequireATokenToEdit() {
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").contentType(APPLICATION_JSON).content(EDIT))
+            .hasStatus(401)
+            .bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
+        verifyNoInteractions(updateLocalPokemonUseCase);
+    }
+
+    @Test
+    void shouldAnswerAMalformedEditWith400WithoutEchoingIt() {
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON)
+            .content("{ \"tags\": [ \"starter\" "))
+            .hasStatus(400)
+            .bodyJson().extractingPath("$.message").isEqualTo("Malformed JSON request body");
+        verifyNoInteractions(updateLocalPokemonUseCase);
+    }
+
+    // The tag's format is the domain's rule (D-028), so its 400 comes from the use case.
+    @Test
+    void shouldAnswerAnEditWithAnInvalidTagWith400() {
+        given(updateLocalPokemonUseCase.execute(any(), any())).willThrow(new InvalidTagException(Tag.MAX_LENGTH));
+
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON).content(EDIT))
+            .hasStatus(400)
+            .bodyJson().extractingPath("$.code").isEqualTo("VALIDATION_ERROR");
+    }
+
+    @Test
+    void shouldAnswerAnEditOfAPokemonThatWasNeverSyncedWith404() {
+        given(updateLocalPokemonUseCase.execute(any(), any())).willThrow(new LocalPokemonNotFoundException(new PokedexNumber(25)));
+
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON).content(EDIT))
+            .hasStatus(404);
+    }
+
+    @Test
+    void shouldAnswerAnEditOfARecordChangedMeanwhileWith409() {
+        given(updateLocalPokemonUseCase.execute(any(), any()))
+            .willThrow(new LocalPokemonModifiedConcurrentlyException(new PokedexNumber(25)));
+
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON).content(EDIT))
+            .hasStatus(409)
+            .bodyJson().extractingPath("$.message")
+            .isEqualTo("Pokémon #25 was changed by someone else in the meantime. Reload it and try again");
+    }
+
+    @Test
+    void shouldAnswerAnEditWith503WhenTheDataIsUnavailable() {
+        given(updateLocalPokemonUseCase.execute(any(), any())).willThrow(new LocalPokemonDataUnavailableException(new RuntimeException()));
+
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON).content(EDIT))
+            .hasStatus(503);
     }
 
     // One Pokémon for the client: our record rides along, and its localized name is the one to show.
