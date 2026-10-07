@@ -28,7 +28,7 @@ to a decision in [`decisions.md`](decisions.md).
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
 | FR-0 | Spring Boot REST API that **communicates with PokeAPI** | 🟨 | `PokemonSource` port → `PokeApiPokemonSource`; so far `PokeApiClient` (`PokeApiClientTest`, `PokeApiClientTimeoutIT`) and `PokeApiTranslator` |
-| US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | 🟨 | `GET /api/v1/pokemon` (`BrowsePokemonInteractorTest`, `PokemonControllerIT`); the page in S2.6; merged with local data in Slice 6 (D-030) |
+| US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | 🟨 | `GET /api/v1/pokemon` (`BrowsePokemonInteractorTest`, `PokemonControllerIT`); `PokemonListPage` (`PokemonListPage.test.tsx`); merged with local data in Slice 6 (D-030) |
 | US-01.N | *Nice to have:* **cache** service responses | 🟨 | Caffeine on `PokeApiClient` (D-012): `PokeApiClientCacheTest`, `PokeApiPokemonSourceCacheTest`; the list endpoint comes in S2.5 |
 | US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | ⬜ | `GET /api/v1/pokemon/{identifier}` (merged with local data) |
 | US-03 | **Persist** Pokémon data into a **local relational store** (sync) | ⬜ | `POST /api/v1/pokemon/{identifier}/local` → `local_pokemons` (scalar snapshot, D-031) |
@@ -80,7 +80,7 @@ to a decision in [`decisions.md`](decisions.md).
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
 | FE-1 | Modern framework (React) integrated with the backend | 🟨 | React 19 + Vite, React Router, TanStack Query; sign up / sign in / sign out against the real API (S1.10) |
-| FE-2 | **Responsive** and **user-centric** design | ⬜ | live resize in the demo (~360 px → desktop), four async states per view |
+| FE-2 | **Responsive** and **user-centric** design | 🟨 | live resize in the demo (~360 px → desktop), four async states per view |
 | FE-3 | **CRUD** matching the functional use cases | ⬜ | detail page: Sync (C), local section (R), Edit (U), Remove (D) |
 | FE-4 | **Clean component organization** and **efficient state management** | ⬜ | [`standards/frontend.md`](standards/frontend.md) |
 | FE-5 | *Optional but desired:* **no warnings in the browser console** | 🟨 | console guard in `src/test/setup.ts` (fails any test that warns); manual pass per page |

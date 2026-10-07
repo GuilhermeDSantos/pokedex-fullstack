@@ -116,7 +116,10 @@ no CORS in dev. In Docker, nginx proxies `/api` to the backend container.
   colour contrast, and keyboard-only flows that work.
 - **Images:** explicit `width`/`height` (no layout shift), `loading="lazy"` in grids, and a
   fallback when a sprite URL is `null`.
-- Pagination is reflected in the URL (`?page=3`).
+- Pagination is reflected in the URL (`?page=3`), counted from 1 as people do (the API counts
+  from 0); anything that isn't a whole number from 1 up means the first page. Previous/Next are
+  links, and `<ScrollRestoration />` in the shell returns to the top on navigation and restores
+  the position on Back.
 - Styling uses CSS Modules + CSS custom properties (design tokens in `app/styles/tokens.css`), with
   type colours as tokens. No UI library. Dark mode is out of scope.
 

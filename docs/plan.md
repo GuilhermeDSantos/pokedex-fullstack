@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 2 — Browse the list.** Next task: S2.6 (the list page in the frontend). The list API works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 2 — Browse the list.** Next task: S3.1 (Slice 3, view a Pokémon). Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -263,11 +263,21 @@ Backend:
       page in 0.53s. `displayName` and `synced` join the card with Slice 6 (the merge).
 
 Frontend:
-- [ ] S2.6 List page (the home page): every card shows the brief's four fields (sprite, category,
-      mass in kg, skills = abilities) plus name and number. Responsive grid, pagination in the URL,
-      skeletons, error and empty states. New global components: `Card`, `Skeleton`, `Pagination`,
-      `EmptyState`, `Badge`. Tests: the four fields render, loading → success, 503 → `ErrorState`
-      with retry, empty page → `EmptyState`, the page number follows the URL.
+- [x] S2.6 `PokemonListPage` on `/`, test-first through the real route table: each card shows the
+      brief's four fields (sprite, category, mass in kg, skills = abilities, the hidden one marked)
+      plus name, number and type badges; skeletons while loading (`role="status"`); 503 →
+      `ErrorState` whose Retry loads the page; an empty page → `EmptyState` linking to the first
+      page; the page comes from the URL, **counted from 1** (`?page=3` asks the API for page 2) and
+      anything else (`abc`, `0`, `-2`, `1.5`) means the first page; Previous/Next are links, absent
+      at the edges. Cards: no sprite → "No image", no category → "Category unknown". Formatters in
+      `shared/lib` (slug → name, `#025`, `6.0 kg`). `features/pokemon/{api,hooks,components,pages}`,
+      query keys in `pokemonKeys`. `shared/ui`: `Card`, `Badge`, `Skeleton` (a variant, no inline
+      style), `EmptyState`, `Pagination`. Default MSW handlers in `src/test/msw/handlers.ts`, shaped
+      like the API. Found in the browser pass: after "Next page" the new page opened scrolled to its
+      bottom; fixed with `<ScrollRestoration />` (top on navigation, position restored on Back), with
+      a test (jsdom's `scrollTo` is stubbed in the setup: it only logs "not implemented"). Checked
+      on Docker against the real PokeAPI: pages 2→3, Back, 360px in one column with no horizontal
+      scroll, empty console.
 
 ## Slice 3 — View a Pokémon (US-02, FE-2)
 

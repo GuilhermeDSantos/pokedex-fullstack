@@ -31,6 +31,22 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — The list page: the tests passed, the browser found the bug
+- **Context:** S2.6, the list page (US-01, FE-2).
+- **AI proposed:** A list page whose tests covered the fields, loading, error with retry, empty,
+  and pagination through the URL. Along the way, a `Skeleton` with an inline height and a
+  `Pagination` with props no test used yet.
+- **Problem:** In the browser on Docker, "Next page" changed the URL and the cards but left the
+  window scrolled to the bottom, where the pagination is: every new page opened at its last row.
+  jsdom has no layout, so no test could have noticed. The inline style broke the frontend standard,
+  and the lint run caught the unused props.
+- **Resolution:** `<ScrollRestoration />` in the shell, with a test that navigation calls
+  `scrollTo(0, 0)` (the setup stubs jsdom's `scrollTo`, which otherwise only logs an error the
+  console guard would fail on). The skeleton got a CSS variant; the props came with the test that
+  needed them.
+- **Lesson:** Component tests check behaviour, not what the screen feels like; the manual pass on
+  the real stack is part of "done".
+
 ### 2026-10-07 — The list endpoint: a guard that worked, and an example that leaked internals
 - **Context:** S2.5, `GET /api/v1/pokemon` (US-01, TR-API-2).
 - **AI proposed:** The new use case, with its unit tests green; and the reference 503 handler,
