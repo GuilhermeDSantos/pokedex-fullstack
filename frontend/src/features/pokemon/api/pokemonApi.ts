@@ -63,6 +63,13 @@ export function syncPokemon(pokedexNumber: number, accessToken: string): Promise
   return request<LocalPokemon>(`/pokemon/${pokedexNumber}/local`, { method: 'POST', accessToken })
 }
 
+// What the edit form sends: PUT replaces all of our fields (US-04).
+export type LocalEdit = { localizedName: string; region: string; tags: string[] }
+
+export function updateLocalPokemon(pokedexNumber: number, edit: LocalEdit, accessToken: string): Promise<LocalPokemon> {
+  return request<LocalPokemon>(`/pokemon/${pokedexNumber}/local`, { method: 'PUT', body: edit, accessToken })
+}
+
 export function fetchPokemonPage(page: number, size: number): Promise<PageResponse<PokemonSummary>> {
   return request<PageResponse<PokemonSummary>>(`/pokemon?${new URLSearchParams({ page: String(page), size: String(size) })}`)
 }
