@@ -10,12 +10,14 @@ import dev.guilhermeds.backend.application.dto.LocalPokemonOutput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
+import dev.guilhermeds.backend.application.dto.RemoveLocalPokemonInput;
 import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
 import dev.guilhermeds.backend.application.dto.UpdateLocalPokemonInput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetLocalPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
+import dev.guilhermeds.backend.application.usecase.RemoveLocalPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.UpdateLocalPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
@@ -54,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -94,6 +97,9 @@ class PokemonControllerIT {
 
     @MockitoBean
     private UpdateLocalPokemonUseCase updateLocalPokemonUseCase;
+
+    @MockitoBean
+    private RemoveLocalPokemonUseCase removeLocalPokemonUseCase;
 
     @Test
     void shouldReturnAPageOfCardsToAnyone() {
@@ -405,6 +411,15 @@ class PokemonControllerIT {
 
         assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON).content(EDIT))
             .hasStatus(503);
+    }
+
+    // ---- removing our record (CRUD-D) -------------------------------------------------------------
+
+    @Test
+    void shouldRemoveOurRecordForASignedInUser() {
+        assertThat(mockMvc.delete().uri("/api/v1/pokemon/25/local").with(jwt())).hasStatus(204);
+
+        then(removeLocalPokemonUseCase).should().execute(new RemoveLocalPokemonInput("25"));
     }
 
     // One Pokémon for the client: our record rides along, and its localized name is the one to show.
