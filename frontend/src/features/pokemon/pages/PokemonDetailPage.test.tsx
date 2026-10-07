@@ -194,4 +194,13 @@ describe('PokemonDetailPage', () => {
     expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
     expect(sessionStorage.length).toBe(0)
   })
+
+  // A nickname: shown as "Pica", and it is still Pikachu underneath (D-039).
+  it('titles a renamed Pokémon with its localized name and keeps the original in sight', async () => {
+    server.use(http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)))
+    renderApp('/pokemon/pikachu')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pica' })).toBeInTheDocument()
+    expect(screen.getByText('Originally Pikachu')).toBeInTheDocument()
+  })
 })
