@@ -1,6 +1,7 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.Optional;
@@ -16,7 +17,11 @@ public class PokeApiClient {
     }
 
     Optional<PokeApiPokemonJson> fetchPokemon(String identifier) {
-        return Optional.ofNullable(restClient.get().uri("/pokemon/{identifier}", identifier).retrieve()
-            .body(PokeApiPokemonJson.class));
+        try {
+            return Optional.ofNullable(restClient.get().uri("/pokemon/{identifier}", identifier).retrieve()
+                .body(PokeApiPokemonJson.class));
+        } catch (HttpClientErrorException.NotFound e) {
+            return Optional.empty();
+        }
     }
 }
