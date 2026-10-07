@@ -1,3 +1,4 @@
+import { ErrorState } from '../../../shared/ui/ErrorState'
 import { Heading } from '../../../shared/ui/Heading'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { Stack } from '../../../shared/ui/Stack'
@@ -8,7 +9,7 @@ import styles from './PokemonListPage.module.css'
 const PAGE_SIZE = 20
 
 export function PokemonListPage() {
-  const { data, isPending } = usePokemonPage(0, PAGE_SIZE)
+  const { data, isPending, error, refetch } = usePokemonPage(0, PAGE_SIZE)
   return (
     <Stack gap={6}>
       <Heading level={1}>Pokémon</Heading>
@@ -23,6 +24,7 @@ export function PokemonListPage() {
           </ul>
         </div>
       )}
+      {error && <ErrorState message={error.message} onRetry={() => void refetch()} />}
       {data && (
         <ul className={styles.grid}>
           {data.content.map((pokemon) => (
