@@ -81,6 +81,19 @@ class PokeApiPokemonSourceTest {
             .isInstanceOf(PokemonSourceUnavailableException.class);
     }
 
+    // The failure a worker thread hit reaches the caller as itself, so it still maps to a 503.
+    @Test
+    void shouldPassOnAFailureFromAConcurrentCallUnwrapped() {
+        given(client.fetchPage(0, 1)).willReturn(page(1351, "pikachu"));
+        given(client.fetchPokemon("pikachu")).willReturn(Optional.of(pokemon(25)));
+        given(client.fetchSpecies(pokemon(25).species().url()))
+            .willThrow(new PokemonSourceUnavailableException("PokeAPI is unavailable right now"));
+
+        assertThatThrownBy(() -> source.findAll(new PageRequest(0, 1)))
+            .isExactlyInstanceOf(PokemonSourceUnavailableException.class)
+            .hasMessage("PokeAPI is unavailable right now");
+    }
+
     private void givenPokemon(String name, int id) {
         given(client.fetchPokemon(name)).willReturn(Optional.of(pokemon(id)));
         given(client.fetchSpecies(pokemon(id).species().url())).willReturn(species(id));
