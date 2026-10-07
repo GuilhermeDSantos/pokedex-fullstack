@@ -1,5 +1,7 @@
 package dev.guilhermeds.backend.domain.model;
 
+import dev.guilhermeds.backend.domain.exception.InvalidCustomAttributesException;
+
 import java.util.Set;
 
 // The proprietary fields of the brief: localized name, region, internal tags. Ours, unlike the canonical data.
@@ -8,18 +10,22 @@ public record CustomAttributes(String localizedName, String region, Set<Tag> tag
     public static final int MAX_TEXT_LENGTH = 100;
 
     public CustomAttributes {
-        localizedName = trimToNull(localizedName);
-        region = trimToNull(region);
+        localizedName = optionalText(localizedName, "Localized name");
+        region = optionalText(region, "Region");
     }
 
     public static CustomAttributes empty() {
         return new CustomAttributes(null, null, Set.of());
     }
 
-    private static String trimToNull(String text) {
+    private static String optionalText(String text, String field) {
         if (text == null || text.isBlank()) {
             return null;
         }
-        return text.trim();
+        var trimmed = text.trim();
+        if (trimmed.length() > MAX_TEXT_LENGTH) {
+            throw new InvalidCustomAttributesException(field + " must be at most " + MAX_TEXT_LENGTH + " characters");
+        }
+        return trimmed;
     }
 }
