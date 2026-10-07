@@ -6,11 +6,10 @@ import { Heading } from '../../../shared/ui/Heading'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { Stack } from '../../../shared/ui/Stack'
 import { AbilityList } from '../components/AbilityList'
+import { BadgeList } from '../components/BadgeList'
 import { EvolutionTree } from '../components/EvolutionTree'
 import { SyncAction } from '../components/SyncAction'
 import { PokemonStats } from '../components/PokemonStats'
-import { TagList } from '../components/TagList'
-import { TypeList } from '../components/TypeList'
 import { usePokemon } from '../hooks/usePokemon'
 import styles from './PokemonDetailPage.module.css'
 
@@ -53,7 +52,7 @@ export function PokemonDetailPage() {
         <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>
         <Heading level={1}>{name}</Heading>
         {pokemon.local?.localizedName && <p className={styles.localizedName}>{pokemon.local.localizedName}</p>}
-        <TypeList types={pokemon.types} />
+        <BadgeList label="Types" items={pokemon.types} />
         <SyncAction pokemon={pokemon} />
         <p>{pokemon.description}</p>
         <ul aria-label="Facts" className={styles.facts}>
@@ -85,7 +84,7 @@ export function PokemonDetailPage() {
         {pokemon.local && pokemon.local.tags.length > 0 && (
           <>
             <Heading level={2}>Tags</Heading>
-            <TagList tags={pokemon.local.tags} />
+            <BadgeList label="Tags" items={pokemon.local.tags} />
           </>
         )}
       </Stack>

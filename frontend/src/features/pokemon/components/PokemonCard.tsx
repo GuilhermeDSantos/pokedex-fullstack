@@ -5,7 +5,7 @@ import { Card } from '../../../shared/ui/Card'
 import type { PokemonSummary } from '../api/pokemonApi'
 import { AbilityList } from './AbilityList'
 import styles from './PokemonCard.module.css'
-import { TypeList } from './TypeList'
+import { BadgeList } from './BadgeList'
 
 const SPRITE_SIZE = 96
 
@@ -32,7 +32,7 @@ export function PokemonCard({ pokemon }: { pokemon: PokemonSummary }) {
       </h2>
       <p>{pokemon.category ?? 'Category unknown'}</p>
       <p>{formatKilograms(pokemon.weightKilograms)}</p>
-      <TypeList types={pokemon.types} />
+      <BadgeList label="Types" items={pokemon.types} />
       <AbilityList abilities={pokemon.abilities} />
     </Card>
   )
