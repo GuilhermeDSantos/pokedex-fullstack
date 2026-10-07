@@ -40,8 +40,12 @@ export function PokemonDetailPage() {
   const name = formatName(pokemon.name)
   return (
     <article className={styles.detail}>
-      {pokemon.artworkUrl && (
+      {pokemon.artworkUrl ? (
         <img src={pokemon.artworkUrl} alt={`${name} artwork`} width={ARTWORK_SIZE} height={ARTWORK_SIZE} />
+      ) : pokemon.spriteUrl ? (
+        <img src={pokemon.spriteUrl} alt={`${name} sprite`} width={ARTWORK_SIZE} height={ARTWORK_SIZE} />
+      ) : (
+        <p className={styles.noImage}>No image</p>
       )}
       <Stack>
         <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>

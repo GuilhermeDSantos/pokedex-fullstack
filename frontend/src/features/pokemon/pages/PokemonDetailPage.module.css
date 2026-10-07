@@ -29,3 +29,14 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
+
+.noImage {
+  display: grid;
+  place-items: center;
+  width: 15rem;
+  height: 15rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+}
