@@ -23,6 +23,11 @@ class LocalPokemonRepositoryTest {
         public Optional<LocalPokemon> findByPokedexNumber(PokedexNumber number) {
             return Optional.empty();
         }
+
+        @Override
+        public void delete(LocalPokemon pokemon) {
+            throw new UnsupportedOperationException("not used here");
+        }
     };
 
     @Test

@@ -43,6 +43,11 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
         return reachable(() -> jpaRepository.findByPokedexNumber(number.value()).map(mapper::toDomain));
     }
 
+    @Override
+    public void delete(LocalPokemon pokemon) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
     private static <T> T reachable(Supplier<T> call) {
         try {
             return call.get();

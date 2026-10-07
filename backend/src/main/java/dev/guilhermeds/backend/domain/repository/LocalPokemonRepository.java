@@ -14,6 +14,8 @@ public interface LocalPokemonRepository {
 
     Optional<LocalPokemon> findByPokedexNumber(PokedexNumber number);
 
+    void delete(LocalPokemon pokemon);
+
     default LocalPokemon getByPokedexNumber(PokedexNumber number) {
         return findByPokedexNumber(number).orElseThrow(() -> new LocalPokemonNotFoundException(number));
     }
