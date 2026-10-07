@@ -1,7 +1,9 @@
 package dev.guilhermeds.backend.infrastructure.transaction;
 
 import dev.guilhermeds.backend.application.port.UnitOfWork;
+import dev.guilhermeds.backend.domain.exception.TransactionUnavailableException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -18,6 +20,10 @@ public class SpringUnitOfWork implements UnitOfWork {
 
     @Override
     public <T> T inTransaction(Supplier<T> work) {
-        return transactionTemplate.execute(status -> work.get());
+        try {
+            return transactionTemplate.execute(status -> work.get());
+        } catch (CannotCreateTransactionException exception) {
+            throw new TransactionUnavailableException(exception);
+        }
     }
 }
