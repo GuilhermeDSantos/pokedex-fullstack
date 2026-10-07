@@ -1,4 +1,10 @@
 spring:
+  cache:
+    type: caffeine
+    cache-names: pokeapi-pages, pokeapi-pokemon, pokeapi-species
+    caffeine:
+      # PokeAPI's data is effectively static; exceptions are never cached, so an outage isn't remembered.
+      spec: maximumSize=2000,expireAfterWrite=6h
   http:
     clients:
       # PokeAPI is the only outbound client; a hung call must become a 503, not a hung request.

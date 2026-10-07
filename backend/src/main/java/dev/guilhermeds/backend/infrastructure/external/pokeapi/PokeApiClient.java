@@ -3,6 +3,7 @@ package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
@@ -23,15 +24,18 @@ public class PokeApiClient {
     }
 
     // Any offset is a valid page (past the end it's just empty), so a 404 means PokeAPI is broken.
+    @Cacheable("pokeapi-pages")
     PokeApiPageJson fetchPage(long offset, int limit) {
         return getRequired("/pokemon?offset={offset}&limit={limit}", PokeApiPageJson.class, offset, limit);
     }
 
+    @Cacheable("pokeapi-pokemon")
     Optional<PokeApiPokemonJson> fetchPokemon(String identifier) {
         return get("/pokemon/{identifier}", PokeApiPokemonJson.class, identifier);
     }
 
     // A 404 here means PokeAPI linked to a species it doesn't have: its data is broken, not our request.
+    @Cacheable("pokeapi-species")
     PokeApiSpeciesJson fetchSpecies(String url) {
         return getRequired(url, PokeApiSpeciesJson.class);
     }
