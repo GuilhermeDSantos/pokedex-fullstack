@@ -31,7 +31,7 @@ frontend/src
 │   ├── pokemon/            # US-01…US-04 — one resource, two pages
 │   │   ├── api/            # pokemonApi.ts: typed calls + DTO types (mirror backend responses)
 │   │   ├── hooks/          # usePokemonPage, usePokemon, useSyncPokemon, useUpdateLocal, useRemoveLocal
-│   │   ├── components/     # PokemonCard, StatBars, EvolutionTree, BadgeList, SyncAction, LocalForm, TagInput
+│   │   ├── components/     # PokemonCard, PokemonStats, EvolutionTree, BadgeList, LocalActions, LocalForm
 │   │   └── pages/          # PokemonListPage, PokemonDetailPage
 │   └── auth/
 │       ├── api/  lib/  pages/

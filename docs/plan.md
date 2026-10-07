@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 5 — Edit and remove our fields.** Next task: S5.4 (the edit form and the remove dialog). The backend of Slice 5 is done: `PUT` and `DELETE /pokemon/{number}/local` with every documented status; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 5 — Edit and remove our fields.** Next task: S6.1 (Slice 6, edits show up everywhere). Slice 5 works end to end on Docker: the full CRUD of our record from the detail page (sync, edit, remove); the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -375,10 +375,14 @@ Backend:
       concurrent edit, 503. Checked with curl on Docker.
 
 Frontend:
-- [ ] S5.4 New global component `ConfirmDialog`. Inline edit form for the localized name, region
-      and tags (controlled inputs, server field errors mapped), and **Remove** with a confirmation
-      dialog. After either, the detail refetches. Tests: save sends the PUT and shows the new
-      values, a 400 maps to field errors, cancelling the dialog removes nothing, confirming does.
+- [x] S5.4 New global component `ConfirmDialog` (`alertdialog`, focus starts on Cancel, Escape
+      cancels). Inline edit form (`LocalForm`) for the localized name, region and tags (one text
+      field, comma-separated): server `fieldErrors` on their field, a rejection naming no field
+      above the form. **Remove** after the dialog. After either, every cached detail refetches.
+      `LocalActions` holds sync, edit and remove; one hook ends an expired session on any write.
+      The HTTP client resolves a 204 with nothing. Tests: save sends the PUT and shows the new
+      values, a 400 lands on its field, a field-less 400 above the form, cancelling removes
+      nothing, confirming removes, visitors get no controls. Checked in the browser on Docker.
 
 ## Slice 6 — Edits show up everywhere (US-01, US-02, US-03.a)
 

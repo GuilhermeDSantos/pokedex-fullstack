@@ -31,6 +31,17 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — The AI ran a formatter the project doesn't have
+- **Context:** Building the edit form (S5.4, FE-3).
+- **AI proposed:** Formatting a new component with `npx prettier --write`.
+- **Problem:** Prettier isn't a project dependency, so `npx` downloaded it from npm and ran it:
+  exactly the "ask before adding a dependency" rule, broken by a tool call. It also reformatted the
+  file into a style the project doesn't use (semicolons, double quotes). The AI caught it in the
+  diff and told the developer.
+- **Resolution:** The file was rewritten in the project's style and the step redone; lint and
+  typecheck run only the project's own tools.
+- **Lesson:** `npx <tool>` is an install. Format with what the repository declares, or by hand.
+
 ### 2026-10-07 — "/local can take the number": the developer removed a resolver before it shipped
 - **Context:** Starting S5.2, edit and remove (US-04, CRUD-D, TR-API-1).
 - **AI proposed:** Keep names on `/pokemon/{identifier}/local` and extract a shared
