@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router'
+import { Link, Outlet, ScrollRestoration } from 'react-router'
 import { useAuth } from '../../features/auth/useAuth'
 import { Button } from '../../shared/ui/Button'
 import styles from './AppShell.module.css'
@@ -30,6 +30,7 @@ export function AppShell() {
       <main className={styles.main}>
         <Outlet />
       </main>
+      <ScrollRestoration />
     </>
   )
 }
