@@ -396,6 +396,18 @@ endpoint would get its security retrofitted.
 Slice 1. The list and detail come from PokeAPI only in Slices 2–3, and local data joins them in
 Slices 4 and 6.
 
+## D-040 — The `/local` routes take the Pokédex number only
+**Status:** Accepted (the developer's call, while starting S5.2) · **Date:** 2026-10-07 · **Requirements:** US-03, US-04, TR-API-1 · **Amends:** the S4 contract (unpublished, so `/api/v1` changes in place)
+**Context:** The local record keeps no name (D-039), so a name in `/pokemon/{identifier}/local` had
+to be resolved through PokeAPI first. The only caller is the detail page, which already has the
+number.
+**Decision:** `GET`, `POST`, `PUT` and `DELETE /pokemon/{number}/local` accept a Pokédex number; a
+name or anything else is a 400. The merged read `GET /pokemon/{identifier}` keeps names.
+**Alternatives considered:** Names on `/local` with a shared resolver: one more class and a PokeAPI
+call on every write, so editing our own data would fail while PokeAPI is down.
+**Consequences:** Get-local, update and remove touch only the database. Sync still asks PokeAPI,
+by number, whether the Pokémon exists. The frontend sends `pokedexNumber`.
+
 ## D-039 — The local record keeps the Pokédex number and our own fields; PokeAPI stays the source of truth
 **Status:** Accepted (the developer's model, decided while designing Slice 4) · **Date:** 2026-10-07 · **Requirements:** US-03, US-03.a, TR-DB-1, TR-DB-2 · **Supersedes:** D-031
 **Context:** The brief asks to "persist Pokémon data" locally and says that replication exists to

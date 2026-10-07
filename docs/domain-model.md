@@ -82,7 +82,7 @@ repository of their own.
 |---|---|
 | `LocalPokemonId(UUID value)` | non-null; `generate()` (edge only) |
 | `UserId(UUID value)` | same shape |
-| `PokedexNumber(int value)` | `value ≥ MIN_VALUE` (1) → `InvalidPokedexNumberException` ("Pokédex number must be at least 1", Validation) |
+| `PokedexNumber(int value)` | `value ≥ MIN_VALUE` (1) → `InvalidPokedexNumberException` ("Pokédex number must be a whole number, at least 1", Validation). `PokedexNumber.parse(String)` reads one from a URL: anything but digits is the same exception |
 | `PokemonIdentifier(String value)` | trimmed, lower-cased; `[a-z0-9-]{1,100}` → else `InvalidPokemonIdentifierException` ("A Pokémon is identified by its name or its Pokédex number", Validation). A name **or** a number; `isNumber()` / `asNumber()` let the local lookup go straight to the database for a number |
 | `Height(BigDecimal meters)` / `Weight(BigDecimal kilograms)` | `≥ 0`, scale 1. Factories `fromDecimetres(int)` / `fromHectograms(int)` hold the unit conversion |
 | `PokemonType(String name)` | non-blank (else `IllegalArgumentException`: it comes from PokeAPI, so it's a mapping bug), trimmed, lower-cased |
@@ -220,17 +220,18 @@ and wired in `infrastructure/config/UseCaseConfig`.
 |---|---|---|---|
 | `BrowsePokemonUseCase` | `PageOutput<PokemonSummaryOutput> execute(BrowsePokemonInput)` | US-01 | `source.findAll` + **one** `repository.findAllByPokedexNumbers` for the page → merge |
 | `GetPokemonUseCase` | `PokemonDetailOutput execute(GetPokemonInput)` | US-02 | `source.getByIdentifier` + `repository.findByPokedexNumber` → merge; `local` is `null` when not synced |
-| `SyncPokemonUseCase` | `LocalPokemonOutput execute(SyncPokemonInput, LocalPokemonId, Instant now)` | US-03 | PokeAPI fetch **before** the transaction. Inside: already synced → 409, create, save |
-| `GetLocalPokemonUseCase` | `LocalPokemonOutput execute(GetLocalPokemonInput)` | US-03 | The resource `Location` points to. A number goes straight to the database; a name is resolved through `PokemonRepository` first. 404 if not synced |
+| `SyncPokemonUseCase` | `LocalPokemonOutput execute(SyncPokemonInput, LocalPokemonId, Instant now)` | US-03 | By Pokédex number. PokeAPI fetch **before** the transaction (it must exist: 404 otherwise). Inside: already synced → 409, create, save |
+| `GetLocalPokemonUseCase` | `LocalPokemonOutput execute(GetLocalPokemonInput)` | US-03 | The resource `Location` points to. By Pokédex number, database only. 404 if not synced |
 | `UpdateLocalPokemonUseCase` | `LocalPokemonOutput execute(UpdateLocalPokemonInput, Instant now)` | US-04 | 404 not synced / 400 / 409 concurrent |
 | `RemoveLocalPokemonUseCase` | `void execute(RemoveLocalPokemonInput)` | CRUD-D | 404 not synced |
 | `RegisterUserUseCase` | `UserOutput execute(RegisterUserInput, UserId, Instant now)` | TR-AUTH | 409 on duplicate email |
 | `AuthenticateUserUseCase` | `AccessTokenOutput execute(AuthenticateUserInput, Instant now)` | TR-AUTH | 401 `InvalidCredentialsException` |
 | `GetCurrentUserUseCase` | `UserOutput execute(GetCurrentUserInput)` | TR-AUTH | Account gone (e.g. the database was reset while a token was still valid) → 401 `UnknownAccountException` |
 
-The `/local` use cases (get-local, update, remove) go straight to the database for a **number**.
-A **name** is resolved to its number through `PokemonRepository` first, because the record keeps no
-name (D-039). PokeAPI's cache makes that lookup cheap after the detail page has loaded.
+The `/local` use cases take the **Pokédex number** only (D-040): the record is keyed by it (D-039),
+and the detail page that calls them already has it. Get-local, update and remove never call PokeAPI,
+so our own data stays editable while PokeAPI is down. Sync is the one that does, to check the
+Pokémon exists.
 
 The auth input DTOs are wrapped by `UserAccountMapper` into `Registration(Email, FullName,
 RawPassword)` and `Credentials(Email, RawPassword)` before any port is called, so malformed input is
@@ -268,7 +269,8 @@ credentials are written in the README and nowhere else.
 ## API contract
 
 Base path **`/api/v1`**, a plain prefix (D-029). JSON only. Errors always use `ErrorResponse`, and
-lists always use `PageResponse`. `{identifier}` is a name or a Pokédex number (`pikachu` or `25`).
+lists always use `PageResponse`. `{identifier}` is a name or a Pokédex number (`pikachu` or `25`);
+`{number}` is a Pokédex number only, and anything else there is a 400 (D-040).
 The frontend doesn't know or care which data comes from PokeAPI and which from the database.
 
 Routes not in this table need a token (D-035): without one, they answer 401, not 404. Public
@@ -278,10 +280,10 @@ routes ignore the `Authorization` header, so an expired token never makes them f
 |---|---|---|---|---|
 | `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` (`displayName` and `synced` arrive with Slice 6) | 400 bad page/size, 503 `DATA_UNAVAILABLE` | US-01 |
 | `GET /pokemon/{identifier}` | public | 200 `PokemonDetailResponse` | 400, 404, 503 | US-02 |
-| `GET /pokemon/{identifier}/local` | public | 200 `LocalPokemonResponse` | 400, 404 (not in PokeAPI / not synced), 503 | US-03 |
-| `POST /pokemon/{identifier}/local` (no body) | 🔒 | 201 `LocalPokemonResponse` + `Location` | 400, 401, 404 (not in PokeAPI), 409 (already synced), 503 | US-03 / CRUD-C |
-| `PUT /pokemon/{identifier}/local` body `{ "localizedName", "region", "tags": [] }` | 🔒 | 200 `LocalPokemonResponse` | 400 (invalid **or** malformed body), 401, 404 (not synced), 409 (modified concurrently) | US-04 / CRUD-U |
-| `DELETE /pokemon/{identifier}/local` | 🔒 | 204 | 400, 401, 404 (not synced) | CRUD-D |
+| `GET /pokemon/{number}/local` | public | 200 `LocalPokemonResponse` | 400, 404 (not synced), 503 | US-03 |
+| `POST /pokemon/{number}/local` (no body) | 🔒 | 201 `LocalPokemonResponse` + `Location` | 400, 401, 404 (not in PokeAPI), 409 (already synced), 503 | US-03 / CRUD-C |
+| `PUT /pokemon/{number}/local` body `{ "localizedName", "region", "tags": [] }` | 🔒 | 200 `LocalPokemonResponse` | 400 (invalid **or** malformed body), 401, 404 (not synced), 409 (modified concurrently), 503 | US-04 / CRUD-U |
+| `DELETE /pokemon/{number}/local` | 🔒 | 204 | 400, 401, 404 (not synced), 503 | CRUD-D |
 | `POST /auth/register` body `{ "email", "name", "password" }` | public | 201 `UserResponse` | 400, 409 | TR-AUTH |
 | `POST /auth/login` body `{ "email", "password" }` | public | 200 `{ "accessToken", "tokenType": "Bearer", "expiresAt" }` | 400, 401 | TR-AUTH |
 | `GET /auth/me` | 🔒 | 200 `UserResponse` | 401 (no/invalid token, or the account no longer exists) | TR-AUTH |
