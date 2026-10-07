@@ -8,6 +8,8 @@ import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.application.dto.StatOutput;
+import dev.guilhermeds.backend.application.dto.UpdateLocalPokemonInput;
+import dev.guilhermeds.backend.interfaces.rest.request.UpdateLocalPokemonRequest;
 import dev.guilhermeds.backend.interfaces.rest.response.AbilityResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.EvolutionStageResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.LocalAttributesResponse;
@@ -33,6 +35,10 @@ public class PokemonRestMapper {
             pokemon.stats().stream().map(this::toResponse).toList(),
             pokemon.description(), toResponse(pokemon.evolutionChain()),
             pokemon.local() == null ? null : toResponse(pokemon.local()));
+    }
+
+    public UpdateLocalPokemonInput toInput(String pokedexNumber, UpdateLocalPokemonRequest request) {
+        return new UpdateLocalPokemonInput(pokedexNumber, request.localizedName(), request.region(), request.tags());
     }
 
     public LocalPokemonResponse toResponse(LocalPokemonOutput local) {
