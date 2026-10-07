@@ -45,7 +45,7 @@ public class PokeApiTranslator {
             types(pokemon),
             abilities(pokemon),
             stats(pokemon),
-            null);
+            englishDescription(species));
         return new PokemonDetail(new PokedexNumber(pokemon.id()), profile, stage(chain.chain()));
     }
 
@@ -57,14 +57,27 @@ public class PokeApiTranslator {
             .toList();
     }
 
+    // Each game version has its own text; the newest English one is the current wording.
+    private static String englishDescription(PokeApiSpeciesJson species) {
+        return species.flavorTextEntries().stream()
+            .filter(entry -> ENGLISH.equals(entry.language().name()))
+            .max(Comparator.comparingInt(entry -> idFromUrl(entry.version().url())))
+            .map(PokeApiSpeciesJson.FlavorText::text)
+            .orElse(null);
+    }
+
     private static EvolutionStage stage(PokeApiEvolutionChainJson.Link link) {
         return new EvolutionStage(link.species().name(), numberFromUrl(link.species().url()), List.of());
     }
 
     // A chain names each species only by its URL (".../pokemon-species/172/"); the id is the Pokédex number.
     private static PokedexNumber numberFromUrl(String url) {
+        return new PokedexNumber(idFromUrl(url));
+    }
+
+    private static int idFromUrl(String url) {
         var path = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-        return new PokedexNumber(Integer.parseInt(path.substring(path.lastIndexOf('/') + 1)));
+        return Integer.parseInt(path.substring(path.lastIndexOf('/') + 1));
     }
 
     private static List<PokemonType> types(PokeApiPokemonJson pokemon) {
