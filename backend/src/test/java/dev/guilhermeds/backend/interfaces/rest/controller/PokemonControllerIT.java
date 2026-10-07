@@ -2,9 +2,14 @@ package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.application.dto.AbilityOutput;
 import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
+import dev.guilhermeds.backend.application.dto.EvolutionStageOutput;
+import dev.guilhermeds.backend.application.dto.GetPokemonInput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
+import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
+import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
+import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
@@ -37,6 +42,9 @@ class PokemonControllerIT {
 
     @MockitoBean
     private BrowsePokemonUseCase browsePokemonUseCase;
+
+    @MockitoBean
+    private GetPokemonUseCase getPokemonUseCase;
 
     @Test
     void shouldReturnAPageOfCardsToAnyone() {
@@ -107,5 +115,32 @@ class PokemonControllerIT {
                   "message": "The Pokémon catalog is unavailable right now. Please try again in a moment." }
                 """);
         assertThat(result).bodyText().doesNotContain("missingno");
+    }
+
+    // ---- one Pokémon ----------------------------------------------------------------------------
+
+    @Test
+    void shouldDescribeOnePokemonToAnyone() {
+        given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu",
+            "Mouse Pokémon", new BigDecimal("0.4"), new BigDecimal("6.0"), "https://img/25.png", "https://img/25-art.png",
+            List.of("electric"), List.of(new AbilityOutput("static", false)), List.of(new StatOutput("HP", 35)),
+            "It keeps its tail raised.", new EvolutionStageOutput("pichu", 172,
+                List.of(new EvolutionStageOutput("pikachu", 25, List.of())))));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu"))
+            .hasStatusOk()
+            .bodyJson()
+            .isStrictlyEqualTo("""
+                {
+                  "pokedexNumber": 25, "name": "pikachu", "category": "Mouse Pokémon",
+                  "heightMeters": 0.4, "weightKilograms": 6.0,
+                  "spriteUrl": "https://img/25.png", "artworkUrl": "https://img/25-art.png",
+                  "types": [ "electric" ], "abilities": [ { "name": "static", "hidden": false } ],
+                  "stats": [ { "name": "HP", "value": 35 } ],
+                  "description": "It keeps its tail raised.",
+                  "evolutionChain": { "speciesName": "pichu", "pokedexNumber": 172,
+                    "evolvesTo": [ { "speciesName": "pikachu", "pokedexNumber": 25, "evolvesTo": [] } ] }
+                }
+                """);
     }
 }
