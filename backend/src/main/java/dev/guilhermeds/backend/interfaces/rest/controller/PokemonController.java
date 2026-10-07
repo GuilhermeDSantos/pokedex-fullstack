@@ -1,9 +1,11 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
+import dev.guilhermeds.backend.application.dto.GetLocalPokemonInput;
 import dev.guilhermeds.backend.application.dto.GetPokemonInput;
 import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
+import dev.guilhermeds.backend.application.usecase.GetLocalPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.domain.model.LocalPokemonId;
@@ -33,14 +35,17 @@ public class PokemonController {
     private final BrowsePokemonUseCase browsePokemonUseCase;
     private final GetPokemonUseCase getPokemonUseCase;
     private final SyncPokemonUseCase syncPokemonUseCase;
+    private final GetLocalPokemonUseCase getLocalPokemonUseCase;
     private final PokemonRestMapper mapper;
     private final Clock clock;
 
     public PokemonController(BrowsePokemonUseCase browsePokemonUseCase, GetPokemonUseCase getPokemonUseCase,
-                             SyncPokemonUseCase syncPokemonUseCase, PokemonRestMapper mapper, Clock clock) {
+                             SyncPokemonUseCase syncPokemonUseCase, GetLocalPokemonUseCase getLocalPokemonUseCase,
+                             PokemonRestMapper mapper, Clock clock) {
         this.browsePokemonUseCase = browsePokemonUseCase;
         this.getPokemonUseCase = getPokemonUseCase;
         this.syncPokemonUseCase = syncPokemonUseCase;
+        this.getLocalPokemonUseCase = getLocalPokemonUseCase;
         this.mapper = mapper;
         this.clock = clock;
     }
@@ -65,5 +70,10 @@ public class PokemonController {
         var location = ServletUriComponentsBuilder.fromCurrentContextPath()
             .path("/api/v1/pokemon/{number}/local").buildAndExpand(synced.pokedexNumber()).toUri();
         return ResponseEntity.created(location).body(mapper.toResponse(synced));
+    }
+
+    @GetMapping("/{identifier}/local")
+    public LocalPokemonResponse getLocal(@PathVariable String identifier) {
+        return mapper.toResponse(getLocalPokemonUseCase.execute(new GetLocalPokemonInput(identifier)));
     }
 }
