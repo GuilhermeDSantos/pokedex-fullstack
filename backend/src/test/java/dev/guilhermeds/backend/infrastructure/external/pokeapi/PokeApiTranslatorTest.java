@@ -139,4 +139,29 @@ class PokeApiTranslatorTest {
                 new EvolutionStage("pikachu", new PokedexNumber(25), List.of(
                     new EvolutionStage("raichu", new PokedexNumber(26), List.of()))))));
     }
+
+    // Lineages branch: Eevee evolves eight ways, all on one level.
+    @Test
+    void shouldKeepEveryBranchOfABranchingLineage() {
+        var lineage = translator.toDetail(pokemon(133), species(133), evolutionChain(67)).evolutionChain();
+
+        assertThat(lineage.speciesName()).isEqualTo("eevee");
+        assertThat(lineage.evolvesTo()).extracting(EvolutionStage::speciesName).containsExactly(
+            "vaporeon", "jolteon", "flareon", "espeon", "umbreon", "leafeon", "glaceon", "sylveon");
+    }
+
+    @Test
+    void shouldAcceptAPokemonWithoutArtworkOrEnglishDescription() {
+        var pikachu = pokemon(25);
+        var noArtwork = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.height(), pikachu.weight(),
+            new PokeApiPokemonJson.Sprites(pikachu.sprites().frontDefault(),
+                new PokeApiPokemonJson.Other(new PokeApiPokemonJson.Artwork(null))),
+            pikachu.types(), pikachu.abilities(), pikachu.stats(), pikachu.species());
+        var noEnglish = new PokeApiSpeciesJson(species(25).genera(), List.of(), species(25).evolutionChain());
+
+        var profile = translator.toDetail(noArtwork, noEnglish, evolutionChain(10)).profile();
+
+        assertThat(profile.artworkUrl()).isNull();
+        assertThat(profile.description()).isNull();
+    }
 }
