@@ -11,33 +11,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LocalPokemonTest {
 
+    // The Pokédex number is the whole link to the canonical data; the name always comes from there (D-039).
     @Test
-    void shouldBeSyncedWithItsIdentityAndNoneOfOurFieldsYet() {
-        var pikachu = LocalPokemon.create(PIKACHU_ID, PIKACHU_NUMBER, "pikachu", NOW);
+    void shouldBeSyncedWithItsNumberAndNoneOfOurFieldsYet() {
+        var pikachu = LocalPokemon.create(PIKACHU_ID, PIKACHU_NUMBER, NOW);
 
         assertThat(pikachu.getId()).isEqualTo(PIKACHU_ID);
         assertThat(pikachu.getPokedexNumber()).isEqualTo(PIKACHU_NUMBER);
-        assertThat(pikachu.getName()).isEqualTo("pikachu");
         assertThat(pikachu.getCustomAttributes()).isEqualTo(CustomAttributes.empty());
         assertThat(pikachu.getSyncedAt()).isEqualTo(NOW);
         assertThat(pikachu.getUpdatedAt()).isEqualTo(NOW);
     }
 
-    // Like a nickname: shown as "Pica", still Pikachu underneath (D-039).
+    // Like a nickname: shown as "Pica", still Pikachu underneath.
     @Test
-    void shouldDisplayTheLocalizedNameWhenThereIsOneAndTheOriginalOtherwise() {
-        var synced = LocalPokemon.create(PIKACHU_ID, PIKACHU_NUMBER, "pikachu", NOW);
+    void shouldDisplayTheLocalizedNameWhenThereIsOneAndTheCanonicalNameOtherwise() {
+        var synced = LocalPokemon.create(PIKACHU_ID, PIKACHU_NUMBER, NOW);
         var renamed = LocalPokemon.builder()
             .id(PIKACHU_ID)
             .pokedexNumber(PIKACHU_NUMBER)
-            .name("pikachu")
             .customAttributes(new CustomAttributes("Pica", null, Set.of()))
             .syncedAt(NOW)
             .updatedAt(NOW)
             .build();
 
-        assertThat(synced.displayName()).isEqualTo("pikachu");
-        assertThat(renamed.displayName()).isEqualTo("Pica");
-        assertThat(renamed.getName()).isEqualTo("pikachu");
+        assertThat(synced.displayName("pikachu")).isEqualTo("pikachu");
+        assertThat(renamed.displayName("pikachu")).isEqualTo("Pica");
     }
 }
