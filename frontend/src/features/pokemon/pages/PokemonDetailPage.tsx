@@ -7,6 +7,7 @@ import { Skeleton } from '../../../shared/ui/Skeleton'
 import { Stack } from '../../../shared/ui/Stack'
 import { AbilityList } from '../components/AbilityList'
 import { EvolutionTree } from '../components/EvolutionTree'
+import { LocalSection } from '../components/LocalSection'
 import { PokemonStats } from '../components/PokemonStats'
 import { TypeList } from '../components/TypeList'
 import { usePokemon } from '../hooks/usePokemon'
@@ -72,6 +73,7 @@ export function PokemonDetailPage() {
         <PokemonStats stats={pokemon.stats} />
         <Heading level={2}>Evolution</Heading>
         <EvolutionTree root={pokemon.evolutionChain} current={pokemon.name} />
+        <LocalSection pokemon={pokemon} />
       </Stack>
     </article>
   )
