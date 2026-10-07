@@ -155,7 +155,7 @@ public interface PokemonSource {
 | `PokemonSummary` | `PokedexNumber number, String name, String spriteUrl, String category, Weight weight, List<PokemonType> types, List<Ability> abilities` (US-01: sprite, category, mass, skills) |
 | `PokemonDetail` | `PokedexNumber number, PokemonProfile profile, EvolutionStage evolutionChain` (US-02: image, stats, description, lineage) |
 | `EvolutionStage` | `String speciesName, PokedexNumber number, List<EvolutionStage> evolvesTo` (recursive tree) |
-| `PokemonSourceUnavailableException extends RuntimeException` | Part of the port contract, not a `DomainException`. Maps to 503 |
+| `PokemonDataUnavailableException extends DataUnavailableException` | The Pokémon repository's data can't be reached. See *Data unavailable* below |
 
 Every method may throw `PokemonSourceUnavailableException`.
 
@@ -197,6 +197,14 @@ DomainException (abstract)                          → 422 DOMAIN_ERROR (catch-
     ├── InvalidCredentialsException                 (same message for unknown email and wrong password)
     └── UnknownAccountException                     (valid token, but the account no longer exists — D-033)
 ```
+
+**Data unavailable.** Any repository whose data can't be reached throws a subclass of the abstract
+`DataUnavailableException` (not a `DomainException`: no business rule was broken):
+`PokemonDataUnavailableException`, `UserAccountDataUnavailableException`, and
+`TransactionUnavailableException` when not even a transaction can start. Every one of them is a
+**503 `DATA_UNAVAILABLE`** with the same neutral message ("The service is temporarily unavailable.
+Please try again in a moment."); the specific class and its cause go to the log, which is where the
+root cause is read. It doesn't matter whether the data sits in PostgreSQL or behind PokeAPI.
 
 The 422 catch-all stays in the handler as the safety net for a future one-off business rule, so
 that one can never fall through to a 500.
@@ -267,7 +275,7 @@ routes ignore the `Authorization` header, so an expired token never makes them f
 
 | Method & path | Auth | Success | Errors | Story |
 |---|---|---|---|---|
-| `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` (`displayName` and `synced` arrive with Slice 6) | 400 bad page/size, 503 `SOURCE_UNAVAILABLE` (fixed message; the cause goes to the log) | US-01 |
+| `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` (`displayName` and `synced` arrive with Slice 6) | 400 bad page/size, 503 `DATA_UNAVAILABLE` | US-01 |
 | `GET /pokemon/{identifier}` | public | 200 `PokemonDetailResponse` | 400, 404, 503 | US-02 |
 | `GET /pokemon/{identifier}/local` | public | 200 `LocalPokemonResponse` | 400, 404 (not synced) | US-03 |
 | `POST /pokemon/{identifier}/local` (no body) | 🔒 | 201 `LocalPokemonResponse` + `Location` | 400, 401, 404 (not in PokeAPI), 409 (already synced), 503 | US-03 / CRUD-C |
