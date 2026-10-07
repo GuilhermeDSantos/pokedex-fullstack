@@ -70,11 +70,11 @@ describe('PokemonDetailPage', () => {
   })
 
   it('explains when the catalog is unavailable and loads the Pokémon on retry', async () => {
-    const unavailable = 'The Pokémon catalog is unavailable right now. Please try again in a moment.'
+    const unavailable = 'The service is temporarily unavailable. Please try again in a moment.'
     server.use(
       http.get(
         '/api/v1/pokemon/pikachu',
-        () => HttpResponse.json({ code: 'SOURCE_UNAVAILABLE', message: unavailable, fieldErrors: [] }, { status: 503 }),
+        () => HttpResponse.json({ code: 'DATA_UNAVAILABLE', message: unavailable, fieldErrors: [] }, { status: 503 }),
         { once: true },
       ),
     )
