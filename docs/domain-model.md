@@ -89,8 +89,8 @@ repository of their own.
 | `Ability(String name, boolean hidden)` | non-blank name |
 | `BaseStat(StatName name, int value)` | `1 ≤ value ≤ 255`. `StatName` enum: `HP, ATTACK, DEFENSE, SPECIAL_ATTACK, SPECIAL_DEFENSE, SPEED` |
 | `PokemonProfile(...)` | The full PokeAPI view: name, category, height, weight, spriteUrl, artworkUrl, types, abilities, `stats` exactly one per `StatName`, kept in `StatName` order, description. Name, height and weight required; urls, description and category nullable (PokeAPI has gaps). A broken rule here is a mapping bug (`IllegalArgumentException`) |
-| `Tag(String value)` | trimmed, lower-cased, `^[a-z0-9][a-z0-9-]{0,29}$` → `InvalidTagException` (Validation). The rules arrive with the first write that takes tags (Slice 5) |
-| `CustomAttributes(String localizedName, String region, Set<Tag> tags)` | strings trimmed, blank → `null`, ≤ `MAX_TEXT_LENGTH` (100) chars each; ≤ `MAX_TAGS` (10) tags → `InvalidCustomAttributesException` (Validation). `CustomAttributes.empty()`. The rules arrive with Slice 5 |
+| `Tag(String value)` | null rejected; trimmed, lower-cased, `[a-z0-9][a-z0-9-]{0,29}` (`MAX_LENGTH` 30) → `InvalidTagException` ("A tag uses only letters, digits and hyphens, starts with a letter or a digit, and has at most 30 characters", Validation). The message never echoes the tag |
+| `CustomAttributes(String localizedName, String region, Set<Tag> tags)` | strings trimmed, blank → `null`, ≤ `MAX_TEXT_LENGTH` (100) chars each; ≤ `MAX_TAGS` (10) tags → `InvalidCustomAttributesException` ("Localized name must be at most 100 characters", "Region …", "A Pokémon has at most 10 tags"; Validation). Tags are kept as an unmodifiable copy; a null set is a caller bug. `CustomAttributes.empty()` |
 | `Email(String value)` | null rejected; trimmed, lower-cased, basic format, ≤ `MAX_LENGTH` (254) → `InvalidEmailException` (Validation) |
 | `FullName(String value)` | the user's name, free text as they write it (one field, no first/last split); null rejected; trimmed, `MIN_LENGTH`..`MAX_LENGTH` (2..100) chars → `InvalidFullNameException` (Validation) |
 | `RawPassword(String value)` | ≥ 8 chars and ≤ 72 **bytes** in UTF-8 (BCrypt's limit is in bytes: Spring Security 7.1.1 `BCrypt.hashpw` throws above it), at least one letter and one digit → `WeakPasswordException` ("at least 8 characters, including a letter and a digit"); over 72 bytes → `PasswordTooLongException` ("Password is too long": the byte limit is an implementation detail users can't act on). Both are Validation. **`toString()` is redacted.** Never stored and never logged |
@@ -101,7 +101,7 @@ repository of their own.
 | Method | Rule |
 |---|---|
 | `static create(LocalPokemonId, PokedexNumber, Instant now)` | Custom attributes start empty, `syncedAt = updatedAt = now` |
-| `updateCustomAttributes(CustomAttributes, Instant now)` (Slice 5) | Replaces all custom attributes (PUT semantics), `updatedAt = now` |
+| `updateCustomAttributes(CustomAttributes, Instant now)` | Replaces all custom attributes (PUT semantics), `updatedAt = now` |
 | `displayName(String canonicalName)` | `localizedName` if set, otherwise the canonical name the caller read from PokeAPI |
 | `static builder()` | **Reconstitution only** (`LocalPokemonEntityMapper`) |
 

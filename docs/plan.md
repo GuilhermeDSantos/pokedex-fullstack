@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 4 — Sync a Pokémon.** Next task: S5.1 (Slice 5, edit and remove the local data). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 5 — Edit and remove our fields.** Next task: S5.2 (the update and remove use cases). S5.1 is done: tag and custom-attribute rules, `updateCustomAttributes`. Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -360,9 +360,11 @@ Frontend:
 ## Slice 5 — Edit and remove the local data (US-04, US-04.a–c, TR-API-1, FE-3)
 
 Backend:
-- [ ] S5.1 Domain (TDD): `LocalPokemon.updateCustomAttributes`, `LocalPokemonModifiedConcurrentlyException`
-      and the custom-attribute validation (tags, sizes).
-- [ ] S5.2 Interactors (TDD): `UpdateLocalPokemon`, `RemoveLocalPokemon`. Optimistic locking in the
+- [x] S5.1 Domain (TDD): `LocalPokemon.updateCustomAttributes` and the custom-attribute validation
+      (tag format, text and tag-count limits). `LocalPokemonModifiedConcurrentlyException` moved to
+      S5.2, next to the adapter that throws it.
+- [ ] S5.2 Interactors (TDD): `UpdateLocalPokemon`, `RemoveLocalPokemon`, after extracting the
+      "name or number → number" step out of `GetLocalPokemon` so all three share it. Optimistic locking in the
       repository adapter (`copyInto` the managed entity, D-011) + IT for the concurrent edit → 409.
 - [ ] S5.3 `PUT` and `DELETE /pokemon/{identifier}/local` + IT: 200/204, 400 invalid **and**
       malformed body, 401, 404 not synced, 409 concurrent edit.

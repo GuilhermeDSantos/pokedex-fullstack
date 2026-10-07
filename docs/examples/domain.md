@@ -192,13 +192,17 @@ public record Weight(BigDecimal kilograms) {
 // domain/model/Tag.java
 public record Tag(String value) {
 
-    private static final Pattern FORMAT = Pattern.compile("^[a-z0-9][a-z0-9-]{0,29}$");
+    public static final int MAX_LENGTH = 30;
+
+    private static final Pattern FORMAT = Pattern.compile("[a-z0-9][a-z0-9-]{0," + (MAX_LENGTH - 1) + "}");
 
     public Tag {
-        Objects.requireNonNull(value, "tag must not be null");
+        if (value == null) {
+            throw new InvalidTagException(MAX_LENGTH);
+        }
         value = value.trim().toLowerCase(Locale.ROOT);
         if (!FORMAT.matcher(value).matches()) {
-            throw new InvalidTagException(value);
+            throw new InvalidTagException(MAX_LENGTH);
         }
     }
 }
@@ -206,15 +210,15 @@ public record Tag(String value) {
 // domain/model/CustomAttributes.java — the proprietary fields of US-03/US-04, as one value
 public record CustomAttributes(String localizedName, String region, Set<Tag> tags) {
 
-    public static final int MAX_TAGS = 10;
     public static final int MAX_TEXT_LENGTH = 100;
+    public static final int MAX_TAGS = 10;
 
     public CustomAttributes {
-        localizedName = normalize(localizedName, "localizedName");
-        region = normalize(region, "region");
-        tags = tags == null ? Set.of() : Set.copyOf(tags);
+        localizedName = optionalText(localizedName, "Localized name");
+        region = optionalText(region, "Region");
+        tags = Set.copyOf(tags);   // a null set is a caller bug: the mapper turns "no tags" into an empty one
         if (tags.size() > MAX_TAGS) {
-            throw new InvalidCustomAttributesException("a Pokémon can have at most " + MAX_TAGS + " tags");
+            throw new InvalidCustomAttributesException("A Pokémon has at most " + MAX_TAGS + " tags");
         }
     }
 
@@ -222,8 +226,7 @@ public record CustomAttributes(String localizedName, String region, Set<Tag> tag
         return new CustomAttributes(null, null, Set.of());
     }
 
-    // Optional text: blank means "not set". Explicit null, never an empty string in the DB.
-    private static String normalize(String text, String field) {
+    private static String optionalText(String text, String field) {
         if (text == null || text.isBlank()) {
             return null;
         }
@@ -447,8 +450,10 @@ public class PokemonAlreadySyncedException extends ConflictException {
 
 // domain/exception/InvalidTagException.java
 public class InvalidTagException extends ValidationException {
-    public InvalidTagException(String value) {
-        super("Invalid tag '" + value + "': use 1-30 lowercase letters, digits or hyphens");
+    // The message doesn't echo the tag: user free text stays out of responses and logs.
+    public InvalidTagException(int maxLength) {
+        super("A tag uses only letters, digits and hyphens, starts with a letter or a digit, and has at most "
+            + maxLength + " characters");
     }
 }
 
