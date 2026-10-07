@@ -62,8 +62,13 @@ public class PokeApiTranslator {
         return species.flavorTextEntries().stream()
             .filter(entry -> ENGLISH.equals(entry.language().name()))
             .max(Comparator.comparingInt(entry -> idFromUrl(entry.version().url())))
-            .map(PokeApiSpeciesJson.FlavorText::text)
+            .map(entry -> normalize(entry.text()))
             .orElse(null);
+    }
+
+    // The games' text keeps their line breaks and form feeds; soft hyphens only mark where a word may break.
+    private static String normalize(String text) {
+        return text.replace("\u00AD", "").replaceAll("\\s+", " ").trim();
     }
 
     private static EvolutionStage stage(PokeApiEvolutionChainJson.Link link) {
