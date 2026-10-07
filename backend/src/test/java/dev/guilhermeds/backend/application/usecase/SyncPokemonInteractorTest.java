@@ -4,6 +4,7 @@ import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
 import dev.guilhermeds.backend.application.mapper.PokemonMapper;
 import dev.guilhermeds.backend.application.port.UnitOfWork;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
+import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
@@ -31,6 +32,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class SyncPokemonInteractorTest {
@@ -72,5 +74,16 @@ class SyncPokemonInteractorTest {
             .isInstanceOf(PokemonAlreadySyncedException.class);
 
         then(localPokemonRepository).should(never()).save(any());
+    }
+
+    @Test
+    void shouldNotOpenATransactionForAPokemonTheCanonicalDataDoesNotKnow() {
+        var missingno = new PokemonIdentifier("missingno");
+        given(pokemonRepository.getByIdentifier(missingno)).willThrow(new PokemonNotFoundException(missingno));
+
+        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("missingno"), PIKACHU_ID, NOW))
+            .isInstanceOf(PokemonNotFoundException.class);
+
+        verifyNoInteractions(unitOfWork, localPokemonRepository);
     }
 }
