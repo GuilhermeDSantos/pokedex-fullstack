@@ -10,4 +10,10 @@ describe('PokemonCard', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
     expect(screen.getByText('No image')).toBeInTheDocument()
   })
+
+  it('says the category is unknown when PokeAPI has no English one', () => {
+    render(<PokemonCard pokemon={{ ...PIKACHU, category: null }} />)
+
+    expect(screen.getByText('Category unknown')).toBeInTheDocument()
+  })
 })
