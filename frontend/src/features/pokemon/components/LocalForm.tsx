@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { ApiError } from '../../../shared/api/ApiError'
 import { Button } from '../../../shared/ui/Button'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
@@ -9,6 +10,26 @@ type LocalFormProps = {
   pokedexNumber: number
   local: LocalAttributes
   onDone: () => void
+}
+
+const FIELDS = ['localizedName', 'region', 'tags'] as const
+
+type LocalField = (typeof FIELDS)[number]
+
+function isLocalField(field: string): field is LocalField {
+  return (FIELDS as readonly string[]).includes(field)
+}
+
+function fieldErrors(error: Error | null): Partial<Record<LocalField, string>> {
+  const errors: Partial<Record<LocalField, string>> = {}
+  if (error instanceof ApiError) {
+    for (const { field, message } of error.fieldErrors) {
+      if (isLocalField(field)) {
+        errors[field] = message
+      }
+    }
+  }
+  return errors
 }
 
 function toTags(text: string): string[] {
@@ -23,6 +44,7 @@ export function LocalForm({ pokedexNumber, local, onDone }: LocalFormProps) {
   const [region, setRegion] = useState(local.region ?? '')
   const [tags, setTags] = useState(local.tags.join(', '))
   const update = useUpdateLocalPokemon(pokedexNumber)
+  const errors = fieldErrors(update.error)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -32,9 +54,22 @@ export function LocalForm({ pokedexNumber, local, onDone }: LocalFormProps) {
   return (
     <form onSubmit={handleSubmit} noValidate aria-label="Edit our fields">
       <Stack>
-        <TextField label="Localized name" name="localizedName" value={localizedName} onChange={setLocalizedName} />
-        <TextField label="Region" name="region" value={region} onChange={setRegion} />
-        <TextField label="Tags" name="tags" value={tags} onChange={setTags} hint="Separate tags with commas" />
+        <TextField
+          label="Localized name"
+          name="localizedName"
+          value={localizedName}
+          onChange={setLocalizedName}
+          error={errors.localizedName}
+        />
+        <TextField label="Region" name="region" value={region} onChange={setRegion} error={errors.region} />
+        <TextField
+          label="Tags"
+          name="tags"
+          value={tags}
+          onChange={setTags}
+          hint="Separate tags with commas"
+          error={errors.tags}
+        />
         <Button type="submit" pending={update.isPending}>
           Save
         </Button>
