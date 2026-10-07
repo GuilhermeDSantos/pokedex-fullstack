@@ -3,6 +3,7 @@ package dev.guilhermeds.backend.interfaces.rest.controller;
 import dev.guilhermeds.backend.application.dto.AbilityOutput;
 import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
 import dev.guilhermeds.backend.application.dto.EvolutionStageOutput;
+import dev.guilhermeds.backend.application.dto.GetLocalPokemonInput;
 import dev.guilhermeds.backend.application.dto.GetPokemonInput;
 import dev.guilhermeds.backend.application.dto.LocalPokemonOutput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
@@ -11,6 +12,7 @@ import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
+import dev.guilhermeds.backend.application.usecase.GetLocalPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
@@ -76,6 +78,9 @@ class PokemonControllerIT {
 
     @MockitoBean
     private SyncPokemonUseCase syncPokemonUseCase;
+
+    @MockitoBean
+    private GetLocalPokemonUseCase getLocalPokemonUseCase;
 
     @Test
     void shouldReturnAPageOfCardsToAnyone() {
@@ -265,5 +270,19 @@ class PokemonControllerIT {
             .willThrow(new PokemonDataUnavailableException("PokeAPI is unavailable right now"));
 
         assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt())).hasStatus(503);
+    }
+
+    @Test
+    void shouldShowTheLocalRecordToAnyone() {
+        given(getLocalPokemonUseCase.execute(new GetLocalPokemonInput("25")))
+            .willReturn(new LocalPokemonOutput(25, "Pica", "Kanto", List.of("mascot", "starter"), NOW, NOW));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/25/local"))
+            .hasStatusOk()
+            .bodyJson()
+            .isStrictlyEqualTo("""
+                { "pokedexNumber": 25, "localizedName": "Pica", "region": "Kanto", "tags": [ "mascot", "starter" ],
+                  "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" }
+                """);
     }
 }
