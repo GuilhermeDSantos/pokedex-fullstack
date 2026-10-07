@@ -29,7 +29,7 @@ public class PokemonRestMapper {
     }
 
     public PokemonDetailResponse toResponse(PokemonDetailOutput pokemon) {
-        return new PokemonDetailResponse(pokemon.pokedexNumber(), pokemon.name(), pokemon.displayName(), pokemon.category(),
+        return new PokemonDetailResponse(pokemon.pokedexNumber(), pokemon.name(), pokemon.category(),
             pokemon.heightMeters(), pokemon.weightKilograms(), pokemon.spriteUrl(), pokemon.artworkUrl(), pokemon.types(),
             pokemon.abilities().stream().map(this::toResponse).toList(),
             pokemon.stats().stream().map(this::toResponse).toList(),

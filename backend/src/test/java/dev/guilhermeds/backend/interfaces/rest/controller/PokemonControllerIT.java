@@ -177,7 +177,7 @@ class PokemonControllerIT {
 
     @Test
     void shouldDescribeOnePokemonToAnyone() {
-        given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu", "pikachu",
+        given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu",
             "Mouse Pokémon", new BigDecimal("0.4"), new BigDecimal("6.0"), "https://img/25.png", "https://img/25-art.png",
             List.of("electric"), List.of(new AbilityOutput("static", false)), List.of(new StatOutput("HP", 35)),
             "It keeps its tail raised.", new EvolutionStageOutput("pichu", 172,
@@ -458,7 +458,7 @@ class PokemonControllerIT {
     @Test
     void shouldIncludeOurRecordInTheDetailWhenThePokemonIsSynced() {
         given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu",
-            "Pica", "Mouse Pokémon", new BigDecimal("0.4"), new BigDecimal("6.0"), "https://img/25.png",
+            "Mouse Pokémon", new BigDecimal("0.4"), new BigDecimal("6.0"), "https://img/25.png",
             "https://img/25-art.png", List.of("electric"), List.of(), List.of(), "It keeps its tail raised.",
             new EvolutionStageOutput("pikachu", 25, List.of()),
             new LocalAttributesOutput("Pica", "Kanto", List.of("starter"), NOW, NOW)));

@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-public record PokemonDetailOutput(int pokedexNumber, String name, String displayName, String category, BigDecimal heightMeters,
+public record PokemonDetailOutput(int pokedexNumber, String name, String category, BigDecimal heightMeters,
                                   BigDecimal weightKilograms, String spriteUrl, String artworkUrl, List<String> types,
                                   List<AbilityOutput> abilities, List<StatOutput> stats, String description,
                                   EvolutionStageOutput evolutionChain,
@@ -19,7 +19,6 @@ public record PokemonDetailOutput(int pokedexNumber, String name, String display
         return new PokemonDetailOutput(
             detail.number().value(),
             profile.name(),
-            local.map(record -> record.displayName(profile.name())).orElse(profile.name()),
             profile.category(),
             profile.height().meters(),
             profile.weight().kilograms(),

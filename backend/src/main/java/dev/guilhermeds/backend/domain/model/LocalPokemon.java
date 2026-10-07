@@ -45,11 +45,6 @@ public class LocalPokemon {
         this.updatedAt = Objects.requireNonNull(now, "now must not be null");
     }
 
-    // The canonical name comes from the caller, which reads it from the canonical data.
-    public String displayName(String canonicalName) {
-        return customAttributes.localizedName() != null ? customAttributes.localizedName() : canonicalName;
-    }
-
     public LocalPokemonId getId() { return id; }
     public PokedexNumber getPokedexNumber() { return pokedexNumber; }
     public CustomAttributes getCustomAttributes() { return customAttributes; }
