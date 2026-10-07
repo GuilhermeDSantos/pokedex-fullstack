@@ -7,8 +7,13 @@ import java.time.Instant;
 import java.util.List;
 
 // Our part of a merged Pokémon (D-030).
-public record LocalAttributesOutput(String localizedName, String region, List<String> tags, Instant syncedAt,
-                                    Instant updatedAt) {
+public record LocalAttributesOutput(
+    String localizedName,
+    String region,
+    List<String> tags,
+    Instant syncedAt,
+    Instant updatedAt
+) {
 
     public static LocalAttributesOutput from(LocalPokemon pokemon) {
         var custom = pokemon.getCustomAttributes();

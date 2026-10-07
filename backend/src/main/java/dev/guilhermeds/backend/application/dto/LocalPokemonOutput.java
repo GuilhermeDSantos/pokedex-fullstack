@@ -7,8 +7,14 @@ import java.time.Instant;
 import java.util.List;
 
 // Our record alone: the Pokédex number and our own fields. Names come with the canonical data.
-public record LocalPokemonOutput(int pokedexNumber, String localizedName, String region, List<String> tags,
-                                 Instant syncedAt, Instant updatedAt) {
+public record LocalPokemonOutput(
+    int pokedexNumber,
+    String localizedName,
+    String region,
+    List<String> tags,
+    Instant syncedAt,
+    Instant updatedAt
+) {
 
     public static LocalPokemonOutput from(LocalPokemon pokemon) {
         var custom = pokemon.getCustomAttributes();

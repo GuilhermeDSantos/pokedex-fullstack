@@ -8,11 +8,21 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-public record PokemonDetailOutput(int pokedexNumber, String name, String category, BigDecimal heightMeters,
-                                  BigDecimal weightKilograms, String spriteUrl, String artworkUrl, List<String> types,
-                                  List<AbilityOutput> abilities, List<StatOutput> stats, String description,
-                                  EvolutionStageOutput evolutionChain,
-                                  LocalAttributesOutput local) {   // null when the Pokémon isn't synced
+public record PokemonDetailOutput(
+    int pokedexNumber,
+    String name,
+    String category,
+    BigDecimal heightMeters,
+    BigDecimal weightKilograms,
+    String spriteUrl,
+    String artworkUrl,
+    List<String> types,
+    List<AbilityOutput> abilities,
+    List<StatOutput> stats,
+    String description,
+    EvolutionStageOutput evolutionChain,
+    LocalAttributesOutput local   // null when the Pokémon isn't synced
+) {
 
     public static PokemonDetailOutput from(PokemonDetail detail, Optional<LocalPokemon> local) {
         var profile = detail.profile();

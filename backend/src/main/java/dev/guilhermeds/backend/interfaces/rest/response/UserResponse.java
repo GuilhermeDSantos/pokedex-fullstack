@@ -3,5 +3,10 @@ package dev.guilhermeds.backend.interfaces.rest.response;
 import java.time.Instant;
 import java.util.UUID;
 
-public record UserResponse(UUID id, String email, String name, Instant createdAt) {
+public record UserResponse(
+    UUID id,
+    String email,
+    String name,
+    Instant createdAt
+) {
 }

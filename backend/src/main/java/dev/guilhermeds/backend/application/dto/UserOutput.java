@@ -5,7 +5,12 @@ import dev.guilhermeds.backend.domain.model.UserAccount;
 import java.time.Instant;
 import java.util.UUID;
 
-public record UserOutput(UUID id, String email, String name, Instant createdAt) {
+public record UserOutput(
+    UUID id,
+    String email,
+    String name,
+    Instant createdAt
+) {
 
     public static UserOutput from(UserAccount account) {
         return new UserOutput(

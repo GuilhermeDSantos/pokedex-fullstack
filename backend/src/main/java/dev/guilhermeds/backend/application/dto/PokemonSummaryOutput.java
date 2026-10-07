@@ -8,8 +8,16 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-public record PokemonSummaryOutput(int pokedexNumber, String name, String localizedName, String spriteUrl, String category,
-                                   BigDecimal weightKilograms, List<String> types, List<AbilityOutput> abilities) {
+public record PokemonSummaryOutput(
+    int pokedexNumber,
+    String name,
+    String localizedName,
+    String spriteUrl,
+    String category,
+    BigDecimal weightKilograms,
+    List<String> types,
+    List<AbilityOutput> abilities
+) {
 
     public static PokemonSummaryOutput from(PokemonSummary summary, Optional<LocalPokemon> local) {
         return new PokemonSummaryOutput(

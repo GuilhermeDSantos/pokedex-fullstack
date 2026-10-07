@@ -6,7 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 @ConfigurationProperties("security.jwt")
-public record JwtProperties(String secret, Duration ttl, String issuer) {
+public record JwtProperties(
+    String secret,
+    Duration ttl,
+    String issuer
+) {
 
     private static final int MIN_SECRET_BYTES = 32;
 
