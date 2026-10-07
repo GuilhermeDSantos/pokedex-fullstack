@@ -1,12 +1,15 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
+import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.domain.pagination.Page;
 import dev.guilhermeds.backend.domain.pagination.PageRequest;
+import dev.guilhermeds.backend.domain.source.PokemonDetail;
 import dev.guilhermeds.backend.domain.source.PokemonSource;
 import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
 import dev.guilhermeds.backend.domain.source.PokemonSummary;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,6 +41,11 @@ public class PokeApiPokemonSource implements PokemonSource {
                 .toList();
             return new Page<>(cards.stream().map(PokeApiPokemonSource::join).toList(), page.count());
         }
+    }
+
+    @Override
+    public Optional<PokemonDetail> findByIdentifier(PokemonIdentifier identifier) {
+        return Optional.empty();
     }
 
     private PokemonSummary withinTheCap(Supplier<PokemonSummary> call) throws InterruptedException {
