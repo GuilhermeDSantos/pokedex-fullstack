@@ -1,4 +1,9 @@
 spring:
+  http:
+    clients:
+      # PokeAPI is the only outbound client; a hung call must become a 503, not a hung request.
+      connect-timeout: 2s
+      read-timeout: 3s
   application:
     name: backend
   datasource:
