@@ -6,6 +6,7 @@ import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
+import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
 import dev.guilhermeds.backend.interfaces.rest.mapper.PokemonRestMapper;
@@ -88,5 +89,23 @@ class PokemonControllerIT {
             .isLenientlyEqualTo("""
                 { "code": "VALIDATION_ERROR", "message": "Invalid request parameter" }
                 """);
+    }
+
+    // The exception's message is for the log: it can name internal details, so the client gets a fixed one.
+    @Test
+    void shouldAnswer503WhenPokeApiIsUnavailable() {
+        given(browsePokemonUseCase.execute(new BrowsePokemonInput(0, 20)))
+            .willThrow(new PokemonSourceUnavailableException("PokeAPI listed a Pokémon it can't return: missingno"));
+
+        var result = mockMvc.get().uri("/api/v1/pokemon").exchange();
+
+        assertThat(result)
+            .hasStatus(503)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "SOURCE_UNAVAILABLE",
+                  "message": "The Pokémon catalog is unavailable right now. Please try again in a moment." }
+                """);
+        assertThat(result).bodyText().doesNotContain("missingno");
     }
 }
