@@ -1,4 +1,4 @@
-import type { PokemonSummary } from '../../features/pokemon/api/pokemonApi'
+import type { PokemonDetail, PokemonSummary } from '../../features/pokemon/api/pokemonApi'
 import type { PageResponse } from '../../shared/api/PageResponse'
 
 export const BULBASAUR: PokemonSummary = {
@@ -30,3 +30,38 @@ export const PIKACHU: PokemonSummary = {
 export function pageOf<T>(content: T[], { page = 0, size = 20, totalElements = 1351 } = {}): PageResponse<T> {
   return { content, page, size, totalElements, totalPages: Math.ceil(totalElements / size) }
 }
+
+const STATS = [
+  { name: 'HP', value: 35 },
+  { name: 'ATTACK', value: 55 },
+  { name: 'DEFENSE', value: 40 },
+  { name: 'SPECIAL_ATTACK', value: 50 },
+  { name: 'SPECIAL_DEFENSE', value: 50 },
+  { name: 'SPEED', value: 90 },
+]
+
+export const PIKACHU_DETAIL: PokemonDetail = {
+  pokedexNumber: 25,
+  name: 'pikachu',
+  category: 'Mouse Pokémon',
+  heightMeters: 0.4,
+  weightKilograms: 6,
+  spriteUrl: 'https://img.test/25.png',
+  artworkUrl: 'https://img.test/25-art.png',
+  types: ['electric'],
+  abilities: PIKACHU.abilities,
+  stats: STATS,
+  description: 'Possesses cheek sacs in which it stores electricity.',
+  evolutionChain: {
+    speciesName: 'pichu',
+    pokedexNumber: 172,
+    evolvesTo: [
+      {
+        speciesName: 'pikachu',
+        pokedexNumber: 25,
+        evolvesTo: [{ speciesName: 'raichu', pokedexNumber: 26, evolvesTo: [] }],
+      },
+    ],
+  },
+}
+
