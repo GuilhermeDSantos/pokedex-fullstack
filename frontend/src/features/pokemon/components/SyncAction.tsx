@@ -9,7 +9,7 @@ import { useSyncPokemon } from '../hooks/useSyncPokemon'
 export function SyncAction({ pokemon }: { pokemon: PokemonDetail }) {
   const { pathname } = useLocation()
   const { session } = useAuth()
-  const sync = useSyncPokemon(pokemon.name)
+  const sync = useSyncPokemon(pokemon.pokedexNumber)
   const syncedMeanwhile = sync.error instanceof ApiError && sync.error.status === 409
   return (
     <>
