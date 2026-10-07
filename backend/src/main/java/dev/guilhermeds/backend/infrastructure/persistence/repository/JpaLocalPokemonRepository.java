@@ -1,14 +1,17 @@
 package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
+import dev.guilhermeds.backend.domain.exception.LocalPokemonDataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
+import dev.guilhermeds.backend.infrastructure.persistence.DatabaseFailures;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.LocalPokemonEntityMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @Repository
 public class JpaLocalPokemonRepository implements LocalPokemonRepository {
@@ -26,7 +29,7 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
     @Override
     public LocalPokemon save(LocalPokemon pokemon) {
         try {
-            return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(pokemon)));
+            return reachable(() -> mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(pokemon))));
         } catch (DataIntegrityViolationException exception) {
             if (violates(exception, UNIQUE_NUMBER_CONSTRAINT)) {
                 throw new PokemonAlreadySyncedException(pokemon.getPokedexNumber());
@@ -37,7 +40,18 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
 
     @Override
     public Optional<LocalPokemon> findByPokedexNumber(PokedexNumber number) {
-        return jpaRepository.findByPokedexNumber(number.value()).map(mapper::toDomain);
+        return reachable(() -> jpaRepository.findByPokedexNumber(number.value()).map(mapper::toDomain));
+    }
+
+    private static <T> T reachable(Supplier<T> call) {
+        try {
+            return call.get();
+        } catch (RuntimeException exception) {
+            if (DatabaseFailures.isUnreachable(exception)) {
+                throw new LocalPokemonDataUnavailableException(exception);
+            }
+            throw exception;
+        }
     }
 
     private static boolean violates(DataIntegrityViolationException exception, String constraint) {
