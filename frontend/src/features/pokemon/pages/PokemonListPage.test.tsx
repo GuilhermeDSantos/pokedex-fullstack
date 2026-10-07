@@ -1,7 +1,7 @@
 import { screen, waitForElementToBeRemoved, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { BULBASAUR, PIKACHU, pageOf } from '../../../test/fixtures/pokemon'
 import { server } from '../../../test/msw/server'
 import { renderApp } from '../../../test/renderApp'
@@ -88,5 +88,16 @@ describe('PokemonListPage', () => {
     renderApp(`/?page=${page}`)
 
     expect(await screen.findByRole('article', { name: 'Bulbasaur' })).toBeInTheDocument()
+  })
+
+  // Pagination sits below the grid, so without this the next page would open scrolled to its bottom.
+  it('returns to the top when moving to another page', async () => {
+    renderApp('/?page=3')
+
+    const pagination = await screen.findByRole('navigation', { name: 'Pagination' })
+    vi.mocked(window.scrollTo).mockClear()
+    await userEvent.click(within(pagination).getByRole('link', { name: 'Next page' }))
+
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0)
   })
 })

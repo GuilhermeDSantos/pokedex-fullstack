@@ -14,6 +14,8 @@ beforeEach(() => {
   const record = (...args: unknown[]) => consoleOutput.push(args.map(String).join(' '))
   vi.spyOn(console, 'error').mockImplementation(record)
   vi.spyOn(console, 'warn').mockImplementation(record)
+  // jsdom has no layout, so its scrollTo only logs "not implemented"; tests assert the calls instead.
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
 })
 
 afterEach(() => {
