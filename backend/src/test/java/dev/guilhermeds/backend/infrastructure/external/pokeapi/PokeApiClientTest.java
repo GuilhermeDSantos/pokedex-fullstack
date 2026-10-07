@@ -8,6 +8,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withResourceNotFound;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -31,5 +32,13 @@ class PokeApiClientTest {
             .andRespond(withSuccess(new ClassPathResource("pokeapi/pokemon-25.json"), MediaType.APPLICATION_JSON));
 
         assertThat(client.fetchPokemon("25")).hasValueSatisfying(pokemon -> assertThat(pokemon.name()).isEqualTo("pikachu"));
+    }
+
+    // An unknown name or number is a fact about the catalog, not an outage.
+    @Test
+    void shouldReturnNothingWhenPokeApiDoesNotKnowThePokemon() {
+        server.expect(requestTo(BASE_URL + "/pokemon/missingno")).andRespond(withResourceNotFound());
+
+        assertThat(client.fetchPokemon("missingno")).isEmpty();
     }
 }
