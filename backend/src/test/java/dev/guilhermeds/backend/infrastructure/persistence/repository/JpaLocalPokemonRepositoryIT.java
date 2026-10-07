@@ -1,10 +1,12 @@
 package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
+import dev.guilhermeds.backend.domain.exception.LocalPokemonModifiedConcurrentlyException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.model.CustomAttributes;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.LocalPokemonId;
+import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.Tag;
 import dev.guilhermeds.backend.fixture.LocalPokemonFixture;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.LocalPokemonEntityMapper;
@@ -14,6 +16,11 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -39,6 +46,12 @@ class JpaLocalPokemonRepositoryIT {
 
     @Autowired
     private JpaLocalPokemonRepository repository;
+
+    @Autowired
+    private LocalPokemonJpaRepository jpaRepository;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void shouldSaveAndReloadTheWholeRecordWithItsTags() {
@@ -86,5 +99,34 @@ class JpaLocalPokemonRepositoryIT {
         var pikachu = repository.getByPokedexNumber(PIKACHU_NUMBER);
         pikachu.updateCustomAttributes(attributes, now);
         repository.save(pikachu);
+    }
+
+    // Two people edit Eevee at once: the one who saves last is told, instead of silently overwriting (D-011).
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void shouldRefuseAnEditOfARecordChangedSinceItWasRead() {
+        var eevee = new PokedexNumber(133);
+        var transaction = new TransactionTemplate(transactionManager);
+        var meanwhile = new TransactionTemplate(transactionManager);
+        meanwhile.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        var record = LocalPokemon.create(new LocalPokemonId(UUID.fromString("00000000-0000-0000-0000-000000000133")), eevee, NOW);
+        transaction.executeWithoutResult(status -> repository.save(record));
+        try {
+            assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+                var mine = repository.getByPokedexNumber(eevee);
+                meanwhile.executeWithoutResult(inner -> {
+                    var theirs = repository.getByPokedexNumber(eevee);
+                    theirs.updateCustomAttributes(new CustomAttributes("Evoli", null, Set.of()), NOW.plusSeconds(60));
+                    repository.save(theirs);
+                });
+                mine.updateCustomAttributes(new CustomAttributes("Eievui", null, Set.of()), NOW.plusSeconds(120));
+                repository.save(mine);
+            }))
+                .isInstanceOf(LocalPokemonModifiedConcurrentlyException.class)
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Pokémon #133 was changed by someone else in the meantime. Reload it and try again");
+        } finally {
+            transaction.executeWithoutResult(status -> jpaRepository.deleteById(record.getId().value()));
+        }
     }
 }
