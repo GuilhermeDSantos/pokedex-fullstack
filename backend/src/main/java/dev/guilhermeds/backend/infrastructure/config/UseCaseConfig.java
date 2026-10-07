@@ -56,8 +56,9 @@ public class UseCaseConfig {
     }
 
     @Bean
-    BrowsePokemonUseCase browsePokemonUseCase(PokemonRepository pokemonRepository) {
-        return new BrowsePokemonInteractor(pokemonRepository);
+    BrowsePokemonUseCase browsePokemonUseCase(PokemonRepository pokemonRepository,
+                                              LocalPokemonRepository localPokemonRepository) {
+        return new BrowsePokemonInteractor(pokemonRepository, localPokemonRepository);
     }
 
     @Bean

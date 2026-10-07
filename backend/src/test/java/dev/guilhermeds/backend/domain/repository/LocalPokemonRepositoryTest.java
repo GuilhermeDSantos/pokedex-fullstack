@@ -6,6 +6,8 @@ import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,6 +28,11 @@ class LocalPokemonRepositoryTest {
 
         @Override
         public void delete(LocalPokemon pokemon) {
+            throw new UnsupportedOperationException("not used here");
+        }
+
+        @Override
+        public List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers) {
             throw new UnsupportedOperationException("not used here");
         }
     };

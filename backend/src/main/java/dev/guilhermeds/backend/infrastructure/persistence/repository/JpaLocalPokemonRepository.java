@@ -12,6 +12,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -60,6 +62,11 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
             jpaRepository.flush();
             return null;
         });
+    }
+
+    @Override
+    public List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers) {
+        throw new UnsupportedOperationException("not implemented yet");
     }
 
     private static <T> T reachable(Supplier<T> call) {

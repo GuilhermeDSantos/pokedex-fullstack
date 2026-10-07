@@ -4,14 +4,17 @@ import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.domain.pagination.PageRequest;
+import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
 import dev.guilhermeds.backend.domain.repository.PokemonRepository;
 
 public class BrowsePokemonInteractor implements BrowsePokemonUseCase {
 
     private final PokemonRepository pokemonRepository;
+    private final LocalPokemonRepository localPokemonRepository;
 
-    public BrowsePokemonInteractor(PokemonRepository pokemonRepository) {
+    public BrowsePokemonInteractor(PokemonRepository pokemonRepository, LocalPokemonRepository localPokemonRepository) {
         this.pokemonRepository = pokemonRepository;
+        this.localPokemonRepository = localPokemonRepository;
     }
 
     @Override

@@ -77,7 +77,7 @@ class PokemonControllerIT {
         }
     }
 
-    private static final PokemonSummaryOutput PIKACHU = new PokemonSummaryOutput(25, "pikachu", "https://img/25.png",
+    private static final PokemonSummaryOutput PIKACHU = new PokemonSummaryOutput(25, "pikachu", null, "https://img/25.png",
         "Mouse Pokémon", new BigDecimal("6.0"), List.of("electric"),
         List.of(new AbilityOutput("static", false), new AbilityOutput("lightning-rod", true)));
 
