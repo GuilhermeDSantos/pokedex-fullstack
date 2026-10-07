@@ -26,6 +26,12 @@ public class PokeApiClient {
         return get("/pokemon/{identifier}", PokeApiPokemonJson.class, identifier);
     }
 
+    // A 404 here means PokeAPI linked to a species it doesn't have: its data is broken, not our request.
+    PokeApiSpeciesJson fetchSpecies(String url) {
+        return get(url, PokeApiSpeciesJson.class)
+            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
+    }
+
     // 404 → empty; anything else that isn't a 2xx, a timeout or an I/O error → unavailable.
     private <T> Optional<T> get(String uri, Class<T> type, Object... variables) {
         try {
