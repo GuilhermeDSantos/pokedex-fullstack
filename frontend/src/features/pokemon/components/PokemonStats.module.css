@@ -1,0 +1,17 @@
+.stats {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  max-width: 16rem;
+}
+
+.value {
+  font-weight: var(--font-weight-bold);
+}
