@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 5 — Edit and remove our fields.** Next task: S5.3 (`PUT` and `DELETE /pokemon/{number}/local`). S5.1–S5.2 are done: the rules, the use cases, the adapter with optimistic locking; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 5 — Edit and remove our fields.** Next task: S5.4 (the edit form and the remove dialog). The backend of Slice 5 is done: `PUT` and `DELETE /pokemon/{number}/local` with every documented status; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -370,8 +370,9 @@ Backend:
       concurrent one is a 409 (`LocalPokemonModifiedConcurrentlyException`, two-transaction IT);
       delete flushes, so failures are translated. Frontend sync sends the number and refreshes every
       cached detail (a page opened by number didn't refresh after a sync; fixed and tested).
-- [ ] S5.3 `PUT` and `DELETE /pokemon/{identifier}/local` + IT: 200/204, 400 invalid **and**
-      malformed body, 401, 404 not synced, 409 concurrent edit.
+- [x] S5.3 `PUT` and `DELETE /pokemon/{number}/local` + IT: 200/204, 400 invalid (sizes as
+      `fieldErrors`, tag format from the domain) **and** malformed body, 401, 404 not synced, 409
+      concurrent edit, 503. Checked with curl on Docker.
 
 Frontend:
 - [ ] S5.4 New global component `ConfirmDialog`. Inline edit form for the localized name, region

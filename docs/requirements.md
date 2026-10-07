@@ -33,10 +33,10 @@ to a decision in [`decisions.md`](decisions.md).
 | US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | 🟨 | `GET /api/v1/pokemon/{identifier}` (`GetPokemonInteractorTest`, `PokemonControllerIT`, `PokeApiTranslatorTest`); `PokemonDetailPage` (`PokemonDetailPage.test.tsx`); merged with local data in Slice 6 |
 | US-03 | **Persist** Pokémon data into a **local relational store** (sync) | ✅ | `POST /api/v1/pokemon/{identifier}/local` → 201 + `Location`, a row in `local_pokemons` (Pokédex number + our fields, D-039). `JpaLocalPokemonRepositoryIT`, `PokemonControllerIT` (201/400/401/404/409/503), `SyncPokemonInteractorTest`; the detail page's **Sync to local database** checked on Docker |
 | US-03.a | Replication enables **proprietary fields**: localized nomenclature, geographical metadata, internal classification tags (D-006; one free-text `localizedName`, D-027 rejected) | ⬜ | `CustomAttributes` (localizedName, region, tags) — the brief's three examples |
-| US-04 | **Update** any Pokémon in the local DB (editable fields = the proprietary ones: D-006/D-026) | ⬜ | `PUT /api/v1/pokemon/{identifier}/local` |
-| US-04.a | **404** for missing records | ⬜ | |
-| US-04.b | **400** for malformed payloads (malformed JSON **and** invalid values) | ⬜ | |
-| US-04.c | Further **defensive logic** as required (409 concurrency/duplicates, size limits, input normalization, auth) | ⬜ | |
+| US-04 | **Update** any Pokémon in the local DB (editable fields = the proprietary ones: D-006/D-026) | ✅ | `PUT /api/v1/pokemon/{number}/local` (D-040) replaces our fields: `UpdateLocalPokemonInteractorTest`, `LocalPokemonTest`, `JpaLocalPokemonRepositoryIT` (repeated edits), `PokemonControllerIT`; checked with curl on Docker |
+| US-04.a | **404** for missing records | ✅ | `LocalPokemonNotFoundException` → 404 on `GET`/`PUT`/`DELETE …/local` (`PokemonControllerIT`); a removal of what was never synced is 404, not 204 |
+| US-04.b | **400** for malformed payloads (malformed JSON **and** invalid values) | ✅ | Malformed JSON → "Malformed JSON request body" (never echoed); sizes → `fieldErrors` per field; tag format and a name instead of a number → domain `ValidationException` (`PokemonControllerIT`, `TagTest`, `CustomAttributesTest`, `PokedexNumberTest`) |
+| US-04.c | Further **defensive logic** as required (409 concurrency/duplicates, size limits, input normalization, auth) | ✅ | 409 on a concurrent edit (`@Version`, two-transaction IT) and on a second sync; size limits at the edge and in the domain; tags trimmed, lower-cased, deduplicated; texts trimmed, blank = not set; writes need a token (401) |
 
 ## Technical — mandatory
 
@@ -60,7 +60,7 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| TR-API-1 | Java Web API with **comprehensive CRUD** on the dataset | ⬜ | on `/api/v1/pokemon/{identifier}/local`: C = `POST` (sync), R = `GET`, U = `PUT`, D = `DELETE` |
+| TR-API-1 | Java Web API with **comprehensive CRUD** on the dataset | ✅ | on `/api/v1/pokemon/{number}/local`: C = `POST` (sync), R = `GET`, U = `PUT`, D = `DELETE`, each with ITs for success and every documented error |
 | TR-API-2 | **Standard HTTP verbs**, required parameters, **consistent return structures** | 🟨 | `PageResponse`, `ErrorResponse`, statuses in [`domain-model.md`](domain-model.md#api-contract) |
 | TR-AUTH-1 | Auxiliary API for **user registration** | 🟨 | `POST /api/v1/auth/register`: `AuthController`, `RegisterUserInteractor`; `RegisterUserInteractorTest`, `AuthControllerIT`, `AuthFlowIT` |
 | TR-AUTH-2 | **Authentication** | 🟨 | `POST /api/v1/auth/login` (JWT). `AuthController` (login, `/auth/me`), `BCryptPasswordHasher`, `JwtTokenIssuer` + `JwtConfig` (HS256), `AuthenticateUserInteractor`, `GetCurrentUserInteractor`; their tests, `AuthControllerIT`, `AuthFlowIT` (real token end to end), `JwtTokenIssuerTest`, `JwtPropertiesTest` |

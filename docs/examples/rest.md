@@ -101,7 +101,7 @@ decide, and their `ValidationException` is a 400 too.
 public record UpdateLocalPokemonRequest(
     @Size(max = CustomAttributes.MAX_TEXT_LENGTH) String localizedName,
     @Size(max = CustomAttributes.MAX_TEXT_LENGTH) String region,
-    @Size(max = CustomAttributes.MAX_TAGS) List<@NotBlank String> tags   // format: the Tag VO decides
+    @Size(max = CustomAttributes.MAX_TAGS) List<String> tags   // format, blank included: the Tag VO decides
 ) {}
 
 // interfaces/rest/request/RegisterUserRequest.java — required-ness only; Email, FullName and
