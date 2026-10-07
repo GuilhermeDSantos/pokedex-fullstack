@@ -133,7 +133,7 @@ describe('PokemonDetailPage', () => {
     let synced = false
     server.use(
       http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(synced ? SYNCED_PIKACHU_DETAIL : PIKACHU_DETAIL)),
-      http.post('/api/v1/pokemon/pikachu/local', ({ request }) => {
+      http.post('/api/v1/pokemon/25/local', ({ request }) => {
         if (request.headers.get('Authorization') !== `Bearer ${ASH_SESSION.accessToken}`) {
           return HttpResponse.json({ code: 'UNAUTHENTICATED', message: 'No token', fieldErrors: [] }, { status: 401 })
         }
@@ -156,7 +156,7 @@ describe('PokemonDetailPage', () => {
       http.get('/api/v1/pokemon/pikachu', () =>
         HttpResponse.json(syncedElsewhere ? SYNCED_PIKACHU_DETAIL : PIKACHU_DETAIL),
       ),
-      http.post('/api/v1/pokemon/pikachu/local', () => {
+      http.post('/api/v1/pokemon/25/local', () => {
         syncedElsewhere = true
         return HttpResponse.json(
           { code: 'CONFLICT', message: 'Pokémon #25 is already in the local database', fieldErrors: [] },
@@ -175,7 +175,7 @@ describe('PokemonDetailPage', () => {
   // The token expired, or the account is gone (D-033): the session is over, so sign in again and come back.
   it('signs the user out and sends them to sign in when the sync is refused as unauthenticated', async () => {
     server.use(
-      http.post('/api/v1/pokemon/pikachu/local', () =>
+      http.post('/api/v1/pokemon/25/local', () =>
         HttpResponse.json(
           { code: 'UNAUTHENTICATED', message: 'Authentication is required to access this resource', fieldErrors: [] },
           { status: 401 },
