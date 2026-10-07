@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.pokemon;
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.species;
@@ -41,6 +43,30 @@ class PokeApiPokemonSourceTest {
         var page = source.findAll(new PageRequest(0, 2));
 
         assertThat(page.totalElements()).isEqualTo(1351);
+        assertThat(page.content()).extracting(PokemonSummary::number)
+            .containsExactly(new PokedexNumber(1), new PokedexNumber(25));
+    }
+
+    // Bulbasaur's answer waits until Pikachu's request has started: one call at a time would never get there.
+    @Test
+    void shouldFetchTheEntriesConcurrentlyAndKeepPokeApiOrder() {
+        var pikachuRequested = new CountDownLatch(1);
+        given(client.fetchPage(0, 2)).willReturn(page(1351, "bulbasaur", "pikachu"));
+        given(client.fetchPokemon("bulbasaur")).willAnswer(invocation -> {
+            if (!pikachuRequested.await(2, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("the entries were fetched one at a time");
+            }
+            return Optional.of(pokemon(1));
+        });
+        given(client.fetchPokemon("pikachu")).willAnswer(invocation -> {
+            pikachuRequested.countDown();
+            return Optional.of(pokemon(25));
+        });
+        given(client.fetchSpecies(pokemon(1).species().url())).willReturn(species(1));
+        given(client.fetchSpecies(pokemon(25).species().url())).willReturn(species(25));
+
+        var page = source.findAll(new PageRequest(0, 2));
+
         assertThat(page.content()).extracting(PokemonSummary::number)
             .containsExactly(new PokedexNumber(1), new PokedexNumber(25));
     }
