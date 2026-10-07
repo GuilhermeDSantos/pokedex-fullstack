@@ -4,37 +4,59 @@ import dev.guilhermeds.backend.application.dto.AbilityOutput;
 import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
 import dev.guilhermeds.backend.application.dto.EvolutionStageOutput;
 import dev.guilhermeds.backend.application.dto.GetPokemonInput;
+import dev.guilhermeds.backend.application.dto.LocalPokemonOutput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.application.dto.StatOutput;
+import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
+import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
+import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
-import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
 import dev.guilhermeds.backend.interfaces.rest.mapper.PokemonRestMapper;
 import dev.guilhermeds.backend.interfaces.rest.security.ErrorResponseAuthenticationEntryPoint;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @WebMvcTest(PokemonController.class)
-@Import({PokemonRestMapper.class, SecurityConfig.class, JwtConfig.class, ErrorResponseAuthenticationEntryPoint.class})
+@Import({PokemonRestMapper.class, SecurityConfig.class, JwtConfig.class, ErrorResponseAuthenticationEntryPoint.class,
+    PokemonControllerIT.FixedClock.class})
 class PokemonControllerIT {
+
+    private static final Instant NOW = Instant.parse("2026-01-15T10:00:00Z");
+
+    @TestConfiguration
+    static class FixedClock {
+        @Bean
+        Clock clock() {
+            return Clock.fixed(NOW, ZoneOffset.UTC);
+        }
+    }
 
     private static final PokemonSummaryOutput PIKACHU = new PokemonSummaryOutput(25, "pikachu", "https://img/25.png",
         "Mouse Pokémon", new BigDecimal("6.0"), List.of("electric"),
@@ -48,6 +70,9 @@ class PokemonControllerIT {
 
     @MockitoBean
     private GetPokemonUseCase getPokemonUseCase;
+
+    @MockitoBean
+    private SyncPokemonUseCase syncPokemonUseCase;
 
     @Test
     void shouldReturnAPageOfCardsToAnyone() {
@@ -177,5 +202,23 @@ class PokemonControllerIT {
         assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu"))
             .hasStatus(503)
             .bodyJson().extractingPath("$.code").isEqualTo("DATA_UNAVAILABLE");
+    }
+
+    // ---- the local record (US-03) -----------------------------------------------------------------
+
+    // Location uses the Pokédex number, whatever the client called the Pokémon.
+    @Test
+    void shouldSyncAPokemonForASignedInUser() {
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pikachu")), any(), eq(NOW)))
+            .willReturn(new LocalPokemonOutput(25, null, null, List.of(), NOW, NOW));
+
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt()))
+            .hasStatus(201)
+            .hasHeader("Location", "http://localhost/api/v1/pokemon/25/local")
+            .bodyJson()
+            .isStrictlyEqualTo("""
+                { "pokedexNumber": 25, "localizedName": null, "region": null, "tags": [],
+                  "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" }
+                """);
     }
 }
