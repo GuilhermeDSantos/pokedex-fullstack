@@ -203,7 +203,11 @@ public record Tag(String value) {
 }
 
 // domain/model/CustomAttributes.java — the proprietary fields of US-03/US-04, as one value
-public record CustomAttributes(String localizedName, String region, Set<Tag> tags) {
+public record CustomAttributes(
+    String localizedName,
+    String region,
+    Set<Tag> tags
+) {
 
     public static final int MAX_TEXT_LENGTH = 100;
     public static final int MAX_TAGS = 10;
@@ -358,7 +362,11 @@ public interface PokemonRepository {
 }
 
 // domain/repository/PokemonDetail.java
-public record PokemonDetail(PokedexNumber number, PokemonProfile profile, EvolutionStage evolutionChain) {
+public record PokemonDetail(
+    PokedexNumber number,
+    PokemonProfile profile,
+    EvolutionStage evolutionChain
+) {
     public PokemonDetail {
         Objects.requireNonNull(number, "number must not be null");
         Objects.requireNonNull(profile, "profile must not be null");
@@ -367,7 +375,11 @@ public record PokemonDetail(PokedexNumber number, PokemonProfile profile, Evolut
 }
 
 // domain/repository/EvolutionStage.java — a tree, because lineages branch (Eevee has 8 children)
-public record EvolutionStage(String speciesName, PokedexNumber number, List<EvolutionStage> evolvesTo) {
+public record EvolutionStage(
+    String speciesName,
+    PokedexNumber number,
+    List<EvolutionStage> evolvesTo
+) {
     public EvolutionStage {
         Objects.requireNonNull(speciesName, "speciesName must not be null");
         Objects.requireNonNull(number, "number must not be null");

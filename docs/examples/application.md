@@ -330,11 +330,22 @@ never a `null` passed around.
 
 ```java
 // application/dto/UpdateLocalPokemonInput.java
-public record UpdateLocalPokemonInput(String identifier, String localizedName, String region, List<String> tags) {}
+public record UpdateLocalPokemonInput(
+    String pokedexNumber,
+    String localizedName,
+    String region,
+    List<String> tags
+) {}
 
 // application/dto/LocalPokemonOutput.java — the /local sub-resource
-public record LocalPokemonOutput(int pokedexNumber, String localizedName, String region, List<String> tags,
-                                 Instant syncedAt, Instant updatedAt) {
+public record LocalPokemonOutput(
+    int pokedexNumber,
+    String localizedName,
+    String region,
+    List<String> tags,
+    Instant syncedAt,
+    Instant updatedAt
+) {
 
     public static LocalPokemonOutput from(LocalPokemon pokemon) {
         var custom = pokemon.getCustomAttributes();
@@ -349,12 +360,21 @@ public record LocalPokemonOutput(int pokedexNumber, String localizedName, String
 }
 
 // application/dto/PokemonDetailOutput.java — PokeAPI data merged with the local record
-public record PokemonDetailOutput(int pokedexNumber, String name,
-                                  String category, BigDecimal heightMeters, BigDecimal weightKilograms,
-                                  String spriteUrl, String artworkUrl, List<String> types,
-                                  List<AbilityOutput> abilities, List<StatOutput> stats,
-                                  String description, EvolutionStageOutput evolutionChain,
-                                  LocalAttributesOutput local) {   // null when not synced
+public record PokemonDetailOutput(
+    int pokedexNumber,
+    String name,
+    String category,
+    BigDecimal heightMeters,
+    BigDecimal weightKilograms,
+    String spriteUrl,
+    String artworkUrl,
+    List<String> types,
+    List<AbilityOutput> abilities,
+    List<StatOutput> stats,
+    String description,
+    EvolutionStageOutput evolutionChain,
+    LocalAttributesOutput local   // null when not synced
+) {
 
     public static PokemonDetailOutput from(PokemonDetail detail, Optional<LocalPokemon> local) {
         var profile = detail.profile();
@@ -376,7 +396,12 @@ public record PokemonDetailOutput(int pokedexNumber, String name,
 }
 
 // application/dto/PageOutput.java — application-level page, so interfaces/ never sees domain Page
-public record PageOutput<T>(List<T> content, int page, int size, long totalElements) {
+public record PageOutput<T>(
+    List<T> content,
+    int page,
+    int size,
+    long totalElements
+) {
 
     public static <T> PageOutput<T> from(Page<T> page, PageRequest request) {
         return new PageOutput<>(page.content(), request.page(), request.size(), page.totalElements());

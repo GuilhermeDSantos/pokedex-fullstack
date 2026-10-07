@@ -273,13 +273,26 @@ it. PokeAPI JSON shapes are **package-private records** in this package, so they
 ```java
 // infrastructure/external/pokeapi/PokeApiProperties.java
 @ConfigurationProperties("pokeapi")
-public record PokeApiProperties(URI baseUrl, Duration connectTimeout, Duration readTimeout, int maxConcurrency) {}
+public record PokeApiProperties(
+    URI baseUrl,
+    Duration connectTimeout,
+    Duration readTimeout,
+    int maxConcurrency
+) {}
 
 // infrastructure/external/pokeapi/PokeApiPokemonJson.java — only the fields we use
 @JsonIgnoreProperties(ignoreUnknown = true)
-record PokeApiPokemonJson(int id, String name, int height, int weight, Sprites sprites,
-                          List<TypeSlot> types, List<AbilitySlot> abilities, List<StatEntry> stats,
-                          NamedResource species) {
+record PokeApiPokemonJson(
+    int id,
+    String name,
+    int height,
+    int weight,
+    Sprites sprites,
+    List<TypeSlot> types,
+    List<AbilitySlot> abilities,
+    List<StatEntry> stats,
+    NamedResource species
+) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Sprites(@JsonProperty("front_default") String frontDefault, Other other) {}
@@ -291,7 +304,11 @@ record PokeApiPokemonJson(int id, String name, int height, int weight, Sprites s
     record Artwork(@JsonProperty("front_default") String frontDefault) {}
 
     record TypeSlot(int slot, NamedResource type) {}
-    record AbilitySlot(int slot, @JsonProperty("is_hidden") boolean hidden, NamedResource ability) {}
+    record AbilitySlot(
+        int slot,
+        @JsonProperty("is_hidden") boolean hidden,
+        NamedResource ability
+    ) {}
     record StatEntry(@JsonProperty("base_stat") int baseStat, NamedResource stat) {}
 }
 ```

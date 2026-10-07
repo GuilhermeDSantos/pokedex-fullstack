@@ -148,7 +148,11 @@ public class PokemonRestMapper {
 
 ```java
 // interfaces/rest/response/ErrorResponse.java
-public record ErrorResponse(String code, String message, List<FieldError> fieldErrors) {
+public record ErrorResponse(
+    String code,
+    String message,
+    List<FieldError> fieldErrors
+) {
 
     public record FieldError(String field, String message) {}
 
@@ -158,7 +162,13 @@ public record ErrorResponse(String code, String message, List<FieldError> fieldE
 }
 
 // interfaces/rest/response/PageResponse.java
-public record PageResponse<T>(List<T> content, int page, int size, long totalElements, int totalPages) {}
+public record PageResponse<T>(
+    List<T> content,
+    int page,
+    int size,
+    long totalElements,
+    int totalPages
+) {}
 ```
 
 ## Global exception handler

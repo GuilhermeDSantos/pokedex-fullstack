@@ -171,6 +171,24 @@ Exact patterns, not suggestions.
 
 ---
 
+## Code layout
+
+- **Records with three or more components list one per line**, indented 4 spaces, with `) {` on a
+  line of its own. One or two components stay on one line. A comment about a component goes at the
+  end of its line.
+
+  ```java
+  public record LocalPokemonResponse(
+      int pokedexNumber,
+      String localizedName,
+      String region,
+      List<String> tags,
+      Instant syncedAt,
+      Instant updatedAt
+  ) {
+  }
+  ```
+
 ## Layer rules
 
 ### domain/
