@@ -1,12 +1,17 @@
 package dev.guilhermeds.backend.infrastructure.external.pokeapi;
 
-import dev.guilhermeds.backend.domain.model.PokedexNumber;
-import dev.guilhermeds.backend.domain.model.Weight;
-import java.util.List;
-import dev.guilhermeds.backend.domain.model.PokemonType;
 import dev.guilhermeds.backend.domain.model.Ability;
+import dev.guilhermeds.backend.domain.model.BaseStat;
+import dev.guilhermeds.backend.domain.model.Height;
+import dev.guilhermeds.backend.domain.model.PokedexNumber;
+import dev.guilhermeds.backend.domain.model.PokemonType;
+import dev.guilhermeds.backend.domain.model.StatName;
+import dev.guilhermeds.backend.domain.model.Weight;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
+import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.evolutionChain;
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.pokemon;
 import static dev.guilhermeds.backend.infrastructure.external.pokeapi.PokeApiFixtures.species;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,8 +43,10 @@ class PokeApiTranslatorTest {
 
     @Test
     void shouldLeaveTheCategoryEmptyWhenThereIsNoEnglishGenus() {
+        var pikachu = species(25);
         var onlyFrench = new PokeApiSpeciesJson(
-            List.of(new PokeApiSpeciesJson.Genus("Pokémon Souris", new NamedResource("fr", "https://pokeapi.co/api/v2/language/5/"))));
+            List.of(new PokeApiSpeciesJson.Genus("Pokémon Souris", new NamedResource("fr", "https://pokeapi.co/api/v2/language/5/"))),
+            pikachu.flavorTextEntries(), pikachu.evolutionChain());
 
         assertThat(translator.toSummary(pokemon(25), onlyFrench).category()).isNull();
     }
@@ -54,8 +61,9 @@ class PokeApiTranslatorTest {
     @Test
     void shouldAcceptAPokemonWithoutASprite() {
         var pikachu = pokemon(25);
-        var withoutSprite = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(),
-            new PokeApiPokemonJson.Sprites(null), pikachu.types(), pikachu.abilities(), pikachu.species());
+        var withoutSprite = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.height(), pikachu.weight(),
+            new PokeApiPokemonJson.Sprites(null, null), pikachu.types(), pikachu.abilities(), pikachu.stats(),
+            pikachu.species());
 
         assertThat(translator.toSummary(withoutSprite, species(25)).spriteUrl()).isNull();
     }
@@ -64,8 +72,8 @@ class PokeApiTranslatorTest {
     @Test
     void shouldListTheTypesInSlotOrder() {
         var bulbasaur = pokemon(1);
-        var shuffled = new PokeApiPokemonJson(bulbasaur.id(), bulbasaur.name(), bulbasaur.weight(), bulbasaur.sprites(),
-            bulbasaur.types().reversed(), bulbasaur.abilities(), bulbasaur.species());
+        var shuffled = new PokeApiPokemonJson(bulbasaur.id(), bulbasaur.name(), bulbasaur.height(), bulbasaur.weight(),
+            bulbasaur.sprites(), bulbasaur.types().reversed(), bulbasaur.abilities(), bulbasaur.stats(), bulbasaur.species());
 
         assertThat(translator.toSummary(shuffled, species(1)).types())
             .containsExactly(new PokemonType("grass"), new PokemonType("poison"));
@@ -75,10 +83,26 @@ class PokeApiTranslatorTest {
     @Test
     void shouldListTheAbilitiesInSlotOrderWithTheHiddenOneMarked() {
         var pikachu = pokemon(25);
-        var shuffled = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(), pikachu.sprites(),
-            pikachu.types(), pikachu.abilities().reversed(), pikachu.species());
+        var shuffled = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.height(), pikachu.weight(),
+            pikachu.sprites(), pikachu.types(), pikachu.abilities().reversed(), pikachu.stats(), pikachu.species());
 
         assertThat(translator.toSummary(shuffled, species(25)).abilities())
             .containsExactly(new Ability("static", false), new Ability("lightning-rod", true));
+    }
+
+    // ---- detail (US-02) ---------------------------------------------------------------------
+
+    @Test
+    void shouldTranslateTheProfileWithHeightArtworkAndStatsInTheGamesOrder() {
+        var detail = translator.toDetail(pokemon(25), species(25), evolutionChain(10));
+
+        assertThat(detail.number()).isEqualTo(new PokedexNumber(25));
+        assertThat(detail.profile().height()).isEqualTo(Height.fromDecimetres(4));
+        assertThat(detail.profile().artworkUrl())
+            .isEqualTo("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png");
+        assertThat(detail.profile().stats()).containsExactly(
+            new BaseStat(StatName.HP, 35), new BaseStat(StatName.ATTACK, 55), new BaseStat(StatName.DEFENSE, 40),
+            new BaseStat(StatName.SPECIAL_ATTACK, 50), new BaseStat(StatName.SPECIAL_DEFENSE, 50),
+            new BaseStat(StatName.SPEED, 90));
     }
 }

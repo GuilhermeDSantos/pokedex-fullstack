@@ -22,6 +22,10 @@ final class PokeApiFixtures {
         return read("pokemon-species-" + id + ".json", PokeApiSpeciesJson.class);
     }
 
+    static PokeApiEvolutionChainJson evolutionChain(int id) {
+        return read("evolution-chain-" + id + ".json", PokeApiEvolutionChainJson.class);
+    }
+
     private static <T> T read(String file, Class<T> type) {
         try (InputStream json = PokeApiFixtures.class.getResourceAsStream("/pokeapi/" + file)) {
             if (json == null) {
