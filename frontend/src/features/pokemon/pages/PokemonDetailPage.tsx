@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { ApiError } from '../../../shared/api/ApiError'
 import { formatKilograms, formatName, formatPokedexNumber } from '../../../shared/lib/format'
+import { ErrorState } from '../../../shared/ui/ErrorState'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
 import { EvolutionTree } from '../components/EvolutionTree'
@@ -12,7 +13,7 @@ const ARTWORK_SIZE = 240
 
 export function PokemonDetailPage() {
   const { identifier = '' } = useParams()
-  const { data: pokemon, error } = usePokemon(identifier)
+  const { data: pokemon, error, refetch } = usePokemon(identifier)
   if (error instanceof ApiError && error.status === 404) {
     return (
       <Stack>
@@ -22,6 +23,9 @@ export function PokemonDetailPage() {
         </p>
       </Stack>
     )
+  }
+  if (error) {
+    return <ErrorState message={error.message} onRetry={() => void refetch()} />
   }
   if (!pokemon) {
     return null
