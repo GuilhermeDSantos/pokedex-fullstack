@@ -11,9 +11,15 @@ import styles from './PokemonListPage.module.css'
 
 const PAGE_SIZE = 20
 
+// The URL is typed by people: anything but a whole number from 1 up means the first page.
+function pageFromUrl(value: string | null): number {
+  const page = Number(value)
+  return Number.isInteger(page) && page >= 1 ? page : 1
+}
+
 export function PokemonListPage() {
   const [searchParams] = useSearchParams()
-  const page = Number(searchParams.get('page') ?? '1')
+  const page = pageFromUrl(searchParams.get('page'))
   const { data, isPending, error, refetch } = usePokemonPage(page - 1, PAGE_SIZE)
   return (
     <Stack gap={6}>
