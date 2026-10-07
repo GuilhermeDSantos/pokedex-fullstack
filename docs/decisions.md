@@ -346,7 +346,7 @@ with ownership checks everywhere. Writes directly on `/pokemon/{id}`: a `DELETE`
 `GET` that still returns 200 is incoherent.
 **Consequences:** The merge is a use case concern (port + repository). The list merge costs one DB
 query per page. If PokeAPI is down, even synced Pokémon return 503 on the merged reads
-(`GET …/local` by number still works). An offline fallback is parked (D-039).
+(`/pokemon/{number}/local` still works, D-040). An offline fallback is parked (D-039).
 
 ## D-031 — The local record stores a scalar snapshot, not the full profile
 **Status:** Superseded by D-039 · **Date:** 2026-10-06 · **Requirements:** US-03, TR-DB-1, TR-DB-2 · **Supersedes:** part of D-006

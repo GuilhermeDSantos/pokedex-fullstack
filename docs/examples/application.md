@@ -35,8 +35,10 @@ public class SyncPokemonInteractor implements SyncPokemonUseCase {
 
     @Override
     public LocalPokemonOutput execute(SyncPokemonInput input, LocalPokemonId id, Instant now) {
-        // Read the canonical data before the transaction: a slow call must never hold a connection.
-        var number = pokemonRepository.getByIdentifier(mapper.toIdentifier(input.identifier())).number();
+        var number = mapper.toPokedexNumber(input.pokedexNumber());
+        // Only a Pokémon the canonical data knows can be synced (404 otherwise). Asked before the
+        // transaction: a slow call must never hold a connection.
+        pokemonRepository.getByIdentifier(mapper.toIdentifier(number));
 
         return unitOfWork.inTransaction(() -> {
             localPokemonRepository.findByPokedexNumber(number).ifPresent(existing -> {
@@ -91,17 +93,14 @@ public class GetPokemonInteractor implements GetPokemonUseCase {
 
 ## The `/local` read — `GetLocalPokemonUseCase` (US-03)
 
-The record keeps no name (D-039), so a name is resolved to its number through the canonical data;
-a number goes straight to the database.
+The `/local` routes take the Pokédex number only (D-040), so this one never calls PokeAPI. A name
+is a 400 from `PokedexNumber.parse`, inside the mapper.
 
 ```java
 // application/usecase/GetLocalPokemonInteractor.java
 @Override
 public LocalPokemonOutput execute(GetLocalPokemonInput input) {
-    var identifier = mapper.toIdentifier(input.identifier());
-    var number = identifier.isNumber()
-        ? identifier.asNumber()
-        : pokemonRepository.getByIdentifier(identifier).number();
+    var number = mapper.toPokedexNumber(input.pokedexNumber());
     return LocalPokemonOutput.from(localPokemonRepository.getByPokedexNumber(number));
 }
 ```
@@ -148,8 +147,8 @@ input, and it has no mapper of its own.
 
 404 when the Pokémon isn't synced (from `getByPokedexNumber`). 400 when an attribute is invalid
 (thrown by the `Tag`/`CustomAttributes` constructors inside the mapper). 409 on a concurrent edit
-(the adapter translates `@Version`). The interactor checks none of this itself. The identifier is
-resolved to a number as in `GetLocalPokemon`; `resolveNumber` stands for that step.
+(the adapter translates `@Version`). The interactor checks none of this itself, and never calls
+PokeAPI (D-040).
 
 ```java
 // application/usecase/UpdateLocalPokemonUseCase.java
@@ -160,7 +159,7 @@ public interface UpdateLocalPokemonUseCase {
 // application/usecase/UpdateLocalPokemonInteractor.java
 public class UpdateLocalPokemonInteractor implements UpdateLocalPokemonUseCase {
 
-    private final LocalPokemonRepository repository;
+    private final LocalPokemonRepository localPokemonRepository;
     private final PokemonMapper mapper;
     private final UnitOfWork unitOfWork;
 
@@ -168,14 +167,14 @@ public class UpdateLocalPokemonInteractor implements UpdateLocalPokemonUseCase {
 
     @Override
     public LocalPokemonOutput execute(UpdateLocalPokemonInput input, Instant now) {
-        // Built BEFORE the transaction: invalid input fails fast with a 400 and never opens one.
+        // Built before the transaction: invalid input is a 400 that never opens one.
+        var number = mapper.toPokedexNumber(input.pokedexNumber());
         var attributes = mapper.toCustomAttributes(input);
-        var number = resolveNumber(mapper.toIdentifier(input.identifier()));
 
         return unitOfWork.inTransaction(() -> {
-            var pokemon = repository.getByPokedexNumber(number);
-            pokemon.updateCustomAttributes(attributes, now);   // the domain decides
-            return LocalPokemonOutput.from(repository.save(pokemon));
+            var pokemon = localPokemonRepository.getByPokedexNumber(number);
+            pokemon.updateCustomAttributes(attributes, now);
+            return LocalPokemonOutput.from(localPokemonRepository.save(pokemon));
         });
     }
 }
@@ -189,7 +188,7 @@ Nothing to return, so this uses the `Runnable` overload of `inTransaction` with 
 // application/usecase/RemoveLocalPokemonInteractor.java
 public class RemoveLocalPokemonInteractor implements RemoveLocalPokemonUseCase {
 
-    private final LocalPokemonRepository repository;
+    private final LocalPokemonRepository localPokemonRepository;
     private final PokemonMapper mapper;
     private final UnitOfWork unitOfWork;
 
@@ -197,12 +196,10 @@ public class RemoveLocalPokemonInteractor implements RemoveLocalPokemonUseCase {
 
     @Override
     public void execute(RemoveLocalPokemonInput input) {
-        var number = resolveNumber(mapper.toIdentifier(input.identifier()));
+        var number = mapper.toPokedexNumber(input.pokedexNumber());
         unitOfWork.inTransaction(() -> {
-            // get first: removing something that isn't synced must be a 404, not a silent 204
-            // that claims something was removed.
-            var pokemon = repository.getByPokedexNumber(number);
-            repository.delete(pokemon);
+            // Found first: removing what was never synced is a 404, not a 204 that claims it worked.
+            localPokemonRepository.delete(localPokemonRepository.getByPokedexNumber(number));
         });
     }
 }

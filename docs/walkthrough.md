@@ -13,7 +13,7 @@ claim should point at something concrete: a file, a test, a row in
    PokeAPI, where the team syncs chosen Pokémon into a local database and enriches them with its
    own fields ([`domain-model.md` → Product vision](domain-model.md#product-vision)).
 2. **User stories → design (2 min).** US-01…US-04 mapped to two pages and one resource: list and
-   detail read merged data, and sync/edit/remove go to `/pokemon/{identifier}/local` (D-030).
+   detail read merged data, and sync/edit/remove go to `/pokemon/{number}/local` (D-030, D-040).
    State the interpretations: category = genus, skills = abilities (D-010), the brief's three
    example proprietary fields, and why US-04 edits only those (D-026).
 3. **Architecture (4 min).**
@@ -89,8 +89,9 @@ claim should point at something concrete: a file, a test, a row in
 - How do you guarantee the domain doesn't depend on Spring? → The ArchUnit allowlist. Adding a
   Spring import to `domain` fails the build.
 - What happens if PokeAPI is down? → `PokemonDataUnavailableException` → 503 on the merged reads;
-  `GET …/local` by number still works, and the cache softens it. Serving synced Pokémon offline
-  would need a copy of PokeAPI's data, which D-039 dropped on purpose.
+  our own data stays readable and editable on `/pokemon/{number}/local` (D-040), and the cache
+  softens it. Serving synced Pokémon offline would need a copy of PokeAPI's data, which D-039
+  dropped on purpose.
 - Two users edit the same Pokémon at once? → `@Version` → 409 (D-011). Next step: expose the
   version and require `If-Match`, so a stale browser tab also gets a 409.
 - Two users sync the same Pokémon at once? → The unique constraint, translated to 409. The

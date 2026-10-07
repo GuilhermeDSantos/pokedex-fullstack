@@ -128,7 +128,7 @@ interface alone:
 |---|---|---|
 | `UserAccountRepository` | `save`, `findById`, `findByEmail` | PostgreSQL |
 | `PokemonRepository` | `findAll`, `findByIdentifier` (read-only: the canonical data isn't ours to change) | PokeAPI |
-| `LocalPokemonRepository` | `save`, `findByPokedexNumber` (+ `delete` in Slice 5) | PostgreSQL |
+| `LocalPokemonRepository` | `save`, `findByPokedexNumber`, `delete` | PostgreSQL |
 
 The canonical data and the local record are still two things in the domain, not because of where
 they are stored but because of what the business allows: the canonical data can only be read, the
@@ -164,7 +164,7 @@ public interface LocalPokemonRepository {
     default LocalPokemon getByPokedexNumber(PokedexNumber number) {
         return findByPokedexNumber(number).orElseThrow(() -> new LocalPokemonNotFoundException(number));
     }
-    // Slice 5: void delete(LocalPokemon pokemon);
+    void delete(LocalPokemon pokemon);
     // Slice 6: List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);  // 1 query per page
 }
 ```

@@ -53,32 +53,32 @@ public class PokemonController {
 
     // ---- the local record: /local sub-resource -----------------------------------
 
-    @GetMapping("/{identifier}/local")
-    public LocalPokemonResponse getLocal(@PathVariable String identifier) {
-        return mapper.toResponse(getLocalPokemonUseCase.execute(new GetLocalPokemonInput(identifier)));
+    // {number}: a Pokédex number only (D-040); the mapper turns anything else into a 400.
+    @GetMapping("/{number}/local")
+    public LocalPokemonResponse getLocal(@PathVariable String number) {
+        return mapper.toResponse(getLocalPokemonUseCase.execute(new GetLocalPokemonInput(number)));
     }
 
-    @PostMapping("/{identifier}/local")
-    public ResponseEntity<LocalPokemonResponse> sync(@PathVariable String identifier) {
+    @PostMapping("/{number}/local")
+    public ResponseEntity<LocalPokemonResponse> sync(@PathVariable String number) {
         // Both ambient values originate here, once, and are passed down explicitly.
         var output = syncPokemonUseCase.execute(
-            new SyncPokemonInput(identifier), LocalPokemonId.generate(), Instant.now(clock));
-        // Location uses the canonical number, whatever the client sent (name or number).
+            new SyncPokemonInput(number), LocalPokemonId.generate(), Instant.now(clock));
         var location = ServletUriComponentsBuilder.fromCurrentContextPath()
             .path("/api/v1/pokemon/{number}/local").buildAndExpand(output.pokedexNumber()).toUri();
         return ResponseEntity.created(location).body(mapper.toResponse(output));
     }
 
-    @PutMapping("/{identifier}/local")
-    public LocalPokemonResponse update(@PathVariable String identifier,
+    @PutMapping("/{number}/local")
+    public LocalPokemonResponse update(@PathVariable String number,
                                        @RequestBody @Valid UpdateLocalPokemonRequest request) {
-        return mapper.toResponse(updateLocalPokemonUseCase.execute(mapper.toInput(identifier, request), Instant.now(clock)));
+        return mapper.toResponse(updateLocalPokemonUseCase.execute(mapper.toInput(number, request), Instant.now(clock)));
     }
 
-    @DeleteMapping("/{identifier}/local")
+    @DeleteMapping("/{number}/local")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remove(@PathVariable String identifier) {
-        removeLocalPokemonUseCase.execute(new RemoveLocalPokemonInput(identifier));
+    public void remove(@PathVariable String number) {
+        removeLocalPokemonUseCase.execute(new RemoveLocalPokemonInput(number));
     }
 }
 ```

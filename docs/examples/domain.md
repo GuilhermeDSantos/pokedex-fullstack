@@ -53,7 +53,7 @@ public class LocalPokemon {
         return new Builder();
     }
 
-    // Slice 5. PUT semantics: the given attributes replace the current ones entirely (US-04).
+    // PUT semantics (US-04): the given fields replace ours entirely.
     public void updateCustomAttributes(CustomAttributes attributes, Instant now) {
         this.customAttributes = Objects.requireNonNull(attributes, "attributes must not be null");
         this.updatedAt = now;
@@ -330,7 +330,7 @@ public interface LocalPokemonRepository {
         return findByPokedexNumber(number).orElseThrow(() -> new LocalPokemonNotFoundException(number));
     }
 
-    void delete(LocalPokemon pokemon);   // Slice 5
+    void delete(LocalPokemon pokemon);
 
     // Slice 6, the list merge: the local records for one page of results, in a single query.
     List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);

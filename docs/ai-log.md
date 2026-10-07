@@ -31,6 +31,21 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — "/local can take the number": the developer removed a resolver before it shipped
+- **Context:** Starting S5.2, edit and remove (US-04, CRUD-D, TR-API-1).
+- **AI proposed:** Keep names on `/pokemon/{identifier}/local` and extract a shared
+  `PokedexNumberResolver` (a name looked up in PokeAPI) for get-local, update and remove.
+- **Problem:** The developer pointed out that the only caller, the detail page, already has the
+  number. The AI then saw what the resolver cost: a PokeAPI call on every write, so editing our own
+  data would have failed while PokeAPI was down. Switching to numbers also exposed an S4 frontend
+  bug the tests had missed: the sync refreshed the detail cached under `pokemon.name`, so a page
+  opened as `/pokemon/25` stayed stale.
+- **Resolution:** D-040, `/pokemon/{number}/local` for all four verbs, a name is a 400. The
+  uncommitted resolver work was dropped and redone by number. The sync refreshes every cached
+  detail, with a test that opens the page by number.
+- **Lesson:** Before building a lookup, ask whether the caller already has the key. And a cache key
+  derived from the response instead of the request is a mismatch waiting for a second URL.
+
 ### 2026-10-07 — The detail page showed two sources; the developer asked for one Pokémon
 - **Context:** Reviewing S4.5 in the browser (US-02, US-03, FE-3).
 - **AI proposed:** A "Local data" section at the end of the detail page, with its own heading and

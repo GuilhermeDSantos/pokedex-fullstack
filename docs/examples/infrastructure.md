@@ -114,8 +114,7 @@ public interface LocalPokemonJpaRepository extends JpaRepository<LocalPokemonEnt
 `Jpa{Name}Repository` implements the domain port. It does two jobs: mapping (via the entity
 mapper) and **exception translation**, so nothing Spring-shaped escapes: a known constraint becomes
 a domain exception, an unreachable database becomes `LocalPokemonDataUnavailableException`
-(`DatabaseFailures.isUnreachable`), and anything else stays loud. The version below is the
-Slice 5 shape, with updates on the managed entity; Slice 4's `save` only inserts. There's no `@Transactional`: the boundary is the `UnitOfWork` the interactor opened.
+(`DatabaseFailures.isUnreachable`), and anything else stays loud. There's no `@Transactional`: the boundary is the `UnitOfWork` the interactor opened.
 
 ```java
 // infrastructure/persistence/repository/JpaLocalPokemonRepository.java
@@ -144,7 +143,7 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
                     .orElseGet(() -> mapper.toEntity(pokemon));
                 return mapper.toDomain(jpaRepository.saveAndFlush(entity));
             });
-        } catch (OptimisticLockingFailureException e) {   // Slice 5
+        } catch (OptimisticLockingFailureException e) {
             throw new LocalPokemonModifiedConcurrentlyException(pokemon.getPokedexNumber());
         } catch (DataIntegrityViolationException e) {
             // Translate only the violation we know; anything else is a bug and must stay loud.
@@ -170,9 +169,10 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
     }
 
     @Override
-    public void delete(LocalPokemon pokemon) {   // Slice 5
+    public void delete(LocalPokemon pokemon) {
         reachable(() -> {
             jpaRepository.deleteById(pokemon.getId().value());
+            jpaRepository.flush();   // a failure surfaces here, where it can be translated
             return null;
         });
     }
