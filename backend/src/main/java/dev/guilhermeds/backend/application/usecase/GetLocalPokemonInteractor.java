@@ -21,7 +21,11 @@ public class GetLocalPokemonInteractor implements GetLocalPokemonUseCase {
 
     @Override
     public LocalPokemonOutput execute(GetLocalPokemonInput input) {
-        var number = mapper.toIdentifier(input.identifier()).asNumber();
+        var identifier = mapper.toIdentifier(input.identifier());
+        // The record keeps no name (D-039): the canonical data says which number a name is.
+        var number = identifier.isNumber()
+            ? identifier.asNumber()
+            : pokemonRepository.getByIdentifier(identifier).number();
         return LocalPokemonOutput.from(localPokemonRepository.getByPokedexNumber(number));
     }
 }
