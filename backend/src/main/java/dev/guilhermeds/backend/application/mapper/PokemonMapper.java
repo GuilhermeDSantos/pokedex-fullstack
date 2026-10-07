@@ -6,6 +6,7 @@ import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.domain.model.Tag;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PokemonMapper {
@@ -23,7 +24,9 @@ public class PokemonMapper {
     }
 
     public CustomAttributes toCustomAttributes(UpdateLocalPokemonInput input) {
-        var tags = input.tags().stream().map(Tag::new).collect(Collectors.toSet());
+        var tags = input.tags() == null
+            ? Set.<Tag>of()
+            : input.tags().stream().map(Tag::new).collect(Collectors.toSet());
         return new CustomAttributes(input.localizedName(), input.region(), tags);
     }
 }
