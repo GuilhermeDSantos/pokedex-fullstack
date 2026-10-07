@@ -4,6 +4,7 @@ import type { PageResponse } from '../../shared/api/PageResponse'
 export const BULBASAUR: PokemonSummary = {
   pokedexNumber: 1,
   name: 'bulbasaur',
+  localizedName: null,
   spriteUrl: 'https://img.test/1.png',
   category: 'Seed Pokémon',
   weightKilograms: 6.9,
@@ -17,6 +18,7 @@ export const BULBASAUR: PokemonSummary = {
 export const PIKACHU: PokemonSummary = {
   pokedexNumber: 25,
   name: 'pikachu',
+  localizedName: null,
   spriteUrl: 'https://img.test/25.png',
   category: 'Mouse Pokémon',
   weightKilograms: 6,
@@ -43,7 +45,6 @@ const STATS = [
 export const PIKACHU_DETAIL: PokemonDetail = {
   pokedexNumber: 25,
   name: 'pikachu',
-  displayName: 'pikachu',
   category: 'Mouse Pokémon',
   heightMeters: 0.4,
   weightKilograms: 6,
@@ -69,7 +70,6 @@ export const PIKACHU_DETAIL: PokemonDetail = {
 
 export const SYNCED_PIKACHU_DETAIL: PokemonDetail = {
   ...PIKACHU_DETAIL,
-  displayName: 'Pica',
   local: {
     localizedName: 'Pica',
     region: 'Kanto',
@@ -81,7 +81,6 @@ export const SYNCED_PIKACHU_DETAIL: PokemonDetail = {
 
 export const EDITED_PIKACHU_DETAIL: PokemonDetail = {
   ...PIKACHU_DETAIL,
-  displayName: 'Pikachu BR',
   local: {
     localizedName: 'Pikachu BR',
     region: 'Johto',

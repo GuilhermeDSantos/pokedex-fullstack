@@ -9,6 +9,7 @@ export type Ability = {
 export type PokemonSummary = {
   pokedexNumber: number
   name: string
+  localizedName: string | null
   spriteUrl: string | null
   category: string | null
   weightKilograms: number
@@ -41,7 +42,6 @@ export type LocalPokemon = LocalAttributes & { pokedexNumber: number }
 export type PokemonDetail = {
   pokedexNumber: number
   name: string
-  displayName: string
   category: string | null
   heightMeters: number
   weightKilograms: number
