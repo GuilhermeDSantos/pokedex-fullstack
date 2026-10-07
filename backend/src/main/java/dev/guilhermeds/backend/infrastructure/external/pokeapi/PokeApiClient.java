@@ -22,6 +22,12 @@ public class PokeApiClient {
         this.restClient = builder.baseUrl(properties.baseUrl().toString()).build();
     }
 
+    // Any offset is a valid page (past the end it's just empty), so a 404 means PokeAPI is broken.
+    PokeApiPageJson fetchPage(long offset, int limit) {
+        return get("/pokemon?offset={offset}&limit={limit}", PokeApiPageJson.class, offset, limit)
+            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
+    }
+
     Optional<PokeApiPokemonJson> fetchPokemon(String identifier) {
         return get("/pokemon/{identifier}", PokeApiPokemonJson.class, identifier);
     }
