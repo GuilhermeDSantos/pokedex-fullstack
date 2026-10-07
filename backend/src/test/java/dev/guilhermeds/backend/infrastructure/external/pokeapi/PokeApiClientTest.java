@@ -9,9 +9,12 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 
+import java.net.SocketTimeoutException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withResourceNotFound;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -52,5 +55,12 @@ class PokeApiClientTest {
         assertThatThrownBy(() -> client.fetchPokemon("25"))
             .isInstanceOf(PokemonSourceUnavailableException.class)
             .hasMessage("PokeAPI is unavailable right now");
+    }
+
+    @Test
+    void shouldReportPokeApiAsUnavailableWhenItCannotBeReached() {
+        server.expect(requestTo(BASE_URL + "/pokemon/25")).andRespond(withException(new SocketTimeoutException("Read timed out")));
+
+        assertThatThrownBy(() -> client.fetchPokemon("25")).isInstanceOf(PokemonSourceUnavailableException.class);
     }
 }
