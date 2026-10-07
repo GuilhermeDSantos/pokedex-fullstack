@@ -8,7 +8,7 @@ import { Stack } from '../../../shared/ui/Stack'
 import { AbilityList } from '../components/AbilityList'
 import { BadgeList } from '../components/BadgeList'
 import { EvolutionTree } from '../components/EvolutionTree'
-import { SyncAction } from '../components/SyncAction'
+import { LocalActions } from '../components/LocalActions'
 import { PokemonStats } from '../components/PokemonStats'
 import { usePokemon } from '../hooks/usePokemon'
 import styles from './PokemonDetailPage.module.css'
@@ -53,7 +53,7 @@ export function PokemonDetailPage() {
         <Heading level={1}>{name}</Heading>
         {pokemon.local?.localizedName && <p className={styles.localizedName}>{pokemon.local.localizedName}</p>}
         <BadgeList label="Types" items={pokemon.types} />
-        <SyncAction pokemon={pokemon} />
+        <LocalActions pokemon={pokemon} />
         <p>{pokemon.description}</p>
         <ul aria-label="Facts" className={styles.facts}>
           <li>

@@ -11,7 +11,7 @@ import { useRemoveLocalPokemon } from '../hooks/useRemoveLocalPokemon'
 import { useSyncPokemon } from '../hooks/useSyncPokemon'
 import { LocalForm } from './LocalForm'
 
-export function SyncAction({ pokemon }: { pokemon: PokemonDetail }) {
+export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
   const { pathname } = useLocation()
   const { session } = useAuth()
   const sync = useSyncPokemon(pokemon.pokedexNumber)
