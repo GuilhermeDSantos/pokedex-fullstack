@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { Link, useLocation } from 'react-router'
 import { withReturnTo } from '../../auth/lib/authLink'
 import { useAuth } from '../../auth/useAuth'
+import { ApiError } from '../../../shared/api/ApiError'
 import { Button } from '../../../shared/ui/Button'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
@@ -16,6 +17,7 @@ export function LocalSection({ pokemon }: { pokemon: PokemonDetail }) {
   const { session } = useAuth()
   const sync = useSyncPokemon(pokemon.name)
   const local = pokemon.local
+  const syncedMeanwhile = sync.error instanceof ApiError && sync.error.status === 409
   return (
     <section aria-labelledby={headingId}>
       <Stack>
@@ -28,6 +30,7 @@ export function LocalSection({ pokemon }: { pokemon: PokemonDetail }) {
             Sync to local database
           </Button>
         )}
+        {syncedMeanwhile && <p role="status">Someone synced this Pokémon just before you.</p>}
         {local !== null && (
           <ul aria-label="Our fields" className={styles.fields}>
             <li>
