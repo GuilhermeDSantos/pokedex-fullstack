@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.5 (BrowsePokemon use case, PageResponse, 503 and GET /pokemon). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
+> **Slice 2 — Browse the list.** Next task: S2.6 (the list page in the frontend). The list API works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -251,9 +251,16 @@ Backend:
       new HTTP call (mutation without `@Cacheable` fails). The developer asked about merging client
       and source; kept apart because a merged class would self-call past the cache proxy (FAQ).
       `pokeapi-evolution-chains` comes with Slice 3.
-- [ ] S2.5 `BrowsePokemonInteractor` (TDD), then `PageResponse`, the 503 mapping of
-      `PokemonSourceUnavailableException` in `GlobalExceptionHandler`, and `PokemonController`
-      `GET /pokemon` + `PokemonControllerIT` (200, 400 page/size, 503).
+- [x] S2.5 `BrowsePokemonInteractor` (TDD: the page of cards with its metadata; an invalid page
+      never reaches PokeAPI), `PageOutput.totalPages()` (a partial last page counts). Wired in
+      `UseCaseConfig`: `ApplicationContextIT` went red until it was, as designed. `PageResponse`,
+      `PokemonSummaryResponse`, `PokemonRestMapper`, `PokemonController` `GET /api/v1/pokemon`
+      (defaults `page=0`, `size=20`; public). `PokemonControllerIT`: 200 (strict shape, no token),
+      defaults, 400 size out of range, 400 page not a number, 503 `SOURCE_UNAVAILABLE`. The 503 body
+      has a fixed message: the exception's own can name internals, so it only goes to the log
+      (the reference example echoed it; corrected). Measured on Docker against the real PokeAPI:
+      a cold page of 20 (41 upstream calls) in 0.94s, the same page cached in 0.008s, another cold
+      page in 0.53s. `displayName` and `synced` join the card with Slice 6 (the merge).
 
 Frontend:
 - [ ] S2.6 List page (the home page): every card shows the brief's four fields (sprite, category,

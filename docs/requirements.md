@@ -28,7 +28,7 @@ to a decision in [`decisions.md`](decisions.md).
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
 | FR-0 | Spring Boot REST API that **communicates with PokeAPI** | 🟨 | `PokemonSource` port → `PokeApiPokemonSource`; so far `PokeApiClient` (`PokeApiClientTest`, `PokeApiClientTimeoutIT`) and `PokeApiTranslator` |
-| US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | ⬜ | `GET /api/v1/pokemon` (merged with local data, D-030) |
+| US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | 🟨 | `GET /api/v1/pokemon` (`BrowsePokemonInteractorTest`, `PokemonControllerIT`); the page in S2.6; merged with local data in Slice 6 (D-030) |
 | US-01.N | *Nice to have:* **cache** service responses | 🟨 | Caffeine on `PokeApiClient` (D-012): `PokeApiClientCacheTest`, `PokeApiPokemonSourceCacheTest`; the list endpoint comes in S2.5 |
 | US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | ⬜ | `GET /api/v1/pokemon/{identifier}` (merged with local data) |
 | US-03 | **Persist** Pokémon data into a **local relational store** (sync) | ⬜ | `POST /api/v1/pokemon/{identifier}/local` → `local_pokemons` (scalar snapshot, D-031) |
@@ -61,7 +61,7 @@ to a decision in [`decisions.md`](decisions.md).
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
 | TR-API-1 | Java Web API with **comprehensive CRUD** on the dataset | ⬜ | on `/api/v1/pokemon/{identifier}/local`: C = `POST` (sync), R = `GET`, U = `PUT`, D = `DELETE` |
-| TR-API-2 | **Standard HTTP verbs**, required parameters, **consistent return structures** | ⬜ | `PageResponse`, `ErrorResponse`, statuses in [`domain-model.md`](domain-model.md#api-contract) |
+| TR-API-2 | **Standard HTTP verbs**, required parameters, **consistent return structures** | 🟨 | `PageResponse`, `ErrorResponse`, statuses in [`domain-model.md`](domain-model.md#api-contract) |
 | TR-AUTH-1 | Auxiliary API for **user registration** | 🟨 | `POST /api/v1/auth/register`: `AuthController`, `RegisterUserInteractor`; `RegisterUserInteractorTest`, `AuthControllerIT`, `AuthFlowIT` |
 | TR-AUTH-2 | **Authentication** | 🟨 | `POST /api/v1/auth/login` (JWT). `AuthController` (login, `/auth/me`), `BCryptPasswordHasher`, `JwtTokenIssuer` + `JwtConfig` (HS256), `AuthenticateUserInteractor`, `GetCurrentUserInteractor`; their tests, `AuthControllerIT`, `AuthFlowIT` (real token end to end), `JwtTokenIssuerTest`, `JwtPropertiesTest` |
 | TR-AUTH-3 | **Protected vs public routes** | 🟨 | `SecurityConfig`: every read public, writes on `/local` and `/auth/me` protected, closed by default (D-030, D-035); `SecurityConfigIT`. Controller-level 401 tests come with each endpoint |

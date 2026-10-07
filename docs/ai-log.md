@@ -31,6 +31,20 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — The list endpoint: a guard that worked, and an example that leaked internals
+- **Context:** S2.5, `GET /api/v1/pokemon` (US-01, TR-API-2).
+- **AI proposed:** The new use case, with its unit tests green; and the reference 503 handler,
+  which returns the exception's message to the client.
+- **Problem:** The use case had no bean yet: `ApplicationContextIT`, which discovers every
+  `*UseCase`, went red, exactly the forgotten-wiring case it was written for (the unit tests alone
+  couldn't see it). And the 503 example would have sent messages like "PokeAPI listed a Pokémon it
+  can't return: missingno" to the browser.
+- **Resolution:** Wired in `UseCaseConfig` in the same green step, so no commit is red. The 503
+  answers a fixed message and logs the cause; `PokemonControllerIT` asserts the internal detail
+  never reaches the body. The example was corrected.
+- **Lesson:** Error messages written for logs and for users are different audiences; an example
+  that mixes them spreads the leak to every copy.
+
 ### 2026-10-07 — The PokeAPI source: a hang waiting to happen, and a design question answered with a test
 - **Context:** S2.4, the concurrent fan-out and the cache (US-01, US-01.N, D-012, D-018).
 - **AI proposed:** A `Semaphore(properties.maxConcurrency())` to cap concurrent PokeAPI calls.

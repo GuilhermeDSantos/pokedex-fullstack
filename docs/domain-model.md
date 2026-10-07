@@ -262,7 +262,7 @@ routes ignore the `Authorization` header, so an expired token never makes them f
 
 | Method & path | Auth | Success | Errors | Story |
 |---|---|---|---|---|
-| `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` | 400 bad page/size, 503 | US-01 |
+| `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` (`displayName` and `synced` arrive with Slice 6) | 400 bad page/size, 503 `SOURCE_UNAVAILABLE` (fixed message; the cause goes to the log) | US-01 |
 | `GET /pokemon/{identifier}` | public | 200 `PokemonDetailResponse` | 400, 404, 503 | US-02 |
 | `GET /pokemon/{identifier}/local` | public | 200 `LocalPokemonResponse` | 400, 404 (not synced) | US-03 |
 | `POST /pokemon/{identifier}/local` (no body) | 🔒 | 201 `LocalPokemonResponse` + `Location` | 400, 401, 404 (not in PokeAPI), 409 (already synced), 503 | US-03 / CRUD-C |
