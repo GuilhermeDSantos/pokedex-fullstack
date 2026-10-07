@@ -1,6 +1,7 @@
 package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
 import dev.guilhermeds.backend.domain.exception.LocalPokemonDataUnavailableException;
+import dev.guilhermeds.backend.domain.exception.LocalPokemonModifiedConcurrentlyException;
 import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
@@ -8,6 +9,7 @@ import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
 import dev.guilhermeds.backend.infrastructure.persistence.DatabaseFailures;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.LocalPokemonEntityMapper;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -36,6 +38,8 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
                     .orElseGet(() -> mapper.toEntity(pokemon));
                 return mapper.toDomain(jpaRepository.saveAndFlush(entity));
             });
+        } catch (OptimisticLockingFailureException exception) {
+            throw new LocalPokemonModifiedConcurrentlyException(pokemon.getPokedexNumber());
         } catch (DataIntegrityViolationException exception) {
             if (violates(exception, UNIQUE_NUMBER_CONSTRAINT)) {
                 throw new PokemonAlreadySyncedException(pokemon.getPokedexNumber());
