@@ -263,4 +263,30 @@ describe('PokemonDetailPage', () => {
     expect(sent).toEqual({ localizedName: 'Pikachu BR', region: 'Johto', tags: ['electric'] })
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
   })
+
+  it('shows what the API rejected next to the field, keeping what the user typed', async () => {
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)),
+      http.put('/api/v1/pokemon/25/local', () =>
+        HttpResponse.json(
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'Request body is invalid',
+            fieldErrors: [{ field: 'region', message: 'size must be between 0 and 100' }],
+          },
+          { status: 400 },
+        ),
+      ),
+    )
+    renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    const region = screen.getByRole('textbox', { name: 'Region' })
+    await userEvent.type(region, ' and beyond')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('size must be between 0 and 100')).toBeInTheDocument()
+    expect(region).toHaveAttribute('aria-invalid', 'true')
+    expect(region).toHaveValue('Kanto and beyond')
+  })
 })
