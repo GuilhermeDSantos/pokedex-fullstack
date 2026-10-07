@@ -1,11 +1,17 @@
 package dev.guilhermeds.backend.interfaces.rest.mapper;
 
 import dev.guilhermeds.backend.application.dto.AbilityOutput;
+import dev.guilhermeds.backend.application.dto.EvolutionStageOutput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
+import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
+import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.interfaces.rest.response.AbilityResponse;
+import dev.guilhermeds.backend.interfaces.rest.response.EvolutionStageResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.PageResponse;
+import dev.guilhermeds.backend.interfaces.rest.response.PokemonDetailResponse;
 import dev.guilhermeds.backend.interfaces.rest.response.PokemonSummaryResponse;
+import dev.guilhermeds.backend.interfaces.rest.response.StatResponse;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,6 +20,23 @@ public class PokemonRestMapper {
     public PageResponse<PokemonSummaryResponse> toPageResponse(PageOutput<PokemonSummaryOutput> page) {
         return new PageResponse<>(page.content().stream().map(this::toResponse).toList(),
             page.page(), page.size(), page.totalElements(), page.totalPages());
+    }
+
+    public PokemonDetailResponse toResponse(PokemonDetailOutput pokemon) {
+        return new PokemonDetailResponse(pokemon.pokedexNumber(), pokemon.name(), pokemon.category(),
+            pokemon.heightMeters(), pokemon.weightKilograms(), pokemon.spriteUrl(), pokemon.artworkUrl(), pokemon.types(),
+            pokemon.abilities().stream().map(this::toResponse).toList(),
+            pokemon.stats().stream().map(this::toResponse).toList(),
+            pokemon.description(), toResponse(pokemon.evolutionChain()));
+    }
+
+    private StatResponse toResponse(StatOutput stat) {
+        return new StatResponse(stat.name(), stat.value());
+    }
+
+    private EvolutionStageResponse toResponse(EvolutionStageOutput stage) {
+        return new EvolutionStageResponse(stage.speciesName(), stage.pokedexNumber(),
+            stage.evolvesTo().stream().map(this::toResponse).toList());
     }
 
     private PokemonSummaryResponse toResponse(PokemonSummaryOutput card) {
