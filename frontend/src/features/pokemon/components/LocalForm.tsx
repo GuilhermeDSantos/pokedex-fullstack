@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../../shared/api/ApiError'
 import { Button } from '../../../shared/ui/Button'
+import { FormError } from '../../../shared/ui/FormError'
 import { Stack } from '../../../shared/ui/Stack'
 import { TextField } from '../../../shared/ui/TextField'
 import type { LocalAttributes } from '../api/pokemonApi'
@@ -45,6 +46,7 @@ export function LocalForm({ pokedexNumber, local, onDone }: LocalFormProps) {
   const [tags, setTags] = useState(local.tags.join(', '))
   const update = useUpdateLocalPokemon(pokedexNumber)
   const errors = fieldErrors(update.error)
+  const formError = update.error && Object.keys(errors).length === 0 ? update.error.message : null
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -54,6 +56,7 @@ export function LocalForm({ pokedexNumber, local, onDone }: LocalFormProps) {
   return (
     <form onSubmit={handleSubmit} noValidate aria-label="Edit our fields">
       <Stack>
+        {formError && <FormError message={formError} />}
         <TextField
           label="Localized name"
           name="localizedName"
