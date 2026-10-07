@@ -11,6 +11,9 @@ import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
+import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
+import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
+import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.domain.source.PokemonSourceUnavailableException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
@@ -142,5 +145,37 @@ class PokemonControllerIT {
                     "evolvesTo": [ { "speciesName": "pikachu", "pokedexNumber": 25, "evolvesTo": [] } ] }
                 }
                 """);
+    }
+
+    @Test
+    void shouldAnswerAnUnknownPokemonWith404() {
+        given(getPokemonUseCase.execute(new GetPokemonInput("missingno")))
+            .willThrow(new PokemonNotFoundException(new PokemonIdentifier("missingno")));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/missingno"))
+            .hasStatus(404)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "NOT_FOUND", "message": "Pokémon 'missingno' was not found" }
+                """);
+    }
+
+    @Test
+    void shouldAnswerAMalformedIdentifierWith400() {
+        given(getPokemonUseCase.execute(new GetPokemonInput("pika!"))).willThrow(new InvalidPokemonIdentifierException());
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/pika!"))
+            .hasStatus(400)
+            .bodyJson().extractingPath("$.code").isEqualTo("VALIDATION_ERROR");
+    }
+
+    @Test
+    void shouldAnswer503WhenPokeApiIsUnavailableForADetail() {
+        given(getPokemonUseCase.execute(new GetPokemonInput("pikachu")))
+            .willThrow(new PokemonSourceUnavailableException("PokeAPI is unavailable right now"));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu"))
+            .hasStatus(503)
+            .bodyJson().extractingPath("$.code").isEqualTo("SOURCE_UNAVAILABLE");
     }
 }
