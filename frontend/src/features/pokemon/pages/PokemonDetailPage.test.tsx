@@ -52,4 +52,19 @@ describe('PokemonDetailPage', () => {
     expect(within(lineage).getByRole('link', { name: 'Sylveon' })).toHaveAttribute('href', '/pokemon/sylveon')
     expect(within(lineage).getAllByRole('link')).toHaveLength(9)
   })
+
+  it('says so when PokeAPI has no such Pokémon, with a way back to the list', async () => {
+    server.use(
+      http.get('/api/v1/pokemon/missingno', () =>
+        HttpResponse.json(
+          { code: 'NOT_FOUND', message: "Pokémon 'missingno' was not found", fieldErrors: [] },
+          { status: 404 },
+        ),
+      ),
+    )
+    renderApp('/pokemon/missingno')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pokémon not found' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to the Pokémon list' })).toHaveAttribute('href', '/')
+  })
 })
