@@ -11,10 +11,14 @@ import dev.guilhermeds.backend.application.usecase.BrowsePokemonInteractor;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserInteractor;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserUseCase;
+import dev.guilhermeds.backend.application.usecase.GetLocalPokemonInteractor;
+import dev.guilhermeds.backend.application.usecase.GetLocalPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonInteractor;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserInteractor;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
+import dev.guilhermeds.backend.application.usecase.SyncPokemonInteractor;
+import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
 import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
 import dev.guilhermeds.backend.domain.repository.PokemonRepository;
@@ -61,5 +65,18 @@ public class UseCaseConfig {
     GetPokemonUseCase getPokemonUseCase(PokemonRepository pokemonRepository,
                                         LocalPokemonRepository localPokemonRepository, PokemonMapper mapper) {
         return new GetPokemonInteractor(pokemonRepository, localPokemonRepository, mapper);
+    }
+
+    @Bean
+    SyncPokemonUseCase syncPokemonUseCase(PokemonRepository pokemonRepository,
+                                          LocalPokemonRepository localPokemonRepository, PokemonMapper mapper,
+                                          UnitOfWork unitOfWork) {
+        return new SyncPokemonInteractor(pokemonRepository, localPokemonRepository, mapper, unitOfWork);
+    }
+
+    @Bean
+    GetLocalPokemonUseCase getLocalPokemonUseCase(PokemonRepository pokemonRepository,
+                                                  LocalPokemonRepository localPokemonRepository, PokemonMapper mapper) {
+        return new GetLocalPokemonInteractor(pokemonRepository, localPokemonRepository, mapper);
     }
 }
