@@ -77,7 +77,7 @@ class PokemonControllerIT {
         }
     }
 
-    private static final PokemonSummaryOutput PIKACHU = new PokemonSummaryOutput(25, "pikachu", null, "https://img/25.png",
+    private static final PokemonSummaryOutput PIKACHU = new PokemonSummaryOutput(25, "pikachu", "Pica", "https://img/25.png",
         "Mouse Pokémon", new BigDecimal("6.0"), List.of("electric"),
         List.of(new AbilityOutput("static", false), new AbilityOutput("lightning-rod", true)));
 
@@ -113,7 +113,7 @@ class PokemonControllerIT {
             .isStrictlyEqualTo("""
                 {
                   "content": [ {
-                    "pokedexNumber": 25, "name": "pikachu", "spriteUrl": "https://img/25.png",
+                    "pokedexNumber": 25, "name": "pikachu", "localizedName": "Pica", "spriteUrl": "https://img/25.png",
                     "category": "Mouse Pokémon", "weightKilograms": 6.0, "types": [ "electric" ],
                     "abilities": [ { "name": "static", "hidden": false }, { "name": "lightning-rod", "hidden": true } ]
                   } ],
