@@ -136,6 +136,13 @@ class PokeApiPokemonSourceTest {
         });
     }
 
+    @Test
+    void shouldFindNothingWhenPokeApiDoesNotKnowThePokemon() {
+        given(client.fetchPokemon("missingno")).willReturn(Optional.empty());
+
+        assertThat(source.findByIdentifier(new PokemonIdentifier("missingno"))).isEmpty();
+    }
+
     private void givenPokemon(String name, int id) {
         given(client.fetchPokemon(name)).willReturn(Optional.of(pokemon(id)));
         given(client.fetchSpecies(pokemon(id).species().url())).willReturn(species(id));
