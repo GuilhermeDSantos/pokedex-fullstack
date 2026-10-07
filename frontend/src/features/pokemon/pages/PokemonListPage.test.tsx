@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitForElementToBeRemoved, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { PIKACHU, pageOf } from '../../../test/fixtures/pokemon'
@@ -17,5 +17,13 @@ describe('PokemonListPage', () => {
     expect(within(card).getByText('6.0 kg')).toBeInTheDocument()
     expect(within(card).getByRole('list', { name: 'Abilities' })).toHaveTextContent('StaticLightning Rod (hidden)')
     expect(within(card).getByRole('list', { name: 'Types' })).toHaveTextContent('Electric')
+  })
+
+  it('shows placeholders while the page loads, then the cards', async () => {
+    renderApp('/')
+
+    const loading = screen.getByRole('status', { name: 'Loading Pokémon' })
+    await waitForElementToBeRemoved(loading)
+    expect(screen.getByRole('article', { name: 'Bulbasaur' })).toBeInTheDocument()
   })
 })
