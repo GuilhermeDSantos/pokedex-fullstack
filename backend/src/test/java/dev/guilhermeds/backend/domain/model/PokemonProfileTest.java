@@ -30,6 +30,13 @@ class PokemonProfileTest {
         assertThat(profile.stats()).extracting(BaseStat::name).containsExactly(StatName.values());
     }
 
+    @Test
+    void shouldRequireExactlyOneValuePerStat() {
+        assertThatThrownBy(() -> profile("pikachu", HEIGHT, WEIGHT, STATS.subList(0, 5)))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("a profile has exactly one value per stat");
+    }
+
     private static PokemonProfile profile(String name, Height height, Weight weight, List<BaseStat> stats) {
         return new PokemonProfile(name, "Mouse Pokémon", height, weight, "sprite.png", "artwork.png", TYPES, ABILITIES,
             stats, "It keeps its tail raised to monitor its surroundings.");
