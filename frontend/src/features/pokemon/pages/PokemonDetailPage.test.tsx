@@ -24,4 +24,32 @@ describe('PokemonDetailPage', () => {
       'Speed90',
     ])
   })
+
+  it('shows the whole lineage, every branch included, with the current Pokémon marked', async () => {
+    const eeveelutions = ['vaporeon', 'jolteon', 'flareon', 'espeon', 'umbreon', 'leafeon', 'glaceon', 'sylveon']
+    server.use(
+      http.get('/api/v1/pokemon/eevee', () =>
+        HttpResponse.json({
+          ...PIKACHU_DETAIL,
+          pokedexNumber: 133,
+          name: 'eevee',
+          evolutionChain: {
+            speciesName: 'eevee',
+            pokedexNumber: 133,
+            evolvesTo: eeveelutions.map((speciesName, branch) => ({
+              speciesName,
+              pokedexNumber: 134 + branch,
+              evolvesTo: [],
+            })),
+          },
+        }),
+      ),
+    )
+    renderApp('/pokemon/eevee')
+
+    const lineage = await screen.findByRole('navigation', { name: 'Evolution' })
+    expect(within(lineage).getByRole('link', { name: 'Eevee' })).toHaveAttribute('aria-current', 'page')
+    expect(within(lineage).getByRole('link', { name: 'Sylveon' })).toHaveAttribute('href', '/pokemon/sylveon')
+    expect(within(lineage).getAllByRole('link')).toHaveLength(9)
+  })
 })
