@@ -27,8 +27,8 @@ data.**
   a personal collection. Users exist to separate public reads from authenticated writes
   (TR-AUTH-3).
 - **One resource, merged by the backend.** `GET /pokemon` and `GET /pokemon/{id}` return PokeAPI data
-  merged with the local record when one exists. The localized name, if set, becomes `displayName`,
-  and the original name is still returned.
+  merged with the local record when one exists. The name is always PokeAPI's; the localized name,
+  if set, rides along (the screens show it under the name).
 
 The frontend is two pages, a **list** and a **detail**, plus login and register. Sync, edit and
 remove all happen on the detail page.
@@ -44,7 +44,6 @@ remove all happen on the detail page.
 | **Sync** | Creating the local record of a Pokémon from PokeAPI data (US-03). The brief calls it "Data Synchronization". |
 | **Custom attributes** | The proprietary fields only we own (US-03.a, US-04): `localizedName`, `region`, `tags`. |
 | **Localized name** | The name the organization displays, e.g. a translation for a local market. Free text, optional (D-027). |
-| **Display name** | `localizedName` when it's set, otherwise the original name. Computed by the domain. |
 | **Category** | The species *genus* ("Seed Pokémon"). It isn't the type. See D-010. |
 | **Skills** | The Pokémon's **abilities** (US-01: "a collection of their skills"). See D-010. |
 | **Mass** | Weight in kilograms (PokeAPI sends hectograms). |
@@ -102,7 +101,6 @@ repository of their own.
 |---|---|
 | `static create(LocalPokemonId, PokedexNumber, Instant now)` | Custom attributes start empty, `syncedAt = updatedAt = now` |
 | `updateCustomAttributes(CustomAttributes, Instant now)` | Replaces all custom attributes (PUT semantics), `updatedAt = now` |
-| `displayName(String canonicalName)` | `localizedName` if set, otherwise the canonical name the caller read from PokeAPI |
 | `static builder()` | **Reconstitution only** (`LocalPokemonEntityMapper`) |
 
 ### `UserAccount` behaviour
@@ -165,7 +163,7 @@ public interface LocalPokemonRepository {
         return findByPokedexNumber(number).orElseThrow(() -> new LocalPokemonNotFoundException(number));
     }
     void delete(LocalPokemon pokemon);
-    // Slice 6: List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);  // 1 query per page
+    List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);  // a list page: one query
 }
 ```
 
@@ -218,7 +216,7 @@ and wired in `infrastructure/config/UseCaseConfig`.
 
 | Input port | `execute` signature | Story | Notes |
 |---|---|---|---|
-| `BrowsePokemonUseCase` | `PageOutput<PokemonSummaryOutput> execute(BrowsePokemonInput)` | US-01 | `source.findAll` + **one** `repository.findAllByPokedexNumbers` for the page → merge |
+| `BrowsePokemonUseCase` | `PageOutput<PokemonSummaryOutput> execute(BrowsePokemonInput)` | US-01 | PokeAPI page + **one** `findAllByPokedexNumbers` for its numbers → each card gets its `localizedName` (`null` when not synced or not set) |
 | `GetPokemonUseCase` | `PokemonDetailOutput execute(GetPokemonInput)` | US-02 | `source.getByIdentifier` + `repository.findByPokedexNumber` → merge; `local` is `null` when not synced |
 | `SyncPokemonUseCase` | `LocalPokemonOutput execute(SyncPokemonInput, LocalPokemonId, Instant now)` | US-03 | By Pokédex number. PokeAPI fetch **before** the transaction (it must exist: 404 otherwise). Inside: already synced → 409, create, save |
 | `GetLocalPokemonUseCase` | `LocalPokemonOutput execute(GetLocalPokemonInput)` | US-03 | The resource `Location` points to. By Pokédex number, database only. 404 if not synced |
@@ -278,7 +276,7 @@ routes ignore the `Authorization` header, so an expired token never makes them f
 
 | Method & path | Auth | Success | Errors | Story |
 |---|---|---|---|---|
-| `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` (`displayName` and `synced` arrive with Slice 6) | 400 bad page/size, 503 `DATA_UNAVAILABLE` | US-01 |
+| `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` | 400 bad page/size, 503 `DATA_UNAVAILABLE` | US-01 |
 | `GET /pokemon/{identifier}` | public | 200 `PokemonDetailResponse` | 400, 404, 503 | US-02 |
 | `GET /pokemon/{number}/local` | public | 200 `LocalPokemonResponse` | 400, 404 (not synced), 503 | US-03 |
 | `POST /pokemon/{number}/local` (no body) | 🔒 | 201 `LocalPokemonResponse` + `Location` | 400, 401, 404 (not in PokeAPI), 409 (already synced), 503 | US-03 / CRUD-C |
@@ -302,14 +300,13 @@ Shared shapes:
   "fieldErrors": [ { "field": "tags", "message": "size must be between 0 and 10" } ] }
 
 // PageResponse<PokemonSummaryResponse>
-{ "content": [ { "pokedexNumber": 25, "name": "pikachu", "displayName": "Pikachu BR",
+{ "content": [ { "pokedexNumber": 25, "name": "pikachu", "localizedName": "Pikachu BR",
                  "spriteUrl": "…", "category": "Mouse Pokémon", "weightKilograms": 6.0,
-                 "types": ["electric"], "abilities": [ { "name": "static", "hidden": false } ],
-                 "synced": true } ],
+                 "types": ["electric"], "abilities": [ { "name": "static", "hidden": false } ] } ],
   "page": 0, "size": 20, "totalElements": 1302, "totalPages": 66 }
 
 // PokemonDetailResponse — PokeAPI data merged with the local record
-{ "pokedexNumber": 25, "name": "pikachu", "displayName": "Pikachu BR",
+{ "pokedexNumber": 25, "name": "pikachu",
   "category": "Mouse Pokémon", "heightMeters": 0.4, "weightKilograms": 6.0,
   "spriteUrl": "…", "artworkUrl": "…", "types": ["electric"],
   "abilities": [ { "name": "static", "hidden": false } ],

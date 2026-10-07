@@ -387,25 +387,22 @@ Frontend:
       pencil icon in inline SVG), the form opens in a `Dialog` (extracted from `ConfirmDialog`),
       and a visitor sees no sync control at all (the "Log in to sync" link is gone).
 
-## Slice 6 — Edits show up everywhere (US-01, US-02, US-03.a)
+## Slice 6 — The list shows our localized names too (US-01, US-03.a)
 
-The list and the detail reflect the local data. On the detail the name stays the title, with the
-localized name under it (the developer's call in the S4 review); the list card should follow the
-same rule, which S6 settles.
+The list card follows the detail's rule (the developer's call in the S4 review): the name is the
+title, and our localized name sits under it. Only the localized name joins the list; region and
+tags stay on the detail. No "synced" badge: the screen doesn't show where data comes from.
 
 Backend:
-- [ ] S6.1 Domain (TDD): `LocalPokemon.displayName()` (localized name when set, otherwise the
-      original).
-- [ ] S6.2 The list merge: `findAllByPokedexNumbers` (one query per page) + IT, and
-      `BrowsePokemon` adds `displayName` and `synced` to each item. `GetPokemon` adds `displayName`.
-      Controller ITs for the new fields.
+- [ ] S6.1 Drop `displayName` (domain, outputs, detail response): the screens always title a
+      Pokémon with its name, so nothing reads it.
+- [ ] S6.2 The list merge: `findAllByPokedexNumbers` (one query per page, tags included) + IT, and
+      `BrowsePokemon` gives each card its `localizedName`. Controller IT for the new field.
 
 Frontend:
-- [ ] S6.3 The cards and the detail title show `displayName`, with the original name underneath
-      when they differ, plus a "synced" badge on the list. Sync, edit and remove invalidate both the
-      detail and the list queries, so going back to the list shows the change at once. Tests: the
-      display name and the original name render, the badge appears only for synced Pokémon, an
-      edit is visible on the list without a manual reload.
+- [ ] S6.3 The card shows the localized name under the name. Sync, edit and remove refresh the
+      cached list pages too, so going back to the list never flashes the old name. Tests: the
+      localized name renders on its card only, an edit is on the list when going back.
 
 ---
 
