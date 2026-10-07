@@ -358,6 +358,18 @@ class PokemonControllerIT {
         verifyNoInteractions(updateLocalPokemonUseCase);
     }
 
+    // Sizes are checked at the edge too, so each field gets its own message (D-028).
+    @Test
+    void shouldAnswerAnEditOverTheSizeLimitsWith400NamingEachField() {
+        var tooManyTags = "[" + "\"tag\",".repeat(10) + "\"tag\"]";
+        var body = "{ \"region\": \"" + "a".repeat(101) + "\", \"tags\": " + tooManyTags + " }";
+
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON).content(body))
+            .hasStatus(400)
+            .bodyJson().extractingPath("$.fieldErrors[*].field").asArray().containsExactlyInAnyOrder("region", "tags");
+        verifyNoInteractions(updateLocalPokemonUseCase);
+    }
+
     // The tag's format is the domain's rule (D-028), so its 400 comes from the use case.
     @Test
     void shouldAnswerAnEditWithAnInvalidTagWith400() {
