@@ -19,6 +19,12 @@ class TagTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"a", "gen-1", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
+    void shouldAcceptTagsAtTheLimitsOfTheFormat(String raw) {
+        assertThat(new Tag(raw).value()).isEqualTo(raw);
+    }
+
+    @ParameterizedTest
     @NullSource
     @ValueSource(strings = {"", "   ", "-starter", "has space", "under_score", "ção", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
     void shouldRejectATagOutsideTheFormatAsAValidationError(String raw) {
