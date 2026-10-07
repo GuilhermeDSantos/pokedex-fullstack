@@ -94,4 +94,13 @@ class PokeApiClientTest {
         assertThat(page.count()).isEqualTo(1351);
         assertThat(page.results()).extracting(NamedResource::name).containsExactly("bulbasaur", "ivysaur");
     }
+
+    @Test
+    void shouldFetchTheEvolutionChainFromTheUrlTheSpeciesGave() {
+        var url = BASE_URL + "/evolution-chain/10/";
+        server.expect(requestTo(url))
+            .andRespond(withSuccess(new ClassPathResource("pokeapi/evolution-chain-10.json"), MediaType.APPLICATION_JSON));
+
+        assertThat(client.fetchEvolutionChain(url).chain().species().name()).isEqualTo("pichu");
+    }
 }
