@@ -91,4 +91,15 @@ describe('PokemonDetailPage', () => {
     await waitForElementToBeRemoved(screen.getByRole('status', { name: 'Loading Pokémon' }))
     expect(screen.getByRole('heading', { level: 1, name: 'Pikachu' })).toBeInTheDocument()
   })
+
+  it('shows the category, height, weight, types and abilities', async () => {
+    renderApp('/pokemon/pikachu')
+
+    const facts = await screen.findByRole('list', { name: 'Facts' })
+    expect(facts).toHaveTextContent('CategoryMouse Pokémon')
+    expect(facts).toHaveTextContent('Height0.4 m')
+    expect(facts).toHaveTextContent('Weight6.0 kg')
+    expect(screen.getByRole('list', { name: 'Types' })).toHaveTextContent('Electric')
+    expect(screen.getByRole('list', { name: 'Abilities' })).toHaveTextContent('StaticLightning Rod (hidden)')
+  })
 })
