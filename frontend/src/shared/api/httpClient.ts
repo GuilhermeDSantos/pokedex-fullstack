@@ -3,6 +3,7 @@ import type { ErrorResponse } from './ErrorResponse'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 const UNEXPECTED_RESPONSE_MESSAGE = 'Something went wrong. Please try again.'
+const NO_CONTENT = 204
 const NETWORK_ERROR_MESSAGE = 'Could not reach the server. Check your connection and try again.'
 
 type RequestOptions = {
@@ -26,6 +27,9 @@ export async function request<T>(path: string, { method = 'GET', body, accessTok
   })
   if (!response.ok) {
     throw await toApiError(response)
+  }
+  if (response.status === NO_CONTENT) {
+    return undefined as T
   }
   return (await response.json()) as T
 }
