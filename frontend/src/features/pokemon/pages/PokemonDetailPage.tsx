@@ -2,6 +2,7 @@ import { useParams } from 'react-router'
 import { formatKilograms, formatName, formatPokedexNumber } from '../../../shared/lib/format'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
+import { EvolutionTree } from '../components/EvolutionTree'
 import { PokemonStats } from '../components/PokemonStats'
 import { usePokemon } from '../hooks/usePokemon'
 import styles from './PokemonDetailPage.module.css'
@@ -28,6 +29,8 @@ export function PokemonDetailPage() {
         <p>{pokemon.description}</p>
         <Heading level={2}>Base stats</Heading>
         <PokemonStats stats={pokemon.stats} />
+        <Heading level={2}>Evolution</Heading>
+        <EvolutionTree root={pokemon.evolutionChain} current={pokemon.name} />
       </Stack>
     </article>
   )
