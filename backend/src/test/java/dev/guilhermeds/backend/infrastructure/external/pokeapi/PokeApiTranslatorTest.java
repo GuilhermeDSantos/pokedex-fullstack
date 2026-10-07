@@ -7,6 +7,7 @@ import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonType;
 import dev.guilhermeds.backend.domain.model.StatName;
 import dev.guilhermeds.backend.domain.model.Weight;
+import dev.guilhermeds.backend.domain.source.EvolutionStage;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -127,5 +128,15 @@ class PokeApiTranslatorTest {
 
         assertThat(translator.toDetail(pokemon(25), oneEntry, evolutionChain(10)).profile().description())
             .isEqualTo("When several of these POKéMON gather, their electricity could build.");
+    }
+
+    @Test
+    void shouldBuildTheWholeLineageWithEachStagesNumber() {
+        var lineage = translator.toDetail(pokemon(25), species(25), evolutionChain(10)).evolutionChain();
+
+        assertThat(lineage).isEqualTo(
+            new EvolutionStage("pichu", new PokedexNumber(172), List.of(
+                new EvolutionStage("pikachu", new PokedexNumber(25), List.of(
+                    new EvolutionStage("raichu", new PokedexNumber(26), List.of()))))));
     }
 }
