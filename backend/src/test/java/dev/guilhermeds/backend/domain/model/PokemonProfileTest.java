@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PokemonProfileTest {
@@ -20,6 +21,13 @@ class PokemonProfileTest {
         assertThatThrownBy(() -> profile(null, HEIGHT, WEIGHT, STATS)).hasMessage("name must not be null");
         assertThatThrownBy(() -> profile("pikachu", null, WEIGHT, STATS)).hasMessage("height must not be null");
         assertThatThrownBy(() -> profile("pikachu", HEIGHT, null, STATS)).hasMessage("weight must not be null");
+    }
+
+    @Test
+    void shouldListTheStatsInTheOrderTheGamesShowThem() {
+        var profile = profile("pikachu", HEIGHT, WEIGHT, STATS.reversed());
+
+        assertThat(profile.stats()).extracting(BaseStat::name).containsExactly(StatName.values());
     }
 
     private static PokemonProfile profile(String name, Height height, Weight weight, List<BaseStat> stats) {
