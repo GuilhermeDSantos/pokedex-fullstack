@@ -5,6 +5,8 @@ import dev.guilhermeds.backend.domain.exception.ValidationException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,5 +50,21 @@ class CustomAttributesTest {
         assertThatThrownBy(() -> new CustomAttributes(null, tooLong, Set.of()))
             .isInstanceOf(InvalidCustomAttributesException.class)
             .hasMessage("Region must be at most 100 characters");
+    }
+
+    @Test
+    void shouldAcceptUpToTheMaximumNumberOfTags() {
+        assertThat(new CustomAttributes(null, null, tags(CustomAttributes.MAX_TAGS)).tags()).hasSize(10);
+    }
+
+    @Test
+    void shouldRejectMoreThanTheMaximumNumberOfTagsAsAValidationError() {
+        assertThatThrownBy(() -> new CustomAttributes(null, null, tags(11)))
+            .isInstanceOf(InvalidCustomAttributesException.class)
+            .hasMessage("A Pokémon has at most 10 tags");
+    }
+
+    private static Set<Tag> tags(int count) {
+        return IntStream.rangeClosed(1, count).mapToObj(i -> new Tag("tag-" + i)).collect(Collectors.toSet());
     }
 }

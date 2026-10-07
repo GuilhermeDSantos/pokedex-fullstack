@@ -8,6 +8,7 @@ import java.util.Set;
 public record CustomAttributes(String localizedName, String region, Set<Tag> tags) {
 
     public static final int MAX_TEXT_LENGTH = 100;
+    public static final int MAX_TAGS = 10;
 
     public CustomAttributes {
         localizedName = optionalText(localizedName, "Localized name");
