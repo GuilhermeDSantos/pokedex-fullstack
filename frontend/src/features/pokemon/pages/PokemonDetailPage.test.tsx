@@ -193,11 +193,11 @@ describe('PokemonDetailPage', () => {
   })
 
   // A nickname: shown as "Pica", and it is still Pikachu underneath (D-039).
-  it('titles a renamed Pokémon with its localized name and keeps the original in sight', async () => {
+  it('keeps the name as the title and shows the localized name right under it', async () => {
     server.use(http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)))
     renderApp('/pokemon/pikachu')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Pica' })).toBeInTheDocument()
-    expect(screen.getByText('Originally Pikachu')).toBeInTheDocument()
+    const title = await screen.findByRole('heading', { level: 1, name: 'Pikachu' })
+    expect(title.nextElementSibling).toHaveTextContent('Pica')
   })
 })
