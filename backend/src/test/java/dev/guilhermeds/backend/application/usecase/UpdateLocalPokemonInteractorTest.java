@@ -3,6 +3,8 @@ package dev.guilhermeds.backend.application.usecase;
 import dev.guilhermeds.backend.application.dto.UpdateLocalPokemonInput;
 import dev.guilhermeds.backend.application.mapper.PokemonMapper;
 import dev.guilhermeds.backend.application.port.UnitOfWork;
+import dev.guilhermeds.backend.domain.exception.InvalidPokedexNumberException;
+import dev.guilhermeds.backend.domain.exception.InvalidTagException;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
@@ -20,9 +22,11 @@ import java.util.function.Supplier;
 
 import static dev.guilhermeds.backend.fixture.LocalPokemonFixture.NOW;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateLocalPokemonInteractorTest {
@@ -53,5 +57,15 @@ class UpdateLocalPokemonInteractorTest {
         assertThat(output.region()).isEqualTo("Johto");
         assertThat(output.tags()).containsExactly("electric", "starter");
         assertThat(output.updatedAt()).isEqualTo(LATER);
+    }
+
+    @Test
+    void shouldRejectAnInvalidEditWithoutOpeningATransaction() {
+        assertThatThrownBy(() -> interactor.execute(new UpdateLocalPokemonInput("25", null, null, List.of("not a tag")), LATER))
+            .isInstanceOf(InvalidTagException.class);
+        assertThatThrownBy(() -> interactor.execute(new UpdateLocalPokemonInput("pikachu", null, null, List.of()), LATER))
+            .isInstanceOf(InvalidPokedexNumberException.class);
+
+        verifyNoInteractions(unitOfWork, localPokemonRepository);
     }
 }
