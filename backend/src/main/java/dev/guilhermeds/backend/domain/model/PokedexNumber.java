@@ -11,4 +11,8 @@ public record PokedexNumber(int value) {
             throw new InvalidPokedexNumberException(MIN_VALUE);
         }
     }
+
+    public static PokedexNumber parse(String raw) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
 }
