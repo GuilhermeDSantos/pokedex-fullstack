@@ -83,4 +83,15 @@ class PokeApiClientTest {
             .isInstanceOf(PokemonSourceUnavailableException.class)
             .hasMessage("PokeAPI returned incomplete data");
     }
+
+    @Test
+    void shouldFetchAPageOfTheList() {
+        server.expect(requestTo(BASE_URL + "/pokemon?offset=0&limit=2"))
+            .andRespond(withSuccess(new ClassPathResource("pokeapi/pokemon-page-limit-2-offset-0.json"), MediaType.APPLICATION_JSON));
+
+        var page = client.fetchPage(0, 2);
+
+        assertThat(page.count()).isEqualTo(1351);
+        assertThat(page.results()).extracting(NamedResource::name).containsExactly("bulbasaur", "ivysaur");
+    }
 }
