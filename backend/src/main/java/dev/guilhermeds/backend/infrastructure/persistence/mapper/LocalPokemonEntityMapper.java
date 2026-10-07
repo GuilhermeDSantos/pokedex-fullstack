@@ -8,20 +8,25 @@ import dev.guilhermeds.backend.domain.model.Tag;
 import dev.guilhermeds.backend.infrastructure.persistence.entity.LocalPokemonEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Component
 public class LocalPokemonEntityMapper {
 
     public LocalPokemonEntity toEntity(LocalPokemon pokemon) {
-        var custom = pokemon.getCustomAttributes();
         var entity = new LocalPokemonEntity();
         entity.setId(pokemon.getId().value());
+        return copyInto(pokemon, entity);
+    }
+
+    public LocalPokemonEntity copyInto(LocalPokemon pokemon, LocalPokemonEntity entity) {
+        var custom = pokemon.getCustomAttributes();
         entity.setPokedexNumber(pokemon.getPokedexNumber().value());
         entity.setLocalizedName(custom.localizedName());
         entity.setRegion(custom.region());
-        entity.setTags(custom.tags().stream().map(Tag::value).collect(Collectors.toCollection(HashSet::new)));
+        // Same collection instance: Hibernate tracks the one it handed out.
+        entity.getTags().clear();
+        entity.getTags().addAll(custom.tags().stream().map(Tag::value).toList());
         entity.setSyncedAt(pokemon.getSyncedAt());
         entity.setUpdatedAt(pokemon.getUpdatedAt());
         return entity;

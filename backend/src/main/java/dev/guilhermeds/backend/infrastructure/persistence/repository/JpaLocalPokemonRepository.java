@@ -29,7 +29,13 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
     @Override
     public LocalPokemon save(LocalPokemon pokemon) {
         try {
-            return reachable(() -> mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(pokemon))));
+            return reachable(() -> {
+                // An edit updates the managed entity, so Hibernate keeps the version it read (D-011).
+                var entity = jpaRepository.findById(pokemon.getId().value())
+                    .map(existing -> mapper.copyInto(pokemon, existing))
+                    .orElseGet(() -> mapper.toEntity(pokemon));
+                return mapper.toDomain(jpaRepository.saveAndFlush(entity));
+            });
         } catch (DataIntegrityViolationException exception) {
             if (violates(exception, UNIQUE_NUMBER_CONSTRAINT)) {
                 throw new PokemonAlreadySyncedException(pokemon.getPokedexNumber());
