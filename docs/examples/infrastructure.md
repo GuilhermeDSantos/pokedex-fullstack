@@ -326,7 +326,7 @@ public class PokeApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(PokeApiClient.class);
 
-    private final RestClient restClient;   // base URL + connect/read timeouts from PokeApiProperties
+    private final RestClient restClient;   // builder.baseUrl(pokeapi.base-url); timeouts: spring.http.clients.* (D-038)
 
     // constructor omitted
 
@@ -357,10 +357,8 @@ public class PokeApiClient {
     /** 404 → empty; everything else that isn't a 2xx → PokemonSourceUnavailableException. */
     private <T> Optional<T> get(String uri, Class<T> type, Object... vars) {
         try {
-            return Optional.ofNullable(restClient.get().uri(uri, vars).retrieve()
-                .onStatus(status -> status.value() == 404, (request, response) -> { throw new NotFound(); })
-                .body(type));
-        } catch (NotFound e) {
+            return Optional.ofNullable(restClient.get().uri(uri, vars).retrieve().body(type));
+        } catch (HttpClientErrorException.NotFound e) {
             return Optional.empty();
         } catch (RestClientException e) {
             log.warn("PokeAPI call failed: {}", uri);   // path only — never the body
@@ -372,8 +370,6 @@ public class PokeApiClient {
         return get(uri, type, vars)
             .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
     }
-
-    private static final class NotFound extends RuntimeException {}
 }
 ```
 

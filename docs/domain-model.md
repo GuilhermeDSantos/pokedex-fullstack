@@ -122,6 +122,18 @@ computed: that happens behind the `PasswordHasher` port.
 
 ### PokeAPI port (`domain/source`)
 
+Every data port follows one shape: an interface in the domain, implemented in `infrastructure`.
+There are two kinds, and the suffix says which:
+
+| Suffix | Data | Operations | Examples |
+|---|---|---|---|
+| `*Repository` | **Ours**: an aggregate we own and persist | load, save, delete | `UserAccountRepository`, `LocalPokemonRepository` |
+| `*Source` | **External**: canonical data we only read | read | `PokemonSource` (PokeAPI) |
+
+`PokemonSource` is not called a repository on purpose: it returns read models, not aggregates, it
+can't save or delete, and the Pokémon repository already exists (`LocalPokemonRepository`, the
+synced records). Sync reads from the source and writes to the repository.
+
 ```java
 public interface PokemonSource {
     Page<PokemonSummary> findAll(PageRequest pageRequest);                 // US-01

@@ -68,6 +68,11 @@ claim should point at something concrete: a file, a test, a row in
 
 ## Design FAQ (a short answer + where to look)
 
+- Why `PokemonSource` and not `PokemonRepository`? → Same pattern (port in the domain, adapter in
+  `infrastructure`), different kind of data. A repository holds aggregates we own and can save or
+  delete; PokeAPI is external and read-only, and returns read models. `LocalPokemonRepository` is
+  the Pokémon repository: sync reads the source and writes the repository (`domain-model.md` →
+  PokeAPI port).
 - Why interfaces for use cases? Isn't that over-engineering? → D-003. Controllers depend on
   abstractions, and the interfaces cost nothing in the IDE.
 - Why no `@Transactional` on use cases? → D-001 + `UnitOfWork`. Show `SpringUnitOfWork`.

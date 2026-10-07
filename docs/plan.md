@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.3 (the PokeAPI HTTP client). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.4 (the PokeAPI source: concurrent fan-out and the cache). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -228,9 +228,17 @@ Backend:
       abilities in slot order (proven with reversed input, since the real arrays come sorted), the
       hidden ability marked. No id parsing from list URLs: `findAll` fetches each Pokémon, whose
       JSON has its `id`.
-- [ ] S2.3 Add `spring-boot-starter-restclient` and `spring-boot-starter-restclient-test` (Boot 4
-      split them out, see backend.md). `PokeApiClient` (`RestClient`, timeouts, 404 → empty,
-      failures → `PokemonSourceUnavailableException`) + `@RestClientTest`.
+- [x] S2.3 `spring-boot-starter-restclient` + `-test` (D-038, verified on Maven Central for
+      4.1.1). `PokeApiClient` on the auto-configured `RestClient.Builder` with `pokeapi.base-url`
+      (`PokeApiProperties`); timeouts from Boot's `spring.http.clients.connect-timeout` (2s) /
+      `read-timeout` (3s), the non-deprecated names in 4.1.1's metadata. `@RestClientTest` with
+      recorded JSON: fetch a Pokémon, 404 → empty, 500 and I/O error → `PokemonSourceUnavailable`,
+      species fetched from the URL PokeAPI gave (404 there → unavailable: PokeAPI contradicted
+      itself), a list page. `PokeApiClientTimeoutIT` runs a real slow HTTP server (JDK
+      `HttpServer`): the call gives up at ~3.3s with a 503-bound error, which proves the timeout
+      property reaches our client. The developer asked whether PokeAPI should be a repository;
+      kept as `PokemonSource`, with the `*Repository` / `*Source` rule now explicit in
+      `domain-model.md` and the walkthrough FAQ.
 - [ ] S2.4 `PokeApiPokemonSource.findAll` (concurrent fan-out on virtual threads, D-018) and the
       Caffeine cache on `PokeApiClient` only (D-012), with a test that a repeated call makes no HTTP
       request.

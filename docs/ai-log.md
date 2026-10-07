@@ -31,6 +31,21 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — The PokeAPI client: a property name checked, a timeout proven, a slip caught
+- **Context:** S2.3, the HTTP client for PokeAPI (FR-0).
+- **AI proposed:** Configuring timeouts somewhere sensible, and, in a first draft of
+  `fetchSpecies`, `get(...).orElseThrow()` with no argument.
+- **Problem:** Two of Boot 4's property families exist side by side (`spring.http.client.*` and
+  `spring.http.clients.*`); guessing would have picked a deprecated one, or a request factory set
+  by hand would have silently disabled `@RestClientTest`'s mock server. A mock server can only
+  pretend a timeout happened, so the setting would never have been tested. And a bare
+  `orElseThrow()` is the "silent unwrap" the project forbids, even as a stepping stone.
+- **Resolution:** Read the names from 4.1.1's configuration metadata (`clients` is current); the
+  client only sets its base URL. `PokeApiClientTimeoutIT` uses a real JDK `HttpServer` that
+  answers in 6s: before the setting the call waited it out, after it gave up at ~3.3s. The species
+  call throws an explicit `PokemonSourceUnavailableException` when PokeAPI's own link is broken.
+- **Lesson:** Configuration is behaviour too: give it a test that fails without it.
+
 ### 2026-10-06 — Swagger: a stale search index and a wrong assertion
 - **Context:** D.4, brought forward at the developer's request (TR-OPT, DL-1).
 - **AI proposed:** Picking the springdoc version from Maven Central's search API, and asserting

@@ -307,9 +307,11 @@ Exact patterns, not suggestions.
 
 - Two beans, each with one job:
   - `PokeApiClient` (`@Component`) does the HTTP: one public method per PokeAPI resource (list
-    page, pokemon, species, evolution chain), built on Spring `RestClient` with explicit
-    connect/read timeouts and base URL from
-    `PokeApiProperties` (`@ConfigurationProperties("pokeapi")`). It returns the package-private
+    page, pokemon, species, evolution chain), built on the auto-configured `RestClient.Builder`
+    with the base URL from `PokeApiProperties` (`@ConfigurationProperties("pokeapi")`). Connect
+    and read timeouts come from Boot's `spring.http.clients.connect-timeout` / `read-timeout`
+    (D-038): don't set a request factory by hand, or `@RestClientTest`'s mock server stops
+    intercepting. It returns the package-private
     JSON records. **It is the only place `@Cacheable` appears.**
   - `PokeApiPokemonSource implements PokemonSource` (`@Component`) composes those calls, runs
     the fan-out, and translates JSON → domain through `PokeApiTranslator`. It has no `@Cacheable`.

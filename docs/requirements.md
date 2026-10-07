@@ -27,7 +27,7 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| FR-0 | Spring Boot REST API that **communicates with PokeAPI** | ⬜ | `PokemonSource` port → `PokeApiPokemonSource` |
+| FR-0 | Spring Boot REST API that **communicates with PokeAPI** | 🟨 | `PokemonSource` port → `PokeApiPokemonSource`; so far `PokeApiClient` (`PokeApiClientTest`, `PokeApiClientTimeoutIT`) and `PokeApiTranslator` |
 | US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | ⬜ | `GET /api/v1/pokemon` (merged with local data, D-030) |
 | US-01.N | *Nice to have:* **cache** service responses | ⬜ | Caffeine on `PokeApiClient` (D-012) |
 | US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | ⬜ | `GET /api/v1/pokemon/{identifier}` (merged with local data) |
