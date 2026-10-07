@@ -68,4 +68,16 @@ class UpdateLocalPokemonInteractorTest {
 
         verifyNoInteractions(unitOfWork, localPokemonRepository);
     }
+
+    // PUT replaces everything: tags left out of the request are cleared, like the other fields.
+    @Test
+    void shouldClearTheTagsWhenTheRequestHasNone() {
+        given(localPokemonRepository.getByPokedexNumber(new PokedexNumber(25))).willReturn(LocalPokemonFixture.renamedPikachu());
+        given(localPokemonRepository.save(any(LocalPokemon.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+        var output = interactor.execute(new UpdateLocalPokemonInput("25", "Pica", null, null), LATER);
+
+        assertThat(output.tags()).isEmpty();
+        assertThat(output.region()).isNull();
+    }
 }
