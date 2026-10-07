@@ -28,7 +28,7 @@ export function PokemonCard({ pokemon }: { pokemon: PokemonSummary }) {
       <h2 id={titleId} className={styles.name}>
         {name}
       </h2>
-      <p>{pokemon.category}</p>
+      <p>{pokemon.category ?? 'Category unknown'}</p>
       <p>{formatKilograms(pokemon.weightKilograms)}</p>
       <ul aria-label="Types" className={styles.types}>
         {pokemon.types.map((type) => (
