@@ -1,16 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useLocation, useNavigate } from 'react-router'
-import { ApiError } from '../../../shared/api/ApiError'
-import { withReturnTo } from '../../auth/lib/authLink'
 import { useAuth } from '../../auth/useAuth'
+import { useSignInAgainOnUnauthenticated } from '../../auth/useSignInAgainOnUnauthenticated'
 import { removeLocalPokemon } from '../api/pokemonApi'
 import { pokemonKeys } from './pokemonKeys'
 
 export function useRemoveLocalPokemon(pokedexNumber: number) {
-  const { session, signOut } = useAuth()
+  const { session } = useAuth()
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const signInAgainOnUnauthenticated = useSignInAgainOnUnauthenticated()
   return useMutation({
     mutationFn: () => {
       if (!session) {
@@ -19,11 +16,6 @@ export function useRemoveLocalPokemon(pokedexNumber: number) {
       return removeLocalPokemon(pokedexNumber, session.accessToken)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pokemonKeys.details() }),
-    onError: (error) => {
-      if (error instanceof ApiError && error.status === 401) {
-        signOut()
-        void navigate(withReturnTo('/login', pathname))
-      }
-    },
+    onError: signInAgainOnUnauthenticated,
   })
 }
