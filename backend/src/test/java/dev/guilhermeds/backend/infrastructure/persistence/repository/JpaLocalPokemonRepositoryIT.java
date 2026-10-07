@@ -1,5 +1,9 @@
 package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
+import dev.guilhermeds.backend.domain.exception.ConflictException;
+import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
+import dev.guilhermeds.backend.domain.model.LocalPokemon;
+import dev.guilhermeds.backend.domain.model.LocalPokemonId;
 import dev.guilhermeds.backend.fixture.LocalPokemonFixture;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.LocalPokemonEntityMapper;
 import org.junit.jupiter.api.Test;
@@ -12,8 +16,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.util.UUID;
+
+import static dev.guilhermeds.backend.fixture.LocalPokemonFixture.NOW;
 import static dev.guilhermeds.backend.fixture.LocalPokemonFixture.PIKACHU_NUMBER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -40,5 +48,18 @@ class JpaLocalPokemonRepositoryIT {
             assertThat(reloaded.getSyncedAt()).isEqualTo(pikachu.getSyncedAt());
             assertThat(reloaded.getUpdatedAt()).isEqualTo(pikachu.getUpdatedAt());
         });
+    }
+
+    // Two syncs of #25 at the same time both pass the use case's check; the unique number decides.
+    @Test
+    void shouldTranslateASecondRecordOfTheSamePokemonIntoAConflict() {
+        repository.save(LocalPokemonFixture.syncedPikachu());
+        var secondPikachu = LocalPokemon.create(
+            new LocalPokemonId(UUID.fromString("00000000-0000-0000-0000-000000000099")), PIKACHU_NUMBER, NOW);
+
+        assertThatThrownBy(() -> repository.save(secondPikachu))
+            .isInstanceOf(PokemonAlreadySyncedException.class)
+            .isInstanceOf(ConflictException.class)
+            .hasMessage("Pokémon #25 is already in the local database");
     }
 }
