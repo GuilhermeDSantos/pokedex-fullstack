@@ -57,6 +57,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -420,6 +421,37 @@ class PokemonControllerIT {
         assertThat(mockMvc.delete().uri("/api/v1/pokemon/25/local").with(jwt())).hasStatus(204);
 
         then(removeLocalPokemonUseCase).should().execute(new RemoveLocalPokemonInput("25"));
+    }
+
+    @Test
+    void shouldRequireATokenToRemove() {
+        assertThat(mockMvc.delete().uri("/api/v1/pokemon/25/local")).hasStatus(401);
+        verifyNoInteractions(removeLocalPokemonUseCase);
+    }
+
+    @Test
+    void shouldAnswerARemovalByNameWith400() {
+        willThrow(new InvalidPokedexNumberException(PokedexNumber.MIN_VALUE))
+            .given(removeLocalPokemonUseCase).execute(new RemoveLocalPokemonInput("pikachu"));
+
+        assertThat(mockMvc.delete().uri("/api/v1/pokemon/pikachu/local").with(jwt())).hasStatus(400);
+    }
+
+    // Removing what was never synced must not answer 204 as if something was removed.
+    @Test
+    void shouldAnswerARemovalOfAPokemonThatWasNeverSyncedWith404() {
+        willThrow(new LocalPokemonNotFoundException(new PokedexNumber(26)))
+            .given(removeLocalPokemonUseCase).execute(new RemoveLocalPokemonInput("26"));
+
+        assertThat(mockMvc.delete().uri("/api/v1/pokemon/26/local").with(jwt())).hasStatus(404);
+    }
+
+    @Test
+    void shouldAnswerARemovalWith503WhenTheDataIsUnavailable() {
+        willThrow(new LocalPokemonDataUnavailableException(new RuntimeException()))
+            .given(removeLocalPokemonUseCase).execute(new RemoveLocalPokemonInput("25"));
+
+        assertThat(mockMvc.delete().uri("/api/v1/pokemon/25/local").with(jwt())).hasStatus(503);
     }
 
     // One Pokémon for the client: our record rides along, and its localized name is the one to show.
