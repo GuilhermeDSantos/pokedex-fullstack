@@ -55,7 +55,11 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
 
     @Override
     public void delete(LocalPokemon pokemon) {
-        throw new UnsupportedOperationException("not implemented yet");
+        reachable(() -> {
+            jpaRepository.deleteById(pokemon.getId().value());
+            jpaRepository.flush();
+            return null;
+        });
     }
 
     private static <T> T reachable(Supplier<T> call) {
