@@ -43,9 +43,14 @@ public class PokeApiPokemonSource implements PokemonSource {
         }
     }
 
+    // No @Cacheable here either: getByIdentifier calls this on `this`, past any proxy; the client caches.
     @Override
     public Optional<PokemonDetail> findByIdentifier(PokemonIdentifier identifier) {
-        return Optional.empty();
+        return client.fetchPokemon(identifier.value()).map(pokemon -> {
+            var species = client.fetchSpecies(pokemon.species().url());
+            var chain = client.fetchEvolutionChain(species.evolutionChain().url());
+            return translator.toDetail(pokemon, species, chain);
+        });
     }
 
     private PokemonSummary withinTheCap(Supplier<PokemonSummary> call) throws InterruptedException {
