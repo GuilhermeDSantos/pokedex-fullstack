@@ -4,6 +4,7 @@ import dev.guilhermeds.backend.application.dto.LocalPokemonOutput;
 import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
 import dev.guilhermeds.backend.application.mapper.PokemonMapper;
 import dev.guilhermeds.backend.application.port.UnitOfWork;
+import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.model.LocalPokemon;
 import dev.guilhermeds.backend.domain.model.LocalPokemonId;
 import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
@@ -32,6 +33,9 @@ public class SyncPokemonInteractor implements SyncPokemonUseCase {
         var number = pokemonRepository.getByIdentifier(mapper.toIdentifier(input.identifier())).number();
 
         return unitOfWork.inTransaction(() -> {
+            localPokemonRepository.findByPokedexNumber(number).ifPresent(existing -> {
+                throw new PokemonAlreadySyncedException(number);
+            });
             var synced = localPokemonRepository.save(LocalPokemon.create(id, number, now));
             return LocalPokemonOutput.from(synced);
         });
