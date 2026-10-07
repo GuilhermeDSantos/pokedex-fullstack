@@ -5,6 +5,7 @@ import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
+import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
 import dev.guilhermeds.backend.interfaces.rest.mapper.PokemonRestMapper;
@@ -64,5 +65,18 @@ class PokemonControllerIT {
         assertThat(mockMvc.get().uri("/api/v1/pokemon"))
             .hasStatusOk()
             .bodyJson().extractingPath("$.page").isEqualTo(0);
+    }
+
+    @Test
+    void shouldAnswerAPageSizeOutOfRangeWith400() {
+        given(browsePokemonUseCase.execute(new BrowsePokemonInput(0, 51)))
+            .willThrow(InvalidPageRequestException.sizeOutOfRange(1, 50));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon?size=51"))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Size must be between 1 and 50" }
+                """);
     }
 }
