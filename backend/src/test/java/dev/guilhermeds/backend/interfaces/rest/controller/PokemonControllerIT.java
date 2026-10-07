@@ -5,6 +5,7 @@ import dev.guilhermeds.backend.application.dto.BrowsePokemonInput;
 import dev.guilhermeds.backend.application.dto.EvolutionStageOutput;
 import dev.guilhermeds.backend.application.dto.GetLocalPokemonInput;
 import dev.guilhermeds.backend.application.dto.GetPokemonInput;
+import dev.guilhermeds.backend.application.dto.LocalAttributesOutput;
 import dev.guilhermeds.backend.application.dto.LocalPokemonOutput;
 import dev.guilhermeds.backend.application.dto.PageOutput;
 import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
@@ -169,14 +170,15 @@ class PokemonControllerIT {
             .bodyJson()
             .isStrictlyEqualTo("""
                 {
-                  "pokedexNumber": 25, "name": "pikachu", "category": "Mouse Pokémon",
+                  "pokedexNumber": 25, "name": "pikachu", "displayName": "pikachu", "category": "Mouse Pokémon",
                   "heightMeters": 0.4, "weightKilograms": 6.0,
                   "spriteUrl": "https://img/25.png", "artworkUrl": "https://img/25-art.png",
                   "types": [ "electric" ], "abilities": [ { "name": "static", "hidden": false } ],
                   "stats": [ { "name": "HP", "value": 35 } ],
                   "description": "It keeps its tail raised.",
                   "evolutionChain": { "speciesName": "pichu", "pokedexNumber": 172,
-                    "evolvesTo": [ { "speciesName": "pikachu", "pokedexNumber": 25, "evolvesTo": [] } ] }
+                    "evolvesTo": [ { "speciesName": "pikachu", "pokedexNumber": 25, "evolvesTo": [] } ] },
+                  "local": null
                 }
                 """);
     }
@@ -295,5 +297,24 @@ class PokemonControllerIT {
         assertThat(mockMvc.get().uri("/api/v1/pokemon/26/local"))
             .hasStatus(404)
             .bodyJson().extractingPath("$.message").isEqualTo("Pokémon #26 is not in the local database");
+    }
+
+    // One Pokémon for the client: our record rides along, and its localized name is the one to show.
+    @Test
+    void shouldIncludeOurRecordInTheDetailWhenThePokemonIsSynced() {
+        given(getPokemonUseCase.execute(new GetPokemonInput("pikachu"))).willReturn(new PokemonDetailOutput(25, "pikachu",
+            "Pica", "Mouse Pokémon", new BigDecimal("0.4"), new BigDecimal("6.0"), "https://img/25.png",
+            "https://img/25-art.png", List.of("electric"), List.of(), List.of(), "It keeps its tail raised.",
+            new EvolutionStageOutput("pikachu", 25, List.of()),
+            new LocalAttributesOutput("Pica", "Kanto", List.of("starter"), NOW, NOW)));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon/pikachu"))
+            .hasStatusOk()
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "displayName": "Pica",
+                  "local": { "localizedName": "Pica", "region": "Kanto", "tags": [ "starter" ],
+                             "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" } }
+                """);
     }
 }
