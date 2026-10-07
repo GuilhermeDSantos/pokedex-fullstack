@@ -66,7 +66,8 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
 
     @Override
     public List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers) {
-        throw new UnsupportedOperationException("not implemented yet");
+        var values = numbers.stream().map(PokedexNumber::value).toList();
+        return reachable(() -> jpaRepository.findAllWithTagsByPokedexNumberIn(values).stream().map(mapper::toDomain).toList());
     }
 
     private static <T> T reachable(Supplier<T> call) {
