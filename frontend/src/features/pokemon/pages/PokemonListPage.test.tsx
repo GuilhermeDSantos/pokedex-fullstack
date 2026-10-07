@@ -43,4 +43,12 @@ describe('PokemonListPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('article', { name: 'Bulbasaur' })).toBeInTheDocument()
   })
+
+  it('says so when a page has no Pokémon, with a way back to the first page', async () => {
+    server.use(http.get('/api/v1/pokemon', () => HttpResponse.json(pageOf([], { page: 998 }))))
+    renderApp('/')
+
+    expect(await screen.findByText('No Pokémon on this page.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Go to the first page' })).toHaveAttribute('href', '/')
+  })
 })
