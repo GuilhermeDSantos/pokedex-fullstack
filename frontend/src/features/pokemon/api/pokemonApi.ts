@@ -56,6 +56,10 @@ export function fetchPokemon(identifier: string): Promise<PokemonDetail> {
   return request<PokemonDetail>(`/pokemon/${encodeURIComponent(identifier)}`)
 }
 
+export function syncPokemon(identifier: string, accessToken: string): Promise<LocalAttributes> {
+  return request<LocalAttributes>(`/pokemon/${encodeURIComponent(identifier)}/local`, { method: 'POST', accessToken })
+}
+
 export function fetchPokemonPage(page: number, size: number): Promise<PageResponse<PokemonSummary>> {
   return request<PageResponse<PokemonSummary>>(`/pokemon?${new URLSearchParams({ page: String(page), size: String(size) })}`)
 }
