@@ -101,6 +101,17 @@ class JpaLocalPokemonRepositoryIT {
         repository.save(pikachu);
     }
 
+    // Removed with its tags; the Pokémon can then be synced again (CRUD-D).
+    @Test
+    void shouldDeleteTheRecordWithItsTags() {
+        var pikachu = repository.save(LocalPokemonFixture.renamedPikachu());
+
+        repository.delete(pikachu);
+
+        assertThat(repository.findByPokedexNumber(PIKACHU_NUMBER)).isEmpty();
+        assertThat(repository.save(LocalPokemonFixture.syncedPikachu()).getCustomAttributes().tags()).isEmpty();
+    }
+
     // Two people edit Eevee at once: the one who saves last is told, instead of silently overwriting (D-011).
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
