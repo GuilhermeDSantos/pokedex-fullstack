@@ -6,7 +6,7 @@ import { Button } from '../../../shared/ui/Button'
 import type { PokemonDetail } from '../api/pokemonApi'
 import { useSyncPokemon } from '../hooks/useSyncPokemon'
 
-export function LocalSection({ pokemon }: { pokemon: PokemonDetail }) {
+export function SyncAction({ pokemon }: { pokemon: PokemonDetail }) {
   const { pathname } = useLocation()
   const { session } = useAuth()
   const sync = useSyncPokemon(pokemon.name)

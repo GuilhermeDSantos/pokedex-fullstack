@@ -7,7 +7,7 @@ import { Skeleton } from '../../../shared/ui/Skeleton'
 import { Stack } from '../../../shared/ui/Stack'
 import { AbilityList } from '../components/AbilityList'
 import { EvolutionTree } from '../components/EvolutionTree'
-import { LocalSection } from '../components/LocalSection'
+import { SyncAction } from '../components/SyncAction'
 import { PokemonStats } from '../components/PokemonStats'
 import { TagList } from '../components/TagList'
 import { TypeList } from '../components/TypeList'
@@ -54,7 +54,7 @@ export function PokemonDetailPage() {
         <Heading level={1}>{name}</Heading>
         {pokemon.local?.localizedName && <p className={styles.localizedName}>{pokemon.local.localizedName}</p>}
         <TypeList types={pokemon.types} />
-        <LocalSection pokemon={pokemon} />
+        <SyncAction pokemon={pokemon} />
         <p>{pokemon.description}</p>
         <ul aria-label="Facts" className={styles.facts}>
           <li>
