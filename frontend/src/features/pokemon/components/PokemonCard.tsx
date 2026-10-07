@@ -12,14 +12,18 @@ export function PokemonCard({ pokemon }: { pokemon: PokemonSummary }) {
   const name = formatName(pokemon.name)
   return (
     <Card labelledBy={titleId}>
-      <img
-        src={pokemon.spriteUrl ?? undefined}
-        alt={`${name} sprite`}
-        width={SPRITE_SIZE}
-        height={SPRITE_SIZE}
-        loading="lazy"
-        className={styles.sprite}
-      />
+      {pokemon.spriteUrl ? (
+        <img
+          src={pokemon.spriteUrl}
+          alt={`${name} sprite`}
+          width={SPRITE_SIZE}
+          height={SPRITE_SIZE}
+          loading="lazy"
+          className={styles.sprite}
+        />
+      ) : (
+        <p className={styles.noSprite}>No image</p>
+      )}
       <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>
       <h2 id={titleId} className={styles.name}>
         {name}

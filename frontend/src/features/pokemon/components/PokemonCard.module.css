@@ -2,6 +2,19 @@
   align-self: center;
 }
 
+.noSprite {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 6rem;
+  height: 6rem;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+}
+
 .number {
   margin: 0;
   font-size: var(--font-size-sm);
