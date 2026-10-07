@@ -23,6 +23,14 @@ public class UpdateLocalPokemonInteractor implements UpdateLocalPokemonUseCase {
 
     @Override
     public LocalPokemonOutput execute(UpdateLocalPokemonInput input, Instant now) {
-        throw new UnsupportedOperationException("not implemented yet");
+        // Built before the transaction: invalid input is a 400 that never opens one.
+        var number = mapper.toPokedexNumber(input.pokedexNumber());
+        var attributes = mapper.toCustomAttributes(input);
+
+        return unitOfWork.inTransaction(() -> {
+            var pokemon = localPokemonRepository.getByPokedexNumber(number);
+            pokemon.updateCustomAttributes(attributes, now);
+            return LocalPokemonOutput.from(localPokemonRepository.save(pokemon));
+        });
     }
 }

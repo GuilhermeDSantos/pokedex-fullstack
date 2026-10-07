@@ -19,6 +19,8 @@ import dev.guilhermeds.backend.application.usecase.RegisterUserInteractor;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonInteractor;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
+import dev.guilhermeds.backend.application.usecase.UpdateLocalPokemonInteractor;
+import dev.guilhermeds.backend.application.usecase.UpdateLocalPokemonUseCase;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
 import dev.guilhermeds.backend.domain.repository.LocalPokemonRepository;
 import dev.guilhermeds.backend.domain.repository.PokemonRepository;
@@ -78,5 +80,11 @@ public class UseCaseConfig {
     GetLocalPokemonUseCase getLocalPokemonUseCase(LocalPokemonRepository localPokemonRepository,
                                                   PokemonMapper mapper) {
         return new GetLocalPokemonInteractor(localPokemonRepository, mapper);
+    }
+
+    @Bean
+    UpdateLocalPokemonUseCase updateLocalPokemonUseCase(LocalPokemonRepository localPokemonRepository,
+                                                        PokemonMapper mapper, UnitOfWork unitOfWork) {
+        return new UpdateLocalPokemonInteractor(localPokemonRepository, mapper, unitOfWork);
     }
 }

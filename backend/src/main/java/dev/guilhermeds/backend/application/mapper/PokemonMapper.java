@@ -1,7 +1,12 @@
 package dev.guilhermeds.backend.application.mapper;
 
+import dev.guilhermeds.backend.application.dto.UpdateLocalPokemonInput;
+import dev.guilhermeds.backend.domain.model.CustomAttributes;
 import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
+import dev.guilhermeds.backend.domain.model.Tag;
+
+import java.util.stream.Collectors;
 
 public class PokemonMapper {
 
@@ -15,5 +20,10 @@ public class PokemonMapper {
 
     public PokedexNumber toPokedexNumber(String raw) {
         return PokedexNumber.parse(raw);
+    }
+
+    public CustomAttributes toCustomAttributes(UpdateLocalPokemonInput input) {
+        var tags = input.tags().stream().map(Tag::new).collect(Collectors.toSet());
+        return new CustomAttributes(input.localizedName(), input.region(), tags);
     }
 }
