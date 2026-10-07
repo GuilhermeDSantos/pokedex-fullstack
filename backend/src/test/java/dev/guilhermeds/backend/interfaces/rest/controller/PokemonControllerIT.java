@@ -79,4 +79,14 @@ class PokemonControllerIT {
                 { "code": "VALIDATION_ERROR", "message": "Size must be between 1 and 50" }
                 """);
     }
+
+    @Test
+    void shouldAnswerAPageThatIsNotANumberWith400() {
+        assertThat(mockMvc.get().uri("/api/v1/pokemon?page=abc"))
+            .hasStatus(400)
+            .bodyJson()
+            .isLenientlyEqualTo("""
+                { "code": "VALIDATION_ERROR", "message": "Invalid request parameter" }
+                """);
+    }
 }
