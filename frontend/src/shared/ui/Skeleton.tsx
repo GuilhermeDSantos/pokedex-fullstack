@@ -1,7 +1,7 @@
 import styles from './Skeleton.module.css'
 
 type SkeletonProps = {
-  variant: 'card'
+  variant: 'card' | 'detail'
 }
 
 // Decorative: the surrounding status region tells assistive tech what is loading.

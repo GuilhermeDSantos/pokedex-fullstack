@@ -3,6 +3,7 @@ import { ApiError } from '../../../shared/api/ApiError'
 import { formatKilograms, formatName, formatPokedexNumber } from '../../../shared/lib/format'
 import { ErrorState } from '../../../shared/ui/ErrorState'
 import { Heading } from '../../../shared/ui/Heading'
+import { Skeleton } from '../../../shared/ui/Skeleton'
 import { Stack } from '../../../shared/ui/Stack'
 import { EvolutionTree } from '../components/EvolutionTree'
 import { PokemonStats } from '../components/PokemonStats'
@@ -28,7 +29,11 @@ export function PokemonDetailPage() {
     return <ErrorState message={error.message} onRetry={() => void refetch()} />
   }
   if (!pokemon) {
-    return null
+    return (
+      <div role="status" aria-label="Loading Pokémon">
+        <Skeleton variant="detail" />
+      </div>
+    )
   }
   const name = formatName(pokemon.name)
   return (
