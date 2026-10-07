@@ -120,13 +120,13 @@ describe('PokemonDetailPage', () => {
 
   // ---- the local record (US-03) --------------------------------------------------------------
 
-  it('invites a visitor to sign in to sync, coming back to this Pokémon afterwards', async () => {
+  // Syncing is for signed-in users; a visitor just reads the Pokémon.
+  it('offers a visitor no sync control', async () => {
     renderApp('/pokemon/pikachu')
 
-    expect(await screen.findByRole('link', { name: 'Log in to sync' })).toHaveAttribute(
-      'href',
-      '/login?returnTo=%2Fpokemon%2Fpikachu',
-    )
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pikachu' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /sync/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /sync/i })).not.toBeInTheDocument()
   })
 
   it('syncs the Pokémon for a signed-in user and then shows our record', async () => {
