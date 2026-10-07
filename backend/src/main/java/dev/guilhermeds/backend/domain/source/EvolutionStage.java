@@ -11,5 +11,6 @@ public record EvolutionStage(String speciesName, PokedexNumber number, List<Evol
     public EvolutionStage {
         Objects.requireNonNull(speciesName, "speciesName must not be null");
         Objects.requireNonNull(number, "number must not be null");
+        evolvesTo = evolvesTo == null ? List.of() : List.copyOf(evolvesTo);
     }
 }
