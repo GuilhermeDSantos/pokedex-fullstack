@@ -43,6 +43,7 @@ const STATS = [
 export const PIKACHU_DETAIL: PokemonDetail = {
   pokedexNumber: 25,
   name: 'pikachu',
+  displayName: 'pikachu',
   category: 'Mouse Pokémon',
   heightMeters: 0.4,
   weightKilograms: 6,
@@ -63,5 +64,17 @@ export const PIKACHU_DETAIL: PokemonDetail = {
       },
     ],
   },
+  local: null,
 }
 
+export const SYNCED_PIKACHU_DETAIL: PokemonDetail = {
+  ...PIKACHU_DETAIL,
+  displayName: 'Pica',
+  local: {
+    localizedName: 'Pica',
+    region: 'Kanto',
+    tags: ['mascot', 'starter'],
+    syncedAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-01-15T10:00:00Z',
+  },
+}

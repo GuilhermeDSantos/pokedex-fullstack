@@ -27,9 +27,18 @@ export type EvolutionStage = {
   evolvesTo: EvolutionStage[]
 }
 
+export type LocalAttributes = {
+  localizedName: string | null
+  region: string | null
+  tags: string[]
+  syncedAt: string
+  updatedAt: string
+}
+
 export type PokemonDetail = {
   pokedexNumber: number
   name: string
+  displayName: string
   category: string | null
   heightMeters: number
   weightKilograms: number
@@ -40,6 +49,7 @@ export type PokemonDetail = {
   stats: Stat[]
   description: string | null
   evolutionChain: EvolutionStage
+  local: LocalAttributes | null
 }
 
 export function fetchPokemon(identifier: string): Promise<PokemonDetail> {
