@@ -11,4 +11,8 @@ public record PageOutput<T>(List<T> content, int page, int size, long totalEleme
     public static <T> PageOutput<T> from(Page<T> page, PageRequest request) {
         return new PageOutput<>(page.content(), request.page(), request.size(), page.totalElements());
     }
+
+    public int totalPages() {
+        return (int) ((totalElements + size - 1) / size);
+    }
 }
