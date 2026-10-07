@@ -1,4 +1,5 @@
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
+import { ApiError } from '../../../shared/api/ApiError'
 import { formatKilograms, formatName, formatPokedexNumber } from '../../../shared/lib/format'
 import { Heading } from '../../../shared/ui/Heading'
 import { Stack } from '../../../shared/ui/Stack'
@@ -11,7 +12,17 @@ const ARTWORK_SIZE = 240
 
 export function PokemonDetailPage() {
   const { identifier = '' } = useParams()
-  const { data: pokemon } = usePokemon(identifier)
+  const { data: pokemon, error } = usePokemon(identifier)
+  if (error instanceof ApiError && error.status === 404) {
+    return (
+      <Stack>
+        <Heading level={1}>Pokémon not found</Heading>
+        <p>
+          <Link to="/">Back to the Pokémon list</Link>
+        </p>
+      </Stack>
+    )
+  }
   if (!pokemon) {
     return null
   }
