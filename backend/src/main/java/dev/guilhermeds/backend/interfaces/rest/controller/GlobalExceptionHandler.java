@@ -1,11 +1,11 @@
 package dev.guilhermeds.backend.interfaces.rest.controller;
 
 import dev.guilhermeds.backend.domain.exception.ConflictException;
+import dev.guilhermeds.backend.domain.exception.DataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.DomainException;
 import dev.guilhermeds.backend.domain.exception.NotFoundException;
 import dev.guilhermeds.backend.domain.exception.UnauthenticatedException;
 import dev.guilhermeds.backend.domain.exception.ValidationException;
-import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.interfaces.rest.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +49,12 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.UNPROCESSABLE_CONTENT, "DOMAIN_ERROR", exception.getMessage());
     }
 
-    // The message can name internal details (a Pokémon PokeAPI couldn't return), so it only goes to the log.
-    @ExceptionHandler(PokemonDataUnavailableException.class)
-    public ResponseEntity<ErrorResponse> handleSourceUnavailable(PokemonDataUnavailableException exception) {
-        log.warn("PokeAPI unavailable: {}", exception.getMessage());
-        return error(HttpStatus.SERVICE_UNAVAILABLE, "SOURCE_UNAVAILABLE",
-            "The Pokémon catalog is unavailable right now. Please try again in a moment.");
+    // The message names the store and the cause: for the log, where the root cause is read, never the client.
+    @ExceptionHandler(DataUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleDataUnavailable(DataUnavailableException exception) {
+        log.warn("Data unavailable ({})", exception.getClass().getSimpleName(), exception);
+        return error(HttpStatus.SERVICE_UNAVAILABLE, "DATA_UNAVAILABLE",
+            "The service is temporarily unavailable. Please try again in a moment.");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
