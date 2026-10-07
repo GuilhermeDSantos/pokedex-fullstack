@@ -55,4 +55,14 @@ class PokemonControllerIT {
                 }
                 """);
     }
+
+    @Test
+    void shouldStartAtTheFirstPageOfTwentyWhenNothingIsAsked() {
+        given(browsePokemonUseCase.execute(new BrowsePokemonInput(0, 20)))
+            .willReturn(new PageOutput<>(List.of(PIKACHU), 0, 20, 1351));
+
+        assertThat(mockMvc.get().uri("/api/v1/pokemon"))
+            .hasStatusOk()
+            .bodyJson().extractingPath("$.page").isEqualTo(0);
+    }
 }
