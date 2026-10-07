@@ -152,7 +152,7 @@ Exact patterns, not suggestions.
 |---|---|---|
 | Use case entry point (read-only) — declared on the input port | `execute(Input)` | `execute(GetPokemonInput input)` |
 | Use case entry point (mutating) | `execute(Input, …, Instant now)` | `execute(input, localPokemonId, now)` |
-| Domain factory (new) | `create(...)` | `LocalPokemon.create(id, pokedexNumber, snapshot, now)` |
+| Domain factory (new) | `create(...)` | `LocalPokemon.create(id, pokedexNumber, now)` |
 | Domain factory (from DB) | `builder()` | `LocalPokemon.builder()...build()` |
 | Domain state change | action verb | `updateCustomAttributes(...)` |
 | Boolean domain check | `is{State}` / `has{Thing}` | `hasTag(tag)` |
@@ -218,14 +218,18 @@ Exact patterns, not suggestions.
 | `ValidationException` | 400 | `VALIDATION_ERROR` | `InvalidTagException`, `InvalidEmailException`, `WeakPasswordException`, `InvalidPageRequestException` |
 | `UnauthenticatedException` | 401 | `UNAUTHENTICATED` | `InvalidCredentialsException`, `UnknownAccountException` |
 | `DomainException` (catch-all) | 422 | `DOMAIN_ERROR` | one-off business rule violations with no sibling |
-| `DataUnavailableException` (not a `DomainException`) | 503 | `DATA_UNAVAILABLE` | `PokemonDataUnavailableException`, `UserAccountDataUnavailableException`, `TransactionUnavailableException` |
+| `DataUnavailableException` (not a `DomainException`) | 503 | `DATA_UNAVAILABLE` | `PokemonDataUnavailableException`, `UserAccountDataUnavailableException`, `LocalPokemonDataUnavailableException`, `TransactionUnavailableException` |
 
 - **Data that can't be reached is not a domain exception**, wherever it lives. Every repository
   adapter translates "unreachable" into its own subclass of the abstract `DataUnavailableException`
   (`domain/exception`): the PokeAPI adapter for timeouts/5xx/IO (`PokemonDataUnavailableException`),
-  the JPA adapters for `DataAccessResourceFailureException` / `CannotCreateTransactionException`
-  (`UserAccountDataUnavailableException`), and `SpringUnitOfWork` when a transaction can't start
-  (`TransactionUnavailableException`). `GlobalExceptionHandler` maps the category to one `503
+  the JPA adapters (`UserAccountDataUnavailableException`, `LocalPokemonDataUnavailableException`),
+  and `SpringUnitOfWork` when a transaction can't start or finish (`TransactionUnavailableException`).
+  "Unreachable" has **one** definition, `DatabaseFailures.isUnreachable`, which walks the cause
+  chain: SQLState class `08` or `57P`, `SQLTransientConnectionException` (the pool's timeout),
+  `CannotCreateTransactionException`, or Hibernate's `TransactionException` (a rollback that can't
+  reach the database hides the query's own error, and the pool's "Connection is closed" has no
+  SQLState). Anything else is a bug and stays a 500. `GlobalExceptionHandler` maps the category to one `503
   DATA_UNAVAILABLE` with a neutral message and logs the subclass and its cause. Hikari's
   `connection-timeout` is 3000 ms, so a down database is a 503 in seconds, not after 30 s. A PokeAPI
   404 is a business fact and becomes `PokemonNotFoundException` (404).

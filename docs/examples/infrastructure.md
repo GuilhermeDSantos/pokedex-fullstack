@@ -46,8 +46,9 @@ between entity and migration fails the build at Hibernate validation.
 ## JPA Entity
 
 Only in `infrastructure/persistence/entity/`. Things to notice:
-- The snapshot is plain columns (D-031). The only child collection is the tags, an
-  `@ElementCollection`: values inside the aggregate, with no identity and no repository.
+- Only the Pokédex number and our fields are columns; nothing is copied from PokeAPI (D-039). The
+  only child collection is the tags, an `@ElementCollection`: values inside the aggregate, with no
+  identity and no repository.
 - There's no `@ManyToOne`/`@OneToOne`/`@ManyToMany` anywhere, and ArchUnit bans them.
 - `@Version` is mandatory.
 - The constructor is `public`, because the mapper lives in a sibling package.
@@ -64,25 +65,6 @@ public class LocalPokemonEntity {
     @Column(name = "pokedex_number", nullable = false, unique = true)
     private int pokedexNumber;
 
-    @Column(nullable = false, unique = true)
-    private String name;
-
-    private String category;
-
-    @Column(name = "height_m", nullable = false)
-    private BigDecimal heightMeters;
-
-    @Column(name = "weight_kg", nullable = false)
-    private BigDecimal weightKilograms;
-
-    @Column(name = "sprite_url")
-    private String spriteUrl;
-
-    @Column(name = "artwork_url")
-    private String artworkUrl;
-
-    private String description;
-
     @Column(name = "localized_name")
     private String localizedName;
 
@@ -90,7 +72,7 @@ public class LocalPokemonEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "local_pokemon_tags", joinColumns = @JoinColumn(name = "local_pokemon_id"))
-    @Column(name = "tag")
+    @Column(name = "tag", nullable = false)
     private Set<String> tags = new HashSet<>();
 
     @Column(name = "synced_at", nullable = false)
@@ -123,17 +105,17 @@ public interface LocalPokemonJpaRepository extends JpaRepository<LocalPokemonEnt
 
     Optional<LocalPokemonEntity> findByPokedexNumber(int pokedexNumber);
 
-    Optional<LocalPokemonEntity> findByName(String name);
-
-    List<LocalPokemonEntity> findAllByPokedexNumberIn(Collection<Integer> pokedexNumbers);
+    List<LocalPokemonEntity> findAllByPokedexNumberIn(Collection<Integer> pokedexNumbers);   // Slice 6
 }
 ```
 
 ## Repository adapter
 
-`Jpa{Name}Repository` implements the domain port. It does three jobs: mapping (via the entity
-mapper), resolving identifiers to queries, and **exception translation**, so nothing Spring-shaped
-escapes. There's no `@Transactional`: the boundary is the `UnitOfWork` the interactor opened.
+`Jpa{Name}Repository` implements the domain port. It does two jobs: mapping (via the entity
+mapper) and **exception translation**, so nothing Spring-shaped escapes: a known constraint becomes
+a domain exception, an unreachable database becomes `LocalPokemonDataUnavailableException`
+(`DatabaseFailures.isUnreachable`), and anything else stays loud. The version below is the
+Slice 5 shape, with updates on the managed entity; Slice 4's `save` only inserts. There's no `@Transactional`: the boundary is the `UnitOfWork` the interactor opened.
 
 ```java
 // infrastructure/persistence/repository/JpaLocalPokemonRepository.java
@@ -154,13 +136,15 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
             // Update the MANAGED entity when one exists, so Hibernate keeps the version it read and
             // a concurrent write in between is detected. A detached `new LocalPokemonEntity()` would
             // carry version 0 and either fail spuriously or overwrite blindly.
-            var entity = jpaRepository.findById(pokemon.getId().value())
-                .map(existing -> mapper.copyInto(pokemon, existing))
-                .orElseGet(() -> mapper.toEntity(pokemon));
             // saveAndFlush: surface constraint/version violations HERE, where they can be
             // translated, not later at commit time inside SpringUnitOfWork.
-            return mapper.toDomain(jpaRepository.saveAndFlush(entity));
-        } catch (OptimisticLockingFailureException e) {
+            return reachable(() -> {
+                var entity = jpaRepository.findById(pokemon.getId().value())
+                    .map(existing -> mapper.copyInto(pokemon, existing))
+                    .orElseGet(() -> mapper.toEntity(pokemon));
+                return mapper.toDomain(jpaRepository.saveAndFlush(entity));
+            });
+        } catch (OptimisticLockingFailureException e) {   // Slice 5
             throw new LocalPokemonModifiedConcurrentlyException(pokemon.getPokedexNumber());
         } catch (DataIntegrityViolationException e) {
             // Translate only the violation we know; anything else is a bug and must stay loud.
@@ -173,18 +157,10 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
 
     @Override
     public Optional<LocalPokemon> findByPokedexNumber(PokedexNumber number) {
-        return jpaRepository.findByPokedexNumber(number.value()).map(mapper::toDomain);
+        return reachable(() -> jpaRepository.findByPokedexNumber(number.value()).map(mapper::toDomain));
     }
 
-    @Override
-    public Optional<LocalPokemon> findByIdentifier(PokemonIdentifier identifier) {
-        var entity = identifier.isNumber()
-            ? jpaRepository.findByPokedexNumber(identifier.asNumber().value())
-            : jpaRepository.findByName(identifier.value());
-        return entity.map(mapper::toDomain);
-    }
-
-    @Override
+    @Override   // Slice 6
     public List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers) {
         if (numbers.isEmpty()) {
             return List.of();   // explicit: an empty IN () is invalid SQL on some databases
@@ -194,8 +170,22 @@ public class JpaLocalPokemonRepository implements LocalPokemonRepository {
     }
 
     @Override
-    public void delete(LocalPokemon pokemon) {
-        jpaRepository.deleteById(pokemon.getId().value());
+    public void delete(LocalPokemon pokemon) {   // Slice 5
+        reachable(() -> {
+            jpaRepository.deleteById(pokemon.getId().value());
+            return null;
+        });
+    }
+
+    private static <T> T reachable(Supplier<T> call) {
+        try {
+            return call.get();
+        } catch (RuntimeException exception) {
+            if (DatabaseFailures.isUnreachable(exception)) {
+                throw new LocalPokemonDataUnavailableException(exception);
+            }
+            throw exception;
+        }
     }
 }
 ```
@@ -218,15 +208,6 @@ silently empties every record on save. The repository IT asserts the full aggreg
 public class LocalPokemonEntityMapper {
 
     public LocalPokemon toDomain(LocalPokemonEntity entity) {
-        var snapshot = new PokemonSnapshot(
-            entity.getName(),
-            entity.getCategory(),
-            new Height(entity.getHeightMeters()),
-            new Weight(entity.getWeightKilograms()),
-            entity.getSpriteUrl(),
-            entity.getArtworkUrl(),
-            entity.getDescription());
-
         var custom = new CustomAttributes(
             entity.getLocalizedName(),
             entity.getRegion(),
@@ -237,7 +218,6 @@ public class LocalPokemonEntityMapper {
         return LocalPokemon.builder()
             .id(new LocalPokemonId(entity.getId()))
             .pokedexNumber(new PokedexNumber(entity.getPokedexNumber()))
-            .snapshot(snapshot)
             .customAttributes(custom)
             .syncedAt(entity.getSyncedAt())
             .updatedAt(entity.getUpdatedAt())

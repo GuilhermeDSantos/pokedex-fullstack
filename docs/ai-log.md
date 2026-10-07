@@ -31,6 +31,27 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — Slice 4: the developer took the name out, and the full suite found a 500
+- **Context:** Designing and building the local record and the sync (US-03, TR-DB-1/2, TR-ERR).
+- **AI proposed:** Keep the Pokédex number **and** the original name in `local_pokemons`, both
+  unique, so a `/local` lookup by name could stay inside the database. Then, for tags, it laid out
+  a separate entity as an option.
+- **Problem:** The developer asked what happens if PokeAPI renames Pikachu: the stored name would
+  go stale, with a second unique key that only exists to dodge one PokeAPI call (which is cached).
+  On tags, the developer first leaned to an entity, then chose to keep them as plain values, since
+  nothing in the brief gives a tag its own identity. Separately, the full IT suite failed
+  intermittently: a database stopped after a connection had been used answered **500**, not 503.
+  Hikari handed out a dead connection, the query failed with SQLState 57P01/08006, and the failed
+  rollback then replaced it with a `JpaSystemException` whose "Connection is closed" carries no
+  SQLState (checked with `javap` on the resolved Hikari jar).
+- **Resolution:** D-039 now keeps only the number and our fields; a name in a `/local` path is
+  resolved through `PokemonRepository`. Tags stay an `@ElementCollection` with an index on `tag`.
+  One rule, `DatabaseFailures.isUnreachable` (SQLState `08`/`57P`, the pool timeout, a failed
+  transaction), shared by both JPA adapters and `SpringUnitOfWork`; `DatabaseConnectionLostIT`
+  reproduces the dead connection deterministically. The IT suite then passed three runs in a row.
+- **Lesson:** Ask "what if the source changes?" of every copied field. And a test that fails
+  sometimes is a bug report: find the order of events that makes it fail every time.
+
 ### 2026-10-07 — "PokeAPI is just a data source": one pattern, one 503
 - **Context:** Reviewing Slice 3, the developer pushed on the `*Source` naming and on how failures
   are treated (OV-2, TR-ERR).

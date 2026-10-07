@@ -131,8 +131,8 @@ public class PokemonRestMapper {
     }
 
     public LocalPokemonResponse toResponse(LocalPokemonOutput output) {
-        return new LocalPokemonResponse(output.pokedexNumber(), output.name(), output.displayName(),
-            output.localizedName(), output.region(), output.tags(), output.syncedAt(), output.updatedAt());
+        return new LocalPokemonResponse(output.pokedexNumber(), output.localizedName(), output.region(),
+            output.tags(), output.syncedAt(), output.updatedAt());
     }
 
     public PokemonDetailResponse toResponse(PokemonDetailOutput output) { /* field by field; local may be null */ }

@@ -18,27 +18,15 @@ it just synced.
 // domain/model/LocalPokemon.java
 
 /**
- * A Pokémon synced from PokeAPI into the local database, carrying the organization's own fields.
- * Shared: one record per Pokémon, with no owner.
- *
- * <p>Invariants:
- * <ul>
- *   <li>id, pokedexNumber and snapshot are mandatory and never change after the sync</li>
- *   <li>a newly synced record has empty custom attributes and syncedAt == updatedAt == now</li>
- *   <li>updating custom attributes never touches the snapshot</li>
- * </ul>
- *
- * <p>Use {@link #create} for a new sync and {@link #builder()} to rebuild from persistence.
- *
- * <p><strong>{@link #builder()} is the reconstitution contract, for {@code LocalPokemonEntityMapper}
- * only.</strong> It null-checks but does not re-run creation rules, because what it rebuilds was
- * valid when stored. Business code never assembles a LocalPokemon through it.
+ * Our record of a Pokémon (US-03): its Pokédex number plus the fields that are ours. Everything
+ * else, the name included, is read from the canonical data (D-039). New records come from
+ * {@link #create}; {@link #builder()} only rebuilds one that was already valid when it was stored
+ * (persistence mapper).
  */
 public class LocalPokemon {
 
     private final LocalPokemonId id;
     private final PokedexNumber pokedexNumber;
-    private final PokemonSnapshot snapshot;
     private CustomAttributes customAttributes;
     private final Instant syncedAt;
     private Instant updatedAt;
@@ -46,23 +34,15 @@ public class LocalPokemon {
     private LocalPokemon(Builder builder) {
         this.id = Objects.requireNonNull(builder.id, "id must not be null");
         this.pokedexNumber = Objects.requireNonNull(builder.pokedexNumber, "pokedexNumber must not be null");
-        this.snapshot = Objects.requireNonNull(builder.snapshot, "snapshot must not be null");
         this.customAttributes = Objects.requireNonNull(builder.customAttributes, "customAttributes must not be null");
         this.syncedAt = Objects.requireNonNull(builder.syncedAt, "syncedAt must not be null");
         this.updatedAt = Objects.requireNonNull(builder.updatedAt, "updatedAt must not be null");
     }
 
-    // -------------------------------------------------------------------------
-    // Factory / Builder
-    // -------------------------------------------------------------------------
-
-    /** A new sync from PokeAPI (US-03): custom attributes start empty. */
-    public static LocalPokemon create(LocalPokemonId id, PokedexNumber pokedexNumber,
-                                      PokemonSnapshot snapshot, Instant now) {
+    public static LocalPokemon create(LocalPokemonId id, PokedexNumber pokedexNumber, Instant now) {
         return builder()
             .id(id)
             .pokedexNumber(pokedexNumber)
-            .snapshot(snapshot)
             .customAttributes(CustomAttributes.empty())
             .syncedAt(now)
             .updatedAt(now)
@@ -73,28 +53,19 @@ public class LocalPokemon {
         return new Builder();
     }
 
-    // -------------------------------------------------------------------------
-    // Domain behaviour
-    // -------------------------------------------------------------------------
-
-    /** PUT semantics: the given attributes replace the current ones entirely (US-04). */
+    // Slice 5. PUT semantics: the given attributes replace the current ones entirely (US-04).
     public void updateCustomAttributes(CustomAttributes attributes, Instant now) {
         this.customAttributes = Objects.requireNonNull(attributes, "attributes must not be null");
         this.updatedAt = now;
     }
 
-    /** The name the organization shows: its localized name when set, otherwise PokeAPI's. */
-    public String displayName() {
-        return customAttributes.localizedName() != null ? customAttributes.localizedName() : snapshot.name();
+    // The canonical name comes from the caller, which reads it from the canonical data.
+    public String displayName(String canonicalName) {
+        return customAttributes.localizedName() != null ? customAttributes.localizedName() : canonicalName;
     }
-
-    // -------------------------------------------------------------------------
-    // Accessors (no setters)
-    // -------------------------------------------------------------------------
 
     public LocalPokemonId getId() { return id; }
     public PokedexNumber getPokedexNumber() { return pokedexNumber; }
-    public PokemonSnapshot getSnapshot() { return snapshot; }
     public CustomAttributes getCustomAttributes() { return customAttributes; }
     public Instant getSyncedAt() { return syncedAt; }
     public Instant getUpdatedAt() { return updatedAt; }
@@ -114,24 +85,19 @@ public class LocalPokemon {
         return "LocalPokemon{id=" + id.value() + ", pokedexNumber=" + pokedexNumber.value() + "}";
     }
 
-    // -------------------------------------------------------------------------
-    // Builder — reconstitution only
-    // -------------------------------------------------------------------------
-
     public static final class Builder {
 
         private LocalPokemonId id;
         private PokedexNumber pokedexNumber;
-        private PokemonSnapshot snapshot;
         private CustomAttributes customAttributes;
         private Instant syncedAt;
         private Instant updatedAt;
 
-        private Builder() {}
+        private Builder() {
+        }
 
         public Builder id(LocalPokemonId id) { this.id = id; return this; }
         public Builder pokedexNumber(PokedexNumber pokedexNumber) { this.pokedexNumber = pokedexNumber; return this; }
-        public Builder snapshot(PokemonSnapshot snapshot) { this.snapshot = snapshot; return this; }
         public Builder customAttributes(CustomAttributes customAttributes) { this.customAttributes = customAttributes; return this; }
         public Builder syncedAt(Instant syncedAt) { this.syncedAt = syncedAt; return this; }
         public Builder updatedAt(Instant updatedAt) { this.updatedAt = updatedAt; return this; }
@@ -146,8 +112,8 @@ public class LocalPokemon {
 The builder's methods are named after fields (`id(...)`), not `setId(...)`, so the
 `no_setters_in_domain` ArchUnit rule (name-based) stays satisfied without exceptions.
 
-`displayName()` is a business rule ("what name do we show?"), so it lives here, and the output
-DTOs only call it. Neither the controller nor the frontend decides it.
+`displayName(canonicalName)` is a business rule ("what name do we show?"), so it lives here, and
+the output DTOs only call it, passing the name they read from PokeAPI. Neither the controller nor the frontend decides it.
 
 ## Value Objects
 
@@ -220,17 +186,6 @@ public record Weight(BigDecimal kilograms) {
 
     public static Weight fromHectograms(int hectograms) {
         return new Weight(BigDecimal.valueOf(hectograms).movePointLeft(1));
-    }
-}
-
-// domain/model/PokemonSnapshot.java — the scalar part of PokeAPI's data, copied at sync time (D-031)
-public record PokemonSnapshot(String name, String category, Height height, Weight weight,
-                              String spriteUrl, String artworkUrl, String description) {
-    public PokemonSnapshot {
-        Objects.requireNonNull(name, "name must not be null");
-        Objects.requireNonNull(height, "height must not be null");
-        Objects.requireNonNull(weight, "weight must not be null");
-        // category, urls and description are nullable: PokeAPI has gaps
     }
 }
 
@@ -313,8 +268,7 @@ programming/integration bug (500), not a client error (400). User-facing values 
 `CustomAttributes`, `PokemonIdentifier`, `RawPassword`, `Email`) throw `ValidationException`
 subtypes.
 
-`PokemonProfile` (the full PokeAPI view, with types, abilities and stats) follows the same rules and
-adds `toSnapshot()`, which returns the scalar subset the local record keeps.
+`PokemonProfile` (the full PokeAPI view, with types, abilities and stats) follows the same rules.
 
 ## Pagination
 
@@ -364,24 +318,24 @@ One per aggregate root. There's no `TagRepository`: tags are loaded and saved th
 // domain/repository/LocalPokemonRepository.java
 public interface LocalPokemonRepository {
 
+    /** @throws dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException if the number is taken */
     LocalPokemon save(LocalPokemon pokemon);
 
     Optional<LocalPokemon> findByPokedexNumber(PokedexNumber number);
 
-    /** A number looks up pokedex_number, a name looks up name. Never calls PokeAPI. */
-    Optional<LocalPokemon> findByIdentifier(PokemonIdentifier identifier);
-
-    /** Same as findByIdentifier, but throws — the shape the update/remove use cases want. */
-    default LocalPokemon getByIdentifier(PokemonIdentifier identifier) {
-        return findByIdentifier(identifier).orElseThrow(() -> new LocalPokemonNotFoundException(identifier));
+    default LocalPokemon getByPokedexNumber(PokedexNumber number) {
+        return findByPokedexNumber(number).orElseThrow(() -> new LocalPokemonNotFoundException(number));
     }
 
-    /** The list merge: the local records for one page of PokeAPI results, in a single query. */
-    List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);
+    void delete(LocalPokemon pokemon);   // Slice 5
 
-    void delete(LocalPokemon pokemon);
+    // Slice 6, the list merge: the local records for one page of results, in a single query.
+    List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);
 }
 ```
+
+Keyed by number only: the record keeps no name (D-039). A use case that gets a name resolves it
+through `PokemonRepository` first.
 
 ## PokeAPI port — `PokemonRepository`
 

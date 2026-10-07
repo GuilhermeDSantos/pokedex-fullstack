@@ -17,9 +17,9 @@ data.**
   abilities, stats, description, evolution chain). The backend is the only thing that talks to it.
   The frontend never knows where a field came from.
 - **Anyone can browse and view Pokémon**, logged in or not (US-01, US-02).
-- **A logged-in user can sync a Pokémon into the local database** (US-03). The backend copies a
-  snapshot of the PokeAPI data into PostgreSQL. Nobody types Pokémon data by hand. You choose
-  *which* Pokémon, and the data comes from PokeAPI.
+- **A logged-in user can sync a Pokémon into the local database** (US-03). The backend records the
+  Pokémon (its Pokédex number) in PostgreSQL. Nobody types Pokémon data by hand. You choose
+  *which* Pokémon; its data keeps coming from PokeAPI, and the local record holds what's ours.
 - **Once synced, a Pokémon carries proprietary fields** that PokeAPI doesn't have: a localized name,
   a region, and internal classification tags. These are the brief's own three examples. A logged-in
   user can edit them or remove the local record (US-04).
@@ -42,7 +42,6 @@ remove all happen on the detail page.
 | **PokeAPI** / **source** | The external source of canonical data. Read-only from our side. In code: the `PokemonRepository` port. |
 | **Local record** / **local Pokémon** | A Pokémon synced into our PostgreSQL database. The `LocalPokemon` aggregate. It's shared and has no owner. |
 | **Sync** | Creating the local record of a Pokémon from PokeAPI data (US-03). The brief calls it "Data Synchronization". |
-| **Snapshot** | The scalar subset of PokeAPI data copied into the local record at sync time (name, category, height, weight, sprite, artwork, description). |
 | **Custom attributes** | The proprietary fields only we own (US-03.a, US-04): `localizedName`, `region`, `tags`. |
 | **Localized name** | The name the organization displays, e.g. a translation for a local market. Free text, optional (D-027). |
 | **Display name** | `localizedName` when it's set, otherwise the original name. Computed by the domain. |
@@ -63,21 +62,18 @@ records are shared, not owned.
 ┌──────────── LocalPokemon (aggregate root) ─────────────┐   ┌──── UserAccount (aggregate root) ────┐
 │ LocalPokemonId id            (UUID, minted at the edge) │   │ UserId id                             │
 │ PokedexNumber pokedexNumber  (unique)                   │   │ Email email            (unique)       │
-│ PokemonSnapshot snapshot     (copied from PokeAPI)      │   │ FullName name                         │
-│   └ name (unique), category, height, weight,            │   │ PasswordHash passwordHash             │
-│     spriteUrl, artworkUrl, description                  │   │ Instant createdAt                     │
-│ CustomAttributes custom      (ours — US-03.a / US-04)   │   └───────────────────────────────────────┘
-│   ├ localizedName (optional)                            │
-│   ├ region        (optional)                            │
-│   └ Set<Tag> tags (0..10)                               │
+│ CustomAttributes custom      (ours — US-03.a / US-04)   │   │ FullName name                         │
+│   ├ localizedName (optional)                            │   │ PasswordHash passwordHash             │
+│   ├ region        (optional)                            │   │ Instant createdAt                     │
+│   └ Set<Tag> tags (0..10)                               │   └───────────────────────────────────────┘
 │ Instant syncedAt, updatedAt                             │
 └─────────────────────────────────────────────────────────┘
 ```
 
-The local record stores a **scalar snapshot** and not the full profile (D-031). Types, abilities,
-stats and the evolution chain are always read from PokeAPI, because every screen that shows them
-fetches PokeAPI anyway. The snapshot still satisfies US-03 ("persist Pokémon data") and keeps
-persistence to two tables. Tags are child values of the aggregate (`@ElementCollection`), with no
+The local record stores the **Pokédex number and our fields**, nothing copied from PokeAPI
+(D-039). PokeAPI stays the source of truth: the name, types, abilities, stats and the evolution
+chain are always read from it, so nothing local can go stale, and a renamed Pokémon needs no
+migration. Tags are child values of the aggregate (`@ElementCollection`, indexed by `tag`), with no
 repository of their own.
 
 ### Value Objects (`domain/model`, all `record`, validated in the compact constructor)
@@ -87,15 +83,14 @@ repository of their own.
 | `LocalPokemonId(UUID value)` | non-null; `generate()` (edge only) |
 | `UserId(UUID value)` | same shape |
 | `PokedexNumber(int value)` | `value ≥ MIN_VALUE` (1) → `InvalidPokedexNumberException` ("Pokédex number must be at least 1", Validation) |
-| `PokemonIdentifier(String value)` | trimmed, lower-cased; `[a-z0-9-]{1,100}` → else `InvalidPokemonIdentifierException` ("A Pokémon is identified by its name or its Pokédex number", Validation). A name **or** a number; `isNumber()` / `asNumber()` arrive with the local lookup (Slice 4) |
+| `PokemonIdentifier(String value)` | trimmed, lower-cased; `[a-z0-9-]{1,100}` → else `InvalidPokemonIdentifierException` ("A Pokémon is identified by its name or its Pokédex number", Validation). A name **or** a number; `isNumber()` / `asNumber()` let the local lookup go straight to the database for a number |
 | `Height(BigDecimal meters)` / `Weight(BigDecimal kilograms)` | `≥ 0`, scale 1. Factories `fromDecimetres(int)` / `fromHectograms(int)` hold the unit conversion |
 | `PokemonType(String name)` | non-blank (else `IllegalArgumentException`: it comes from PokeAPI, so it's a mapping bug), trimmed, lower-cased |
 | `Ability(String name, boolean hidden)` | non-blank name |
 | `BaseStat(StatName name, int value)` | `1 ≤ value ≤ 255`. `StatName` enum: `HP, ATTACK, DEFENSE, SPECIAL_ATTACK, SPECIAL_DEFENSE, SPEED` |
-| `PokemonProfile(...)` | The full PokeAPI view: name, category, height, weight, spriteUrl, artworkUrl, types, abilities, `stats` exactly one per `StatName`, kept in `StatName` order, description. Name, height and weight required; urls, description and category nullable (PokeAPI has gaps). A broken rule here is a mapping bug (`IllegalArgumentException`). `toSnapshot()` comes with Slice 4 |
-| `PokemonSnapshot(...)` | name non-blank; category, height, weight, spriteUrl, artworkUrl, description; urls, category and description nullable |
-| `Tag(String value)` | trimmed, lower-cased, `^[a-z0-9][a-z0-9-]{0,29}$` → `InvalidTagException` (Validation) |
-| `CustomAttributes(String localizedName, String region, Set<Tag> tags)` | strings trimmed, blank → `null`, ≤ `MAX_TEXT_LENGTH` (100) chars each; ≤ `MAX_TAGS` (10) tags → `InvalidCustomAttributesException` (Validation). `CustomAttributes.empty()` |
+| `PokemonProfile(...)` | The full PokeAPI view: name, category, height, weight, spriteUrl, artworkUrl, types, abilities, `stats` exactly one per `StatName`, kept in `StatName` order, description. Name, height and weight required; urls, description and category nullable (PokeAPI has gaps). A broken rule here is a mapping bug (`IllegalArgumentException`) |
+| `Tag(String value)` | trimmed, lower-cased, `^[a-z0-9][a-z0-9-]{0,29}$` → `InvalidTagException` (Validation). The rules arrive with the first write that takes tags (Slice 5) |
+| `CustomAttributes(String localizedName, String region, Set<Tag> tags)` | strings trimmed, blank → `null`, ≤ `MAX_TEXT_LENGTH` (100) chars each; ≤ `MAX_TAGS` (10) tags → `InvalidCustomAttributesException` (Validation). `CustomAttributes.empty()`. The rules arrive with Slice 5 |
 | `Email(String value)` | null rejected; trimmed, lower-cased, basic format, ≤ `MAX_LENGTH` (254) → `InvalidEmailException` (Validation) |
 | `FullName(String value)` | the user's name, free text as they write it (one field, no first/last split); null rejected; trimmed, `MIN_LENGTH`..`MAX_LENGTH` (2..100) chars → `InvalidFullNameException` (Validation) |
 | `RawPassword(String value)` | ≥ 8 chars and ≤ 72 **bytes** in UTF-8 (BCrypt's limit is in bytes: Spring Security 7.1.1 `BCrypt.hashpw` throws above it), at least one letter and one digit → `WeakPasswordException` ("at least 8 characters, including a letter and a digit"); over 72 bytes → `PasswordTooLongException` ("Password is too long": the byte limit is an implementation detail users can't act on). Both are Validation. **`toString()` is redacted.** Never stored and never logged |
@@ -105,9 +100,9 @@ repository of their own.
 
 | Method | Rule |
 |---|---|
-| `static create(LocalPokemonId, PokedexNumber, PokemonSnapshot, Instant now)` | Custom attributes start empty, `syncedAt = updatedAt = now` |
-| `updateCustomAttributes(CustomAttributes, Instant now)` | Replaces all custom attributes (PUT semantics), `updatedAt = now`. Snapshot untouched |
-| `displayName()` | `localizedName` if set, otherwise `snapshot.name()` |
+| `static create(LocalPokemonId, PokedexNumber, Instant now)` | Custom attributes start empty, `syncedAt = updatedAt = now` |
+| `updateCustomAttributes(CustomAttributes, Instant now)` (Slice 5) | Replaces all custom attributes (PUT semantics), `updatedAt = now` |
+| `displayName(String canonicalName)` | `localizedName` if set, otherwise the canonical name the caller read from PokeAPI |
 | `static builder()` | **Reconstitution only** (`LocalPokemonEntityMapper`) |
 
 ### `UserAccount` behaviour
@@ -133,7 +128,7 @@ interface alone:
 |---|---|---|
 | `UserAccountRepository` | `save`, `findById`, `findByEmail` | PostgreSQL |
 | `PokemonRepository` | `findAll`, `findByIdentifier` (read-only: the canonical data isn't ours to change) | PokeAPI |
-| `LocalPokemonRepository` (Slice 4) | load, save, delete | PostgreSQL |
+| `LocalPokemonRepository` | `save`, `findByPokedexNumber` (+ `delete` in Slice 5) | PostgreSQL |
 
 The canonical data and the local record are still two things in the domain, not because of where
 they are stored but because of what the business allows: the canonical data can only be read, the
@@ -164,16 +159,19 @@ Every method may throw `PokemonDataUnavailableException`.
 
 ```java
 public interface LocalPokemonRepository {
-    LocalPokemon save(LocalPokemon pokemon);
+    LocalPokemon save(LocalPokemon pokemon);                    // number taken → PokemonAlreadySyncedException
     Optional<LocalPokemon> findByPokedexNumber(PokedexNumber number);
-    Optional<LocalPokemon> findByIdentifier(PokemonIdentifier identifier);   // number → pokedex_number, name → name
-    default LocalPokemon getByIdentifier(PokemonIdentifier identifier) {
-        return findByIdentifier(identifier).orElseThrow(() -> new LocalPokemonNotFoundException(identifier));
+    default LocalPokemon getByPokedexNumber(PokedexNumber number) {
+        return findByPokedexNumber(number).orElseThrow(() -> new LocalPokemonNotFoundException(number));
     }
-    List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);  // the list merge: 1 query per page
-    void delete(LocalPokemon pokemon);
+    // Slice 5: void delete(LocalPokemon pokemon);
+    // Slice 6: List<LocalPokemon> findAllByPokedexNumbers(Collection<PokedexNumber> numbers);  // 1 query per page
 }
 ```
+
+The record has no name (D-039), so the repository is keyed by number only. A use case that gets a
+name resolves it to a number through `PokemonRepository` first.
+Every method may throw `LocalPokemonDataUnavailableException`.
 
 `UserAccountRepository`: `save`, `findById`, `findByEmail`. No `getById`: a missing account is
 never a 404. At login it's `InvalidCredentialsException`, and on `/auth/me` it's
@@ -201,8 +199,9 @@ DomainException (abstract)                          → 422 DOMAIN_ERROR (catch-
 
 **Data unavailable.** Any repository whose data can't be reached throws a subclass of the abstract
 `DataUnavailableException` (not a `DomainException`: no business rule was broken):
-`PokemonDataUnavailableException`, `UserAccountDataUnavailableException`, and
-`TransactionUnavailableException` when not even a transaction can start. Every one of them is a
+`PokemonDataUnavailableException`, `UserAccountDataUnavailableException`,
+`LocalPokemonDataUnavailableException`, and `TransactionUnavailableException` when not even a
+transaction can start (or finish). Every one of them is a
 **503 `DATA_UNAVAILABLE`** with the same neutral message ("The service is temporarily unavailable.
 Please try again in a moment."); the specific class and its cause go to the log, which is where the
 root cause is read. It doesn't matter whether the data sits in PostgreSQL or behind PokeAPI.
@@ -222,15 +221,16 @@ and wired in `infrastructure/config/UseCaseConfig`.
 | `BrowsePokemonUseCase` | `PageOutput<PokemonSummaryOutput> execute(BrowsePokemonInput)` | US-01 | `source.findAll` + **one** `repository.findAllByPokedexNumbers` for the page → merge |
 | `GetPokemonUseCase` | `PokemonDetailOutput execute(GetPokemonInput)` | US-02 | `source.getByIdentifier` + `repository.findByPokedexNumber` → merge; `local` is `null` when not synced |
 | `SyncPokemonUseCase` | `LocalPokemonOutput execute(SyncPokemonInput, LocalPokemonId, Instant now)` | US-03 | PokeAPI fetch **before** the transaction. Inside: already synced → 409, create, save |
-| `GetLocalPokemonUseCase` | `LocalPokemonOutput execute(GetLocalPokemonInput)` | US-03 | The resource `Location` points to. 404 if not synced |
+| `GetLocalPokemonUseCase` | `LocalPokemonOutput execute(GetLocalPokemonInput)` | US-03 | The resource `Location` points to. A number goes straight to the database; a name is resolved through `PokemonRepository` first. 404 if not synced |
 | `UpdateLocalPokemonUseCase` | `LocalPokemonOutput execute(UpdateLocalPokemonInput, Instant now)` | US-04 | 404 not synced / 400 / 409 concurrent |
 | `RemoveLocalPokemonUseCase` | `void execute(RemoveLocalPokemonInput)` | CRUD-D | 404 not synced |
 | `RegisterUserUseCase` | `UserOutput execute(RegisterUserInput, UserId, Instant now)` | TR-AUTH | 409 on duplicate email |
 | `AuthenticateUserUseCase` | `AccessTokenOutput execute(AuthenticateUserInput, Instant now)` | TR-AUTH | 401 `InvalidCredentialsException` |
 | `GetCurrentUserUseCase` | `UserOutput execute(GetCurrentUserInput)` | TR-AUTH | Account gone (e.g. the database was reset while a token was still valid) → 401 `UnknownAccountException` |
 
-The local write use cases (get-local, update, remove) resolve the identifier against the **local
-database only**. They never call PokeAPI.
+The `/local` use cases (get-local, update, remove) go straight to the database for a **number**.
+A **name** is resolved to its number through `PokemonRepository` first, because the record keeps no
+name (D-039). PokeAPI's cache makes that lookup cheap after the detail page has loaded.
 
 The auth input DTOs are wrapped by `UserAccountMapper` into `Registration(Email, FullName,
 RawPassword)` and `Credentials(Email, RawPassword)` before any port is called, so malformed input is
@@ -259,7 +259,7 @@ updated to match (or trimmed), never the other way around.
 Migrations, in the order the slices create them: `V1__create_user_accounts.sql`,
 `V2__create_local_pokemons.sql`, `V3__seed_demo_data.sql`. The seed has a demo user with a BCrypt hash, plus about 10 synced Pokémon
 with custom attributes and tags, so the demo starts with merged data. **Pikachu is not in the
-seed**, because it's synced live in the demo. The snapshot values come from **real PokeAPI
+seed**, because it's synced live in the demo. The Pokédex numbers come from **real PokeAPI
 responses** (recorded with `curl`, like the test fixtures), never typed from memory. The demo
 credentials are written in the README and nowhere else.
 
@@ -278,7 +278,7 @@ routes ignore the `Authorization` header, so an expired token never makes them f
 |---|---|---|---|---|
 | `GET /pokemon?page=0&size=20` | public | 200 `PageResponse<PokemonSummaryResponse>` (`displayName` and `synced` arrive with Slice 6) | 400 bad page/size, 503 `DATA_UNAVAILABLE` | US-01 |
 | `GET /pokemon/{identifier}` | public | 200 `PokemonDetailResponse` | 400, 404, 503 | US-02 |
-| `GET /pokemon/{identifier}/local` | public | 200 `LocalPokemonResponse` | 400, 404 (not synced) | US-03 |
+| `GET /pokemon/{identifier}/local` | public | 200 `LocalPokemonResponse` | 400, 404 (not in PokeAPI / not synced), 503 | US-03 |
 | `POST /pokemon/{identifier}/local` (no body) | 🔒 | 201 `LocalPokemonResponse` + `Location` | 400, 401, 404 (not in PokeAPI), 409 (already synced), 503 | US-03 / CRUD-C |
 | `PUT /pokemon/{identifier}/local` body `{ "localizedName", "region", "tags": [] }` | 🔒 | 200 `LocalPokemonResponse` | 400 (invalid **or** malformed body), 401, 404 (not synced), 409 (modified concurrently) | US-04 / CRUD-U |
 | `DELETE /pokemon/{identifier}/local` | 🔒 | 204 | 400, 401, 404 (not synced) | CRUD-D |
@@ -319,10 +319,9 @@ Shared shapes:
 // UserResponse — register (201) and /auth/me (200). Never the password hash.
 { "id": "6f1c…", "email": "ash@pallet.town", "name": "Ash Ketchum", "createdAt": "…" }
 
-// LocalPokemonResponse — the /local sub-resource
-{ "pokedexNumber": 25, "name": "pikachu", "displayName": "Pikachu BR",
-  "localizedName": "Pikachu BR", "region": "Kanto", "tags": ["mascot", "starter"],
-  "syncedAt": "…", "updatedAt": "…" }
+// LocalPokemonResponse — the /local sub-resource: our record alone, no PokeAPI data (D-039)
+{ "pokedexNumber": 25, "localizedName": "Pikachu BR", "region": "Kanto",
+  "tags": ["mascot", "starter"], "syncedAt": "…", "updatedAt": "…" }
 ```
 
 **Validation (D-028; both kinds are 400, as US-04 requires).** The domain is the single validation

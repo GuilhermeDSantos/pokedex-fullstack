@@ -4,9 +4,10 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Our record of a Pokémon (US-03): its Pokédex number, the link to the canonical data, plus the
- * fields that are ours. Everything else, the name included, is read from the canonical data (D-039). New records come from {@link #create}; {@link #builder()} only
- * rebuilds one that was already valid when it was stored (persistence mapper).
+ * Our record of a Pokémon (US-03): its Pokédex number plus the fields that are ours. Everything
+ * else, the name included, is read from the canonical data (D-039). New records come from
+ * {@link #create}; {@link #builder()} only rebuilds one that was already valid when it was stored
+ * (persistence mapper).
  */
 public class LocalPokemon {
 

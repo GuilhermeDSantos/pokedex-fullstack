@@ -16,10 +16,6 @@ never read the clock, so a test can't fail at midnight.
 // test/.../fixture/PokemonFixture.java
 public final class PokemonFixture {
 
-    public static final Instant NOW = Instant.parse("2026-01-15T10:00:00Z");
-    public static final LocalPokemonId PIKACHU_ID =
-        new LocalPokemonId(UUID.fromString("00000000-0000-0000-0000-000000000025"));
-
     private PokemonFixture() {}
 
     public static PokemonProfile pikachuProfile() {
@@ -41,19 +37,31 @@ public final class PokemonFixture {
         return new PokemonDetail(new PokedexNumber(25), pikachuProfile(), pichu);
     }
 
-    /** Pikachu right after a sync: no custom attributes yet. */
-    public static LocalPokemon localPikachu() {
-        return LocalPokemon.create(PIKACHU_ID, new PokedexNumber(25), pikachuProfile().toSnapshot(), NOW);
-    }
-
-    public static LocalPokemon localPikachuWithCustomAttributes() {
-        var pokemon = localPikachu();
-        pokemon.updateCustomAttributes(
-            new CustomAttributes("Pikachu BR", "Kanto", Set.of(new Tag("mascot"))), NOW);
-        return pokemon;
-    }
-
     private static List<BaseStat> allStats(int hp, int atk, int def, int spAtk, int spDef, int speed) { /* ... */ }
+}
+
+// test/.../fixture/LocalPokemonFixture.java
+public final class LocalPokemonFixture {
+
+    public static final Instant NOW = Instant.parse("2026-01-15T10:00:00Z");
+    public static final LocalPokemonId PIKACHU_ID =
+        new LocalPokemonId(UUID.fromString("00000000-0000-0000-0000-000000000025"));
+    public static final PokedexNumber PIKACHU_NUMBER = new PokedexNumber(25);
+
+    public static LocalPokemon syncedPikachu() {
+        return LocalPokemon.create(PIKACHU_ID, PIKACHU_NUMBER, NOW);
+    }
+
+    // A record whose own fields were already filled in: rebuilt as the mapper would.
+    public static LocalPokemon renamedPikachu() {
+        return LocalPokemon.builder()
+            .id(PIKACHU_ID)
+            .pokedexNumber(PIKACHU_NUMBER)
+            .customAttributes(new CustomAttributes("Pica", "Kanto", Set.of(new Tag("starter"), new Tag("mascot"))))
+            .syncedAt(NOW)
+            .updatedAt(NOW.plusSeconds(60))
+            .build();
+    }
 }
 ```
 
@@ -66,36 +74,20 @@ Plain JUnit 5. No Spring, no mocks. Most of the thinking happens here.
 class LocalPokemonTest {
 
     @Test
-    void shouldStartWithEmptyCustomAttributesWhenCreated() {
-        var pokemon = PokemonFixture.localPikachu();
+    void shouldBeSyncedWithItsNumberAndNoneOfOurFieldsYet() {
+        var pikachu = LocalPokemon.create(PIKACHU_ID, PIKACHU_NUMBER, NOW);
 
-        assertThat(pokemon.getCustomAttributes()).isEqualTo(CustomAttributes.empty());
-        assertThat(pokemon.getSyncedAt()).isEqualTo(PokemonFixture.NOW);
-        assertThat(pokemon.getUpdatedAt()).isEqualTo(PokemonFixture.NOW);
+        assertThat(pikachu.getPokedexNumber()).isEqualTo(PIKACHU_NUMBER);
+        assertThat(pikachu.getCustomAttributes()).isEqualTo(CustomAttributes.empty());
+        assertThat(pikachu.getSyncedAt()).isEqualTo(NOW);
+        assertThat(pikachu.getUpdatedAt()).isEqualTo(NOW);
     }
 
+    // Like a nickname: shown as "Pica", still Pikachu underneath.
     @Test
-    void shouldReplaceCustomAttributesWithoutTouchingSnapshotWhenUpdated() {
-        var pokemon = PokemonFixture.localPikachu();
-        var later = PokemonFixture.NOW.plusSeconds(60);
-        var attributes = new CustomAttributes("Pikachu BR", "Kanto", Set.of(new Tag("starter")));
-
-        pokemon.updateCustomAttributes(attributes, later);
-
-        assertThat(pokemon.getCustomAttributes()).isEqualTo(attributes);
-        assertThat(pokemon.getSnapshot()).isEqualTo(PokemonFixture.pikachuProfile().toSnapshot());
-        assertThat(pokemon.getUpdatedAt()).isEqualTo(later);
-        assertThat(pokemon.getSyncedAt()).isEqualTo(PokemonFixture.NOW);
-    }
-
-    @Test
-    void shouldUseLocalizedNameAsDisplayNameWhenSet() {
-        assertThat(PokemonFixture.localPikachuWithCustomAttributes().displayName()).isEqualTo("Pikachu BR");
-    }
-
-    @Test
-    void shouldFallBackToOriginalNameWhenLocalizedNameIsNotSet() {
-        assertThat(PokemonFixture.localPikachu().displayName()).isEqualTo("pikachu");
+    void shouldDisplayTheLocalizedNameWhenThereIsOneAndTheCanonicalNameOtherwise() {
+        assertThat(LocalPokemonFixture.syncedPikachu().displayName("pikachu")).isEqualTo("pikachu");
+        assertThat(LocalPokemonFixture.renamedPikachu().displayName("pikachu")).isEqualTo("Pica");
     }
 }
 
@@ -118,7 +110,7 @@ class TagTest {
 ## Interactor unit test
 
 `@ExtendWith(MockitoExtension.class)`. **Mock ports** (repository, `PokemonRepository`, `UnitOfWork`)
-and use **real pure collaborators** (`new LocalPokemonMapper()`). Use BDD Mockito only. Name the
+and use **real pure collaborators** (`new PokemonMapper()`). Use BDD Mockito only. Name the
 test after the interactor class, `SyncPokemonInteractorTest`.
 
 ```java
@@ -126,17 +118,16 @@ test after the interactor class, `SyncPokemonInteractorTest`.
 @ExtendWith(MockitoExtension.class)
 class SyncPokemonInteractorTest {
 
-    @Mock private PokemonRepository source;
-    @Mock private LocalPokemonRepository repository;
+    @Mock private PokemonRepository pokemonRepository;
+    @Mock private LocalPokemonRepository localPokemonRepository;
     @Mock private UnitOfWork unitOfWork;
-
-    private final LocalPokemonMapper mapper = new LocalPokemonMapper();   // real — never mocked
 
     private SyncPokemonInteractor interactor;
 
     @BeforeEach
     void setUp() {
-        interactor = new SyncPokemonInteractor(source, repository, mapper, unitOfWork);
+        interactor = new SyncPokemonInteractor(pokemonRepository, localPokemonRepository,
+            new PokemonMapper(), unitOfWork);   // the mapper is real — never mocked
         // Run the transactional body inline. lenient(): tests that fail before the boundary opens
         // never reach it.
         lenient().when(unitOfWork.inTransaction(ArgumentMatchers.<Supplier<Object>>any()))
@@ -144,41 +135,39 @@ class SyncPokemonInteractorTest {
     }
 
     @Test
-    void shouldSaveSnapshotWithGivenIdWhenNotSyncedYet() {
+    void shouldRecordThePokemonUnderItsNumberWithTheGivenIdAndTime() {
         // getByIdentifier is a DEFAULT method — stub it directly. Mockito doesn't run default
         // bodies on a mock, so stubbing findByIdentifier would leave getByIdentifier returning null.
-        given(source.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PokemonFixture.pikachuDetail());
-        given(repository.findByPokedexNumber(new PokedexNumber(25))).willReturn(Optional.empty());
-        given(repository.save(any(LocalPokemon.class))).willAnswer(i -> i.getArgument(0));
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PokemonFixture.pikachuDetail());
+        given(localPokemonRepository.save(any(LocalPokemon.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        var output = interactor.execute(new SyncPokemonInput("Pikachu"), PokemonFixture.PIKACHU_ID, PokemonFixture.NOW);
+        var output = interactor.execute(new SyncPokemonInput("Pikachu"), PIKACHU_ID, NOW);
 
         assertThat(output.pokedexNumber()).isEqualTo(25);
-        assertThat(output.name()).isEqualTo("pikachu");
-        assertThat(output.displayName()).isEqualTo("pikachu");   // no localized name yet
         assertThat(output.tags()).isEmpty();
-        assertThat(output.syncedAt()).isEqualTo(PokemonFixture.NOW);
+        assertThat(output.syncedAt()).isEqualTo(NOW);
         // The id was passed in, so the saved record is assertable too.
-        then(repository).should().save(argThat(saved -> saved.getId().equals(PokemonFixture.PIKACHU_ID)));
+        then(localPokemonRepository).should().save(argThat(saved -> saved.getId().equals(PIKACHU_ID)));
     }
 
     @Test
-    void shouldThrowConflictWhenPokemonIsAlreadySynced() {
-        given(source.getByIdentifier(any())).willReturn(PokemonFixture.pikachuDetail());
-        given(repository.findByPokedexNumber(new PokedexNumber(25))).willReturn(Optional.of(PokemonFixture.localPikachu()));
+    void shouldRefuseAPokemonThatIsAlreadySynced() {
+        given(pokemonRepository.getByIdentifier(new PokemonIdentifier("pikachu"))).willReturn(PokemonFixture.pikachuDetail());
+        given(localPokemonRepository.findByPokedexNumber(new PokedexNumber(25)))
+            .willReturn(Optional.of(LocalPokemonFixture.syncedPikachu()));
 
-        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("pikachu"), PokemonFixture.PIKACHU_ID, PokemonFixture.NOW))
+        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("pikachu"), PIKACHU_ID, NOW))
             .isInstanceOf(PokemonAlreadySyncedException.class);
 
-        then(repository).should(never()).save(any());  // not observable from the exception
+        then(localPokemonRepository).should(never()).save(any());  // not observable from the exception
     }
 
     @Test
     void shouldNotOpenTransactionWhenPokeApiIsUnavailable() {
-        given(source.getByIdentifier(any()))
+        given(pokemonRepository.getByIdentifier(any()))
             .willThrow(new PokemonDataUnavailableException("down", new IOException()));
 
-        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("pikachu"), PokemonFixture.PIKACHU_ID, PokemonFixture.NOW))
+        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("pikachu"), PIKACHU_ID, NOW))
             .isInstanceOf(PokemonDataUnavailableException.class);
 
         // Guards the "no remote call inside the transaction" rule.
@@ -187,10 +176,10 @@ class SyncPokemonInteractorTest {
 
     @Test
     void shouldRejectBlankIdentifierBeforeCallingPokeApi() {
-        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("  "), PokemonFixture.PIKACHU_ID, PokemonFixture.NOW))
+        assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("  "), PIKACHU_ID, NOW))
             .isInstanceOf(InvalidPokemonIdentifierException.class);
 
-        then(source).shouldHaveNoInteractions();
+        then(pokemonRepository).shouldHaveNoInteractions();
     }
 }
 
@@ -198,28 +187,28 @@ class SyncPokemonInteractorTest {
 @ExtendWith(MockitoExtension.class)
 class GetPokemonInteractorTest {
 
-    @Mock private PokemonRepository source;
-    @Mock private LocalPokemonRepository repository;
-    private GetPokemonInteractor interactor;   // set up with new LocalPokemonMapper()
+    @Mock private PokemonRepository pokemonRepository;
+    @Mock private LocalPokemonRepository localPokemonRepository;
+    private GetPokemonInteractor interactor;   // set up with new PokemonMapper()
 
     @Test
     void shouldMergeLocalAttributesWhenPokemonIsSynced() {
-        given(source.getByIdentifier(any())).willReturn(PokemonFixture.pikachuDetail());
-        given(repository.findByPokedexNumber(new PokedexNumber(25)))
-            .willReturn(Optional.of(PokemonFixture.localPikachuWithCustomAttributes()));
+        given(pokemonRepository.getByIdentifier(any())).willReturn(PokemonFixture.pikachuDetail());
+        given(localPokemonRepository.findByPokedexNumber(new PokedexNumber(25)))
+            .willReturn(Optional.of(LocalPokemonFixture.renamedPikachu()));
 
         var output = interactor.execute(new GetPokemonInput("pikachu"));
 
         assertThat(output.name()).isEqualTo("pikachu");
-        assertThat(output.displayName()).isEqualTo("Pikachu BR");
+        assertThat(output.displayName()).isEqualTo("Pica");
         assertThat(output.local().region()).isEqualTo("Kanto");
         assertThat(output.stats()).hasSize(6);   // from PokeAPI, not from the local record
     }
 
     @Test
     void shouldReturnNullLocalAndOriginalNameWhenNotSynced() {
-        given(source.getByIdentifier(any())).willReturn(PokemonFixture.pikachuDetail());
-        given(repository.findByPokedexNumber(any())).willReturn(Optional.empty());
+        given(pokemonRepository.getByIdentifier(any())).willReturn(PokemonFixture.pikachuDetail());
+        given(localPokemonRepository.findByPokedexNumber(any())).willReturn(Optional.empty());
 
         var output = interactor.execute(new GetPokemonInput("pikachu"));
 
@@ -258,37 +247,30 @@ class JpaLocalPokemonRepositoryIT {
     @Autowired private JpaLocalPokemonRepository repository;
 
     @Test
-    void shouldPersistAndReloadWholeAggregate() {
-        var pokemon = PokemonFixture.localPikachuWithCustomAttributes();
+    void shouldSaveAndReloadTheWholeRecordWithItsTags() {
+        var pikachu = LocalPokemonFixture.renamedPikachu();
 
-        repository.save(pokemon);
+        repository.save(pikachu);
 
-        assertThat(repository.findByPokedexNumber(new PokedexNumber(25))).hasValueSatisfying(reloaded -> {
-            assertThat(reloaded.getSnapshot()).isEqualTo(pokemon.getSnapshot());
-            assertThat(reloaded.getCustomAttributes()).isEqualTo(pokemon.getCustomAttributes()); // tags included
-            assertThat(reloaded.getSyncedAt()).isEqualTo(pokemon.getSyncedAt());
+        assertThat(repository.findByPokedexNumber(PIKACHU_NUMBER)).hasValueSatisfying(reloaded -> {
+            assertThat(reloaded.getId()).isEqualTo(pikachu.getId());
+            assertThat(reloaded.getCustomAttributes()).isEqualTo(pikachu.getCustomAttributes()); // tags included
+            assertThat(reloaded.getSyncedAt()).isEqualTo(pikachu.getSyncedAt());
+            assertThat(reloaded.getUpdatedAt()).isEqualTo(pikachu.getUpdatedAt());
         });
     }
 
+    // Two syncs of #25 at the same time both pass the use case's check; the unique number decides.
     @Test
-    void shouldFindByNameOrNumber() {
-        repository.save(PokemonFixture.localPikachu());
+    void shouldTranslateASecondRecordOfTheSamePokemonIntoAConflict() {
+        repository.save(LocalPokemonFixture.syncedPikachu());
+        var secondPikachu = LocalPokemon.create(
+            new LocalPokemonId(UUID.fromString("00000000-0000-0000-0000-000000000099")), PIKACHU_NUMBER, NOW);
 
-        assertThat(repository.findByIdentifier(new PokemonIdentifier("pikachu"))).isPresent();
-        assertThat(repository.findByIdentifier(new PokemonIdentifier("25"))).isPresent();
+        assertThatThrownBy(() -> repository.save(secondPikachu))
+            .isInstanceOf(PokemonAlreadySyncedException.class)
+            .hasMessage("Pokémon #25 is already in the local database");
     }
-
-    @Test
-    void shouldTranslateDuplicatePokedexNumberIntoConflict() {
-        repository.save(PokemonFixture.localPikachu());
-        var duplicate = LocalPokemon.create(new LocalPokemonId(UUID.fromString("00000000-0000-0000-0000-000000000099")),
-            new PokedexNumber(25), PokemonFixture.pikachuProfile().toSnapshot(), PokemonFixture.NOW);
-
-        assertThatThrownBy(() -> repository.save(duplicate)).isInstanceOf(PokemonAlreadySyncedException.class);
-    }
-
-    @Test
-    void shouldReturnOnlyRequestedNumbersInOneQuery() { /* findAllByPokedexNumbers; empty input → empty list */ }
 }
 ```
 
@@ -356,7 +338,7 @@ class PokemonControllerIT {
 
     @TestConfiguration
     static class FixedClock {
-        @Bean Clock clock() { return Clock.fixed(PokemonFixture.NOW, ZoneOffset.UTC); }
+        @Bean Clock clock() { return Clock.fixed(LocalPokemonFixture.NOW, ZoneOffset.UTC); }
     }
 
     @Autowired private MockMvc mockMvc;
@@ -372,19 +354,19 @@ class PokemonControllerIT {
     void shouldReturnMergedDetailWithoutTokenBecauseReadsArePublic() throws Exception {
         given(getPokemonUseCase.execute(any())).willReturn(
             PokemonDetailOutput.from(PokemonFixture.pikachuDetail(),
-                Optional.of(PokemonFixture.localPikachuWithCustomAttributes())));
+                Optional.of(LocalPokemonFixture.renamedPikachu())));
 
         mockMvc.perform(get("/api/v1/pokemon/pikachu"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("pikachu"))
-            .andExpect(jsonPath("$.displayName").value("Pikachu BR"))
+            .andExpect(jsonPath("$.displayName").value("Pica"))
             .andExpect(jsonPath("$.local.region").value("Kanto"));
     }
 
     @Test
     void shouldReturn201WithLocationWhenPokemonIsSynced() throws Exception {
-        given(syncPokemonUseCase.execute(any(), any(), eq(PokemonFixture.NOW)))
-            .willReturn(LocalPokemonOutput.from(PokemonFixture.localPikachu()));
+        given(syncPokemonUseCase.execute(any(), any(), eq(LocalPokemonFixture.NOW)))
+            .willReturn(LocalPokemonOutput.from(LocalPokemonFixture.syncedPikachu()));
 
         mockMvc.perform(post("/api/v1/pokemon/pikachu/local").with(jwt()))
             .andExpect(status().isCreated())

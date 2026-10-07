@@ -22,7 +22,7 @@ claim should point at something concrete: a file, a test, a row in
    - Output ports: repositories, `PokemonRepository`, `UnitOfWork`, `PasswordHasher`, `TokenIssuer`.
    - The merge: a use case combines the PokeAPI port and the repository. `displayName` is a domain
      rule on `LocalPokemon`.
-   - **Data model** (TR-DB-1/2): `local_pokemons` (a scalar snapshot + the custom attributes, D-031)
+   - **Data model** (TR-DB-1/2): `local_pokemons` (the Pokédex number + the custom attributes, D-039)
      with its tags table, and `user_accounts` as the user-management collection. Unique keys,
      `@Version`, Flyway-owned.
    - Show `LayeredArchitectureTest`: the rules are enforced, not just written down.
@@ -88,8 +88,8 @@ claim should point at something concrete: a file, a test, a row in
 - How do you guarantee the domain doesn't depend on Spring? → The ArchUnit allowlist. Adding a
   Spring import to `domain` fails the build.
 - What happens if PokeAPI is down? → `PokemonDataUnavailableException` → 503 on the merged reads;
-  `GET …/local` still works, and the cache softens it. Serving synced Pokémon from the snapshot is
-  the next step (D-030).
+  `GET …/local` by number still works, and the cache softens it. Serving synced Pokémon offline
+  would need a copy of PokeAPI's data, which D-039 dropped on purpose.
 - Two users edit the same Pokémon at once? → `@Version` → 409 (D-011). Next step: expose the
   version and require `If-Match`, so a stale browser tab also gets a 409.
 - Two users sync the same Pokémon at once? → The unique constraint, translated to 409. The

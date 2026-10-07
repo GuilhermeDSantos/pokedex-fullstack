@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 3 — View a Pokémon.** Next task: S4.1 (Slice 4, sync a Pokémon into the local database). Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 4 — Sync a Pokémon.** Next task: S5.1 (Slice 5, edit and remove the local data). Slice 4 works end to end on Docker: sign in from the detail page, sync, and the local section appears. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -330,22 +330,25 @@ Frontend:
 ## Slice 4 — Sync a Pokémon into the local database (US-03, TR-DAL, TR-API-1)
 
 Backend:
-- [ ] S4.1 Domain (TDD): `LocalPokemonId`, `PokemonSnapshot` (+ `PokemonProfile.toSnapshot()`),
-      `Tag`, `CustomAttributes`, the `LocalPokemon` aggregate (`create`) +
-      `PokemonAlreadySyncedException`, `LocalPokemonNotFoundException`.
-- [ ] S4.2 Migration `V2__create_local_pokemons.sql` (`local_pokemons` + `local_pokemon_tags`), then
-      `LocalPokemonEntity`, `LocalPokemonJpaRepository`, `LocalPokemonEntityMapper`,
-      `JpaLocalPokemonRepository` + IT (whole-aggregate round trip, find by name and by number,
-      unique constraint → 409).
-- [ ] S4.3 Interactors (TDD): `SyncPokemon` (no transaction during the PokeAPI call),
+- [x] S4.1 Domain (TDD): `LocalPokemonId`, `Tag`, `CustomAttributes`, the `LocalPokemon`
+      aggregate (`create`, `displayName(canonicalName)`) + `PokemonAlreadySyncedException`,
+      `LocalPokemonNotFoundException`, `PokemonIdentifier.isNumber()`. No `PokemonSnapshot` and no
+      name: the record is the Pokédex number + our fields (D-039, the developer's call in review).
+      `Tag`'s rules wait for the first write that takes tags (S5.1).
+- [x] S4.2 Migration `V2__create_local_pokemons.sql` (`local_pokemons` + `local_pokemon_tags`, index
+      on `tag`), then `LocalPokemonEntity`, `LocalPokemonJpaRepository`, `LocalPokemonEntityMapper`,
+      `JpaLocalPokemonRepository` + IT (whole-aggregate round trip with tags, unique number → 409).
+      `DatabaseFailures` is the one rule for "unreachable": the full suite showed a connection
+      that dies between two requests answered 500; `DatabaseConnectionLostIT` now proves 503.
+- [x] S4.3 Interactors (TDD): `SyncPokemon` (no transaction during the PokeAPI call),
       `GetLocalPokemon`. `GetPokemon` now merges the local record into the detail (`local`, `null`
       when not synced).
-- [ ] S4.4 `POST` and `GET /pokemon/{identifier}/local` + IT (201 + `Location`, 401 without a token,
+- [x] S4.4 `POST` and `GET /pokemon/{identifier}/local` + IT (201 + `Location`, 401 without a token,
       404 not in PokeAPI / not synced, 409 already synced, 503), and the `local` field in the detail
       response.
 
 Frontend:
-- [ ] S4.5 Local section of the detail page: **Sync to local database** when `local` is null ("Log
+- [x] S4.5 Local section of the detail page: **Sync to local database** when `local` is null ("Log
       in to sync" with `returnTo` when signed out). A 409 (someone just synced it) refetches and
       shows the local data with an inline note. A 401 on the sync (expired token, or the account is
       gone, D-033) clears the session and goes to `/login` with `returnTo` (moved here from S1.10).
@@ -394,7 +397,7 @@ Frontend:
 - [ ] D.1 `V3__seed_demo_data.sql`: demo user + about 10 synced Pokémon with custom attributes
       and tags, so the list starts with merged data. The user's BCrypt hash is generated with the
       project's own `BCryptPasswordHasher` (a one-off run), never with an online generator. The
-      plain demo password appears only in the README. The snapshot values come from real
+      plain demo password appears only in the README. The Pokédex numbers come from real
       PokeAPI responses recorded with `curl`, never typed from memory. **Pikachu is not in the
       seed**: it's synced live in the demo (a 201, not a 409) and it's the test fixture.
 - [ ] D.2 `ApplicationContextIT`: context loads, every `*UseCase` bean resolves, seed present.
@@ -449,8 +452,8 @@ Independent of the Pokémon code: do it once Slice 5 is done, before the polish.
 ## Parked (ideas worth keeping; build only if every phase above is done)
 
 Product and domain:
-- **Snapshot fallback**: serve synced Pokémon from the local snapshot when PokeAPI is down (D-030).
-- **Resync**: refresh a local record's snapshot from PokeAPI, keeping the custom attributes.
+- **Offline fallback**: serve synced Pokémon when PokeAPI is down. It needs a copy of PokeAPI's
+  data, which D-039 dropped on purpose (D-030).
 - **Localized names per language**: a `(language, name)` table, with `displayName` chosen by
   `Accept-Language` (D-027).
 - **Per-user collections** ("my Pokémon", nicknames per user). This is a different product from the

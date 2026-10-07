@@ -26,44 +26,34 @@ public interface SyncPokemonUseCase {
 // application/usecase/SyncPokemonInteractor.java
 public class SyncPokemonInteractor implements SyncPokemonUseCase {
 
-    private final PokemonRepository source;
-    private final LocalPokemonRepository repository;
-    private final LocalPokemonMapper mapper;
+    private final PokemonRepository pokemonRepository;
+    private final LocalPokemonRepository localPokemonRepository;
+    private final PokemonMapper mapper;
     private final UnitOfWork unitOfWork;
 
-    public SyncPokemonInteractor(PokemonRepository source,
-                                 LocalPokemonRepository repository,
-                                 LocalPokemonMapper mapper,
-                                 UnitOfWork unitOfWork) {
-        this.source = source;
-        this.repository = repository;
-        this.mapper = mapper;
-        this.unitOfWork = unitOfWork;
-    }
+    // constructor omitted — constructor injection only
 
     @Override
     public LocalPokemonOutput execute(SyncPokemonInput input, LocalPokemonId id, Instant now) {
-        // 1. Remote call FIRST, outside the transaction. A PokeAPI round trip must never hold a
-        //    DB connection/transaction open. 404 → PokemonNotFoundException,
-        //    outage → PokemonDataUnavailableException; both just propagate.
-        var identifier = mapper.toIdentifier(input.identifier());
-        var detail = source.getByIdentifier(identifier);
+        // Read the canonical data before the transaction: a slow call must never hold a connection.
+        var number = pokemonRepository.getByIdentifier(mapper.toIdentifier(input.identifier())).number();
 
-        // 2. Read-check-write against our own store, atomically.
         return unitOfWork.inTransaction(() -> {
-            // The unique constraint on pokedex_number is the real guarantee under concurrency (the
-            // adapter translates a violation into the same exception). This check gives the
-            // common case a clear 409 without relying on the constraint.
-            repository.findByPokedexNumber(detail.number()).ifPresent(existing -> {
-                throw new PokemonAlreadySyncedException(detail.number());
+            localPokemonRepository.findByPokedexNumber(number).ifPresent(existing -> {
+                throw new PokemonAlreadySyncedException(number);
             });
-
-            var pokemon = mapper.toDomain(detail, id, now);
-            return LocalPokemonOutput.from(repository.save(pokemon));
+            var synced = localPokemonRepository.save(LocalPokemon.create(id, number, now));
+            return LocalPokemonOutput.from(synced);
         });
     }
 }
 ```
+
+The PokeAPI call comes first and outside the transaction: 404 → `PokemonNotFoundException`, an
+outage → `PokemonDataUnavailableException`, and both just propagate. Inside, the `findByPokedexNumber`
+check gives the common case a clear 409; under concurrency the unique constraint on
+`pokedex_number` is the real guarantee, and the adapter translates a violation into the same
+exception. Only the number is kept (D-039), so `create` needs nothing else from the detail.
 
 That `ifPresent → throw` is **not** the forbidden "pre-validate and skip" pattern. It throws, so
 the caller gets a 409 and can tell the outcome apart from a success. What's forbidden is a guard
@@ -84,23 +74,35 @@ public interface GetPokemonUseCase {
 // application/usecase/GetPokemonInteractor.java
 public class GetPokemonInteractor implements GetPokemonUseCase {
 
-    private final PokemonRepository source;
-    private final LocalPokemonRepository repository;
-    private final LocalPokemonMapper mapper;
+    private final PokemonRepository pokemonRepository;
+    private final LocalPokemonRepository localPokemonRepository;
+    private final PokemonMapper mapper;
 
-    public GetPokemonInteractor(PokemonRepository source, LocalPokemonRepository repository,
-                                LocalPokemonMapper mapper) {
-        this.source = source;
-        this.repository = repository;
-        this.mapper = mapper;
-    }
+    // constructor omitted
 
     @Override
     public PokemonDetailOutput execute(GetPokemonInput input) {
-        var detail = source.getByIdentifier(mapper.toIdentifier(input.identifier()));
-        var local = repository.findByPokedexNumber(detail.number());   // absent = not synced, not an error
+        var detail = pokemonRepository.getByIdentifier(mapper.toIdentifier(input.identifier()));
+        var local = localPokemonRepository.findByPokedexNumber(detail.number());   // absent = not synced
         return PokemonDetailOutput.from(detail, local);
     }
+}
+```
+
+## The `/local` read — `GetLocalPokemonUseCase` (US-03)
+
+The record keeps no name (D-039), so a name is resolved to its number through the canonical data;
+a number goes straight to the database.
+
+```java
+// application/usecase/GetLocalPokemonInteractor.java
+@Override
+public LocalPokemonOutput execute(GetLocalPokemonInput input) {
+    var identifier = mapper.toIdentifier(input.identifier());
+    var number = identifier.isNumber()
+        ? identifier.asNumber()
+        : pokemonRepository.getByIdentifier(identifier).number();
+    return LocalPokemonOutput.from(localPokemonRepository.getByPokedexNumber(number));
 }
 ```
 
@@ -144,10 +146,10 @@ input, and it has no mapper of its own.
 
 ## Update — `UpdateLocalPokemonUseCase` (US-04)
 
-404 when the Pokémon isn't synced (from `getByIdentifier`). 400 when an attribute is invalid
+404 when the Pokémon isn't synced (from `getByPokedexNumber`). 400 when an attribute is invalid
 (thrown by the `Tag`/`CustomAttributes` constructors inside the mapper). 409 on a concurrent edit
-(the adapter translates `@Version`). The interactor checks none of this itself, and never calls
-PokeAPI.
+(the adapter translates `@Version`). The interactor checks none of this itself. The identifier is
+resolved to a number as in `GetLocalPokemon`; `resolveNumber` stands for that step.
 
 ```java
 // application/usecase/UpdateLocalPokemonUseCase.java
@@ -159,24 +161,19 @@ public interface UpdateLocalPokemonUseCase {
 public class UpdateLocalPokemonInteractor implements UpdateLocalPokemonUseCase {
 
     private final LocalPokemonRepository repository;
-    private final LocalPokemonMapper mapper;
+    private final PokemonMapper mapper;
     private final UnitOfWork unitOfWork;
 
-    public UpdateLocalPokemonInteractor(LocalPokemonRepository repository, LocalPokemonMapper mapper,
-                                        UnitOfWork unitOfWork) {
-        this.repository = repository;
-        this.mapper = mapper;
-        this.unitOfWork = unitOfWork;
-    }
+    // constructor omitted
 
     @Override
     public LocalPokemonOutput execute(UpdateLocalPokemonInput input, Instant now) {
         // Built BEFORE the transaction: invalid input fails fast with a 400 and never opens one.
-        var identifier = mapper.toIdentifier(input.identifier());
         var attributes = mapper.toCustomAttributes(input);
+        var number = resolveNumber(mapper.toIdentifier(input.identifier()));
 
         return unitOfWork.inTransaction(() -> {
-            var pokemon = repository.getByIdentifier(identifier);
+            var pokemon = repository.getByPokedexNumber(number);
             pokemon.updateCustomAttributes(attributes, now);   // the domain decides
             return LocalPokemonOutput.from(repository.save(pokemon));
         });
@@ -193,18 +190,18 @@ Nothing to return, so this uses the `Runnable` overload of `inTransaction` with 
 public class RemoveLocalPokemonInteractor implements RemoveLocalPokemonUseCase {
 
     private final LocalPokemonRepository repository;
-    private final LocalPokemonMapper mapper;
+    private final PokemonMapper mapper;
     private final UnitOfWork unitOfWork;
 
     // constructor omitted
 
     @Override
     public void execute(RemoveLocalPokemonInput input) {
-        var identifier = mapper.toIdentifier(input.identifier());
+        var number = resolveNumber(mapper.toIdentifier(input.identifier()));
         unitOfWork.inTransaction(() -> {
-            // getByIdentifier first: removing something that isn't synced must be a 404, not a
-            // silent 204 that claims something was removed.
-            var pokemon = repository.getByIdentifier(identifier);
+            // get first: removing something that isn't synced must be a 404, not a silent 204
+            // that claims something was removed.
+            var pokemon = repository.getByPokedexNumber(number);
             repository.delete(pokemon);
         });
     }
@@ -302,24 +299,18 @@ What the transaction does **not** give you:
 - **Lost-update protection.** That comes from `@Version` on `LocalPokemonEntity`, translated into
   `LocalPokemonModifiedConcurrentlyException` (409).
 
-## Mapper — `LocalPokemonMapper`
+## Mapper — `PokemonMapper`
 
 A plain class in `application/mapper/`. It owns every *external input → domain object*
-construction: wrapping strings into VOs and calling `LocalPokemon.create`. It's a pure function of
-its arguments (no ports), so it's never mocked. When it needs an id or `now`, it gets them as
-parameters.
+construction: wrapping strings into VOs. It's a pure function of its arguments (no ports), so it's
+never mocked. If it ever needs an id or `now`, it gets them as parameters.
 
 ```java
-// application/mapper/LocalPokemonMapper.java
-public class LocalPokemonMapper {
+// application/mapper/PokemonMapper.java
+public class PokemonMapper {
 
     public PokemonIdentifier toIdentifier(String raw) {
         return new PokemonIdentifier(raw);
-    }
-
-    // id and now are parameters — this method can't generate or read either.
-    public LocalPokemon toDomain(PokemonDetail detail, LocalPokemonId id, Instant now) {
-        return LocalPokemon.create(id, detail.number(), detail.profile().toSnapshot(), now);
     }
 
     public CustomAttributes toCustomAttributes(UpdateLocalPokemonInput input) {
@@ -345,16 +336,13 @@ never a `null` passed around.
 public record UpdateLocalPokemonInput(String identifier, String localizedName, String region, List<String> tags) {}
 
 // application/dto/LocalPokemonOutput.java — the /local sub-resource
-public record LocalPokemonOutput(int pokedexNumber, String name, String displayName,
-                                 String localizedName, String region, List<String> tags,
+public record LocalPokemonOutput(int pokedexNumber, String localizedName, String region, List<String> tags,
                                  Instant syncedAt, Instant updatedAt) {
 
     public static LocalPokemonOutput from(LocalPokemon pokemon) {
         var custom = pokemon.getCustomAttributes();
         return new LocalPokemonOutput(
             pokemon.getPokedexNumber().value(),
-            pokemon.getSnapshot().name(),
-            pokemon.displayName(),
             custom.localizedName(),
             custom.region(),
             custom.tags().stream().map(Tag::value).sorted().toList(), // deterministic order for clients/tests
@@ -376,7 +364,7 @@ public record PokemonDetailOutput(int pokedexNumber, String name, String display
         return new PokemonDetailOutput(
             detail.number().value(),
             profile.name(),
-            local.map(LocalPokemon::displayName).orElse(profile.name()),
+            local.map(record -> record.displayName(profile.name())).orElse(profile.name()),
             profile.category(),
             profile.height().meters(),
             profile.weight().kilograms(),
@@ -420,8 +408,8 @@ nothing else in the context can ask for an `*Interactor`.
 public class UseCaseConfig {
 
     @Bean
-    LocalPokemonMapper localPokemonMapper() {
-        return new LocalPokemonMapper();
+    PokemonMapper pokemonMapper() {
+        return new PokemonMapper();
     }
 
     @Bean
@@ -435,14 +423,15 @@ public class UseCaseConfig {
     }
 
     @Bean
-    SyncPokemonUseCase syncPokemonUseCase(PokemonRepository source, LocalPokemonRepository repository,
-                                          LocalPokemonMapper mapper, UnitOfWork unitOfWork) {
-        return new SyncPokemonInteractor(source, repository, mapper, unitOfWork);
+    SyncPokemonUseCase syncPokemonUseCase(PokemonRepository pokemonRepository,
+                                          LocalPokemonRepository localPokemonRepository,
+                                          PokemonMapper mapper, UnitOfWork unitOfWork) {
+        return new SyncPokemonInteractor(pokemonRepository, localPokemonRepository, mapper, unitOfWork);
     }
 
     @Bean
     UpdateLocalPokemonUseCase updateLocalPokemonUseCase(LocalPokemonRepository repository,
-                                                        LocalPokemonMapper mapper, UnitOfWork unitOfWork) {
+                                                        PokemonMapper mapper, UnitOfWork unitOfWork) {
         return new UpdateLocalPokemonInteractor(repository, mapper, unitOfWork);
     }
 
