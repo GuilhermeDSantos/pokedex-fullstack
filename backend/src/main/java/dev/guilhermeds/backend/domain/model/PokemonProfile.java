@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.domain.model;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,6 +15,6 @@ public record PokemonProfile(String name, String category, Height height, Weight
         Objects.requireNonNull(weight, "weight must not be null");
         types = List.copyOf(types);
         abilities = List.copyOf(abilities);
-        stats = List.copyOf(stats);
+        stats = stats.stream().sorted(Comparator.comparing(BaseStat::name)).toList();
     }
 }
