@@ -115,4 +115,17 @@ class PokeApiTranslatorTest {
         assertThat(translator.toDetail(pokemon(25), shuffled, evolutionChain(10)).profile().description())
             .startsWith("Possesses cheek sacs in which it stores electricity.");
     }
+
+    // PokeAPI keeps the games' line breaks and form feeds (read as single spaces) and soft hyphens (dropped).
+    @Test
+    void shouldNormalizeTheBreaksInTheDescription() {
+        var pikachu = species(25);
+        var entry = new PokeApiSpeciesJson.FlavorText("When several\nof these POKé\u00adMON\fgather,  their electricity\ncould build.",
+            new NamedResource("en", "https://pokeapi.co/api/v2/language/9/"),
+            new NamedResource("red", "https://pokeapi.co/api/v2/version/1/"));
+        var oneEntry = new PokeApiSpeciesJson(pikachu.genera(), List.of(entry), pikachu.evolutionChain());
+
+        assertThat(translator.toDetail(pokemon(25), oneEntry, evolutionChain(10)).profile().description())
+            .isEqualTo("When several of these POKéMON gather, their electricity could build.");
+    }
 }
