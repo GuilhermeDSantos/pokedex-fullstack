@@ -10,10 +10,13 @@ import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.Tag;
 import dev.guilhermeds.backend.fixture.LocalPokemonFixture;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.LocalPokemonEntityMapper;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -26,6 +29,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -34,7 +38,8 @@ import static dev.guilhermeds.backend.fixture.LocalPokemonFixture.PIKACHU_NUMBER
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DataJpaTest
+// Statistics count the SQL statements: the list page's lookup must stay one query.
+@DataJpaTest(properties = "spring.jpa.properties.hibernate.generate_statistics=true")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({JpaLocalPokemonRepository.class, LocalPokemonEntityMapper.class})
 @Testcontainers
@@ -52,6 +57,12 @@ class JpaLocalPokemonRepositoryIT {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private TestEntityManager entityManager;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
 
     @Test
     void shouldSaveAndReloadTheWholeRecordWithItsTags() {
@@ -99,6 +110,28 @@ class JpaLocalPokemonRepositoryIT {
         var pikachu = repository.getByPokedexNumber(PIKACHU_NUMBER);
         pikachu.updateCustomAttributes(attributes, now);
         repository.save(pikachu);
+    }
+
+    // A list page asks for 20 numbers at once: their records come back with their tags, in one query.
+    @Test
+    void shouldFindThePageRecordsWithTheirTagsInOneQuery() {
+        var eevee = new PokedexNumber(133);
+        repository.save(LocalPokemonFixture.renamedPikachu());
+        var renamedEevee = LocalPokemon.create(
+            new LocalPokemonId(UUID.fromString("00000000-0000-0000-0000-000000000133")), eevee, NOW);
+        renamedEevee.updateCustomAttributes(new CustomAttributes("Evoli", null, Set.of(new Tag("starter"))), NOW);
+        repository.save(renamedEevee);
+        entityManager.flush();
+        entityManager.clear();
+        var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+
+        var found = repository.findAllByPokedexNumbers(List.of(PIKACHU_NUMBER, eevee, new PokedexNumber(150)));
+
+        assertThat(found).extracting(LocalPokemon::getCustomAttributes)
+            .containsExactlyInAnyOrder(LocalPokemonFixture.renamedPikachu().getCustomAttributes(),
+                new CustomAttributes("Evoli", null, Set.of(new Tag("starter"))));
+        assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
     }
 
     // Removed with its tags; the Pokémon can then be synced again (CRUD-D).
