@@ -12,10 +12,12 @@ import dev.guilhermeds.backend.application.dto.PokemonDetailOutput;
 import dev.guilhermeds.backend.application.dto.PokemonSummaryOutput;
 import dev.guilhermeds.backend.application.dto.StatOutput;
 import dev.guilhermeds.backend.application.dto.SyncPokemonInput;
+import dev.guilhermeds.backend.application.dto.UpdateLocalPokemonInput;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetLocalPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
+import dev.guilhermeds.backend.application.usecase.UpdateLocalPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokedexNumberException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
@@ -49,6 +51,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @WebMvcTest(PokemonController.class)
@@ -84,6 +87,9 @@ class PokemonControllerIT {
 
     @MockitoBean
     private GetLocalPokemonUseCase getLocalPokemonUseCase;
+
+    @MockitoBean
+    private UpdateLocalPokemonUseCase updateLocalPokemonUseCase;
 
     @Test
     void shouldReturnAPageOfCardsToAnyone() {
@@ -308,6 +314,27 @@ class PokemonControllerIT {
         assertThat(mockMvc.get().uri("/api/v1/pokemon/26/local"))
             .hasStatus(404)
             .bodyJson().extractingPath("$.message").isEqualTo("Pokémon #26 is not in the local database");
+    }
+
+    // ---- editing our record (US-04) -----------------------------------------------------------------
+
+    private static final String EDIT = """
+        { "localizedName": "Pikachu BR", "region": "Kanto", "tags": [ "starter", "electric" ] }
+        """;
+
+    @Test
+    void shouldEditOurRecordForASignedInUser() {
+        given(updateLocalPokemonUseCase.execute(
+            new UpdateLocalPokemonInput("25", "Pikachu BR", "Kanto", List.of("starter", "electric")), NOW))
+            .willReturn(new LocalPokemonOutput(25, "Pikachu BR", "Kanto", List.of("electric", "starter"), NOW, NOW));
+
+        assertThat(mockMvc.put().uri("/api/v1/pokemon/25/local").with(jwt()).contentType(APPLICATION_JSON).content(EDIT))
+            .hasStatusOk()
+            .bodyJson()
+            .isStrictlyEqualTo("""
+                { "pokedexNumber": 25, "localizedName": "Pikachu BR", "region": "Kanto", "tags": [ "electric", "starter" ],
+                  "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" }
+                """);
     }
 
     // One Pokémon for the client: our record rides along, and its localized name is the one to show.
