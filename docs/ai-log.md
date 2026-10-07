@@ -31,6 +31,19 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — "The domain shouldn't know PokeAPI exists"
+- **Context:** Reviewing Slice 3, the developer questioned the `domain/model` and `domain/source`
+  packages (OV-2, Clean Architecture).
+- **AI proposed:** Explained `domain/source` as "the contract with PokeAPI".
+- **Problem:** The developer objected: like a repository hides the JPA entity, the domain must not
+  know whether data comes from an API, a database or a file. The code already worked that way (no
+  domain or application class imports infrastructure; ArchUnit enforces it), but the AI's wording,
+  and nine comments in the domain, named PokeAPI.
+- **Resolution:** The comments now say "the source"; `domain-model.md` states the rule, with the
+  repository/entity parallel. Zero mentions of PokeAPI remain in domain code.
+- **Lesson:** The words around the code are part of the architecture: a comment that names the
+  adapter leaks it as surely as an import, just without a test to catch it.
+
 ### 2026-10-07 — Slice 3: four slips of the AI's own, and a 404 that never showed
 - **Context:** Slice 3, a Pokémon's detail (US-02).
 - **AI proposed:** The detail through the same TDD rhythm as the list.

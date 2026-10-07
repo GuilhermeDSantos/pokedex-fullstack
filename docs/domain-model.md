@@ -122,7 +122,12 @@ computed: that happens behind the `PasswordHasher` port.
 
 ### PokeAPI port (`domain/source`)
 
-Every data port follows one shape: an interface in the domain, implemented in `infrastructure`.
+The domain never knows where data comes from: not JPA, not PokeAPI, not JSON. Every data port follows
+one shape: an interface in the domain, implemented in `infrastructure`, where the technical format
+(a JPA entity, PokeAPI's JSON) is translated into domain types and never leaves the adapter. Domain
+code doesn't even name PokeAPI in comments. The packages say which kind of port it is:
+`domain/repository` (ours), `domain/source` (read from outside, with the read models it returns),
+and `domain/model` holds the concepts both share (value objects, aggregates).
 There are two kinds, and the suffix says which:
 
 | Suffix | Data | Operations | Examples |
