@@ -65,4 +65,15 @@ describe('PokemonListPage', () => {
     expect(await screen.findByRole('article', { name: 'Pikachu' })).toBeInTheDocument()
     expect(within(screen.getByRole('navigation', { name: 'Pagination' })).getByText('Page 3 of 68')).toBeInTheDocument()
   })
+
+  it('moves between pages through links, so each page has its own URL', async () => {
+    const { router } = renderApp('/?page=3')
+
+    const pagination = await screen.findByRole('navigation', { name: 'Pagination' })
+    expect(within(pagination).getByRole('link', { name: 'Previous page' })).toHaveAttribute('href', '/?page=2')
+    await userEvent.click(within(pagination).getByRole('link', { name: 'Next page' }))
+
+    expect(router.state.location.search).toBe('?page=4')
+    expect(await screen.findByText('Page 4 of 68')).toBeInTheDocument()
+  })
 })
