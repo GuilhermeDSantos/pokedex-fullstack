@@ -192,6 +192,18 @@ describe('PokemonDetailPage', () => {
     expect(sessionStorage.length).toBe(0)
   })
 
+  // One Pokémon on screen: our fields sit with PokeAPI's, the reader never sees two sources.
+  it('shows our region among the facts and our tags as a list, like the types', async () => {
+    server.use(http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)))
+    renderApp('/pokemon/pikachu')
+
+    const facts = await screen.findByRole('list', { name: 'Facts' })
+    expect(within(facts).getByText('Region').parentElement).toHaveTextContent('Kanto')
+    const tags = screen.getByRole('list', { name: 'Tags' })
+    expect(within(tags).getAllByRole('listitem').map((tag) => tag.textContent)).toEqual(['Mascot', 'Starter'])
+    expect(screen.queryByRole('region', { name: 'Local data' })).not.toBeInTheDocument()
+  })
+
   // A nickname: shown as "Pica", and it is still Pikachu underneath (D-039).
   it('keeps the name as the title and shows the localized name right under it', async () => {
     server.use(http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(SYNCED_PIKACHU_DETAIL)))
