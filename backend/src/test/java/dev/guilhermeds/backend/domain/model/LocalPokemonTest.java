@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.domain.model;
 
+import dev.guilhermeds.backend.fixture.LocalPokemonFixture;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -37,5 +38,19 @@ class LocalPokemonTest {
 
         assertThat(synced.displayName("pikachu")).isEqualTo("pikachu");
         assertThat(renamed.displayName("pikachu")).isEqualTo("Pica");
+    }
+
+    // PUT semantics (US-04): the form sends all of our fields, so what it leaves out is cleared.
+    @Test
+    void shouldReplaceAllOfOurFieldsAndRecordWhenTheyChanged() {
+        var pikachu = LocalPokemonFixture.renamedPikachu();
+        var later = NOW.plusSeconds(3600);
+        var edited = new CustomAttributes(null, "Johto", Set.of(new Tag("electric-mouse")));
+
+        pikachu.updateCustomAttributes(edited, later);
+
+        assertThat(pikachu.getCustomAttributes()).isEqualTo(edited);
+        assertThat(pikachu.getUpdatedAt()).isEqualTo(later);
+        assertThat(pikachu.getSyncedAt()).isEqualTo(NOW);
     }
 }

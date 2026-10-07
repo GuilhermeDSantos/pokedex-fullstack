@@ -39,6 +39,9 @@ public class LocalPokemon {
         return new Builder();
     }
 
+    public void updateCustomAttributes(CustomAttributes attributes, Instant now) {
+    }
+
     // The canonical name comes from the caller, which reads it from the canonical data.
     public String displayName(String canonicalName) {
         return customAttributes.localizedName() != null ? customAttributes.localizedName() : canonicalName;
