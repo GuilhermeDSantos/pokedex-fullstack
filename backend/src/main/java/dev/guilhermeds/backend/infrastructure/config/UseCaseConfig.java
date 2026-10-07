@@ -1,5 +1,6 @@
 package dev.guilhermeds.backend.infrastructure.config;
 
+import dev.guilhermeds.backend.application.mapper.PokemonMapper;
 import dev.guilhermeds.backend.application.mapper.UserAccountMapper;
 import dev.guilhermeds.backend.application.port.PasswordHasher;
 import dev.guilhermeds.backend.application.port.TokenIssuer;
@@ -10,6 +11,8 @@ import dev.guilhermeds.backend.application.usecase.BrowsePokemonInteractor;
 import dev.guilhermeds.backend.application.usecase.BrowsePokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserInteractor;
 import dev.guilhermeds.backend.application.usecase.GetCurrentUserUseCase;
+import dev.guilhermeds.backend.application.usecase.GetPokemonInteractor;
+import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.RegisterUserInteractor;
 import dev.guilhermeds.backend.application.usecase.RegisterUserUseCase;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
@@ -46,5 +49,15 @@ public class UseCaseConfig {
     @Bean
     BrowsePokemonUseCase browsePokemonUseCase(PokemonSource source) {
         return new BrowsePokemonInteractor(source);
+    }
+
+    @Bean
+    PokemonMapper pokemonMapper() {
+        return new PokemonMapper();
+    }
+
+    @Bean
+    GetPokemonUseCase getPokemonUseCase(PokemonSource source, PokemonMapper mapper) {
+        return new GetPokemonInteractor(source, mapper);
     }
 }
