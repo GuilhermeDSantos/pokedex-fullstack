@@ -50,8 +50,8 @@ export function PokemonDetailPage() {
       )}
       <Stack>
         <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>
-        <Heading level={1}>{pokemon.local?.localizedName ?? name}</Heading>
-        {pokemon.local?.localizedName && <p className={styles.number}>Originally {name}</p>}
+        <Heading level={1}>{name}</Heading>
+        {pokemon.local?.localizedName && <p className={styles.localizedName}>{pokemon.local.localizedName}</p>}
         <TypeList types={pokemon.types} />
         <p>{pokemon.description}</p>
         <ul aria-label="Facts" className={styles.facts}>
