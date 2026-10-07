@@ -246,9 +246,11 @@ describe('PokemonDetailPage', () => {
     renderApp('/pokemon/pikachu', { session: ASH_SESSION })
 
     await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
-    const localizedName = screen.getByRole('textbox', { name: 'Localized name' })
-    const region = screen.getByRole('textbox', { name: 'Region' })
-    const tags = screen.getByRole('textbox', { name: 'Tags' })
+    const dialog = screen.getByRole('dialog', { name: 'Edit our fields' })
+    const localizedName = within(dialog).getByRole('textbox', { name: 'Localized name' })
+    const region = within(dialog).getByRole('textbox', { name: 'Region' })
+    const tags = within(dialog).getByRole('textbox', { name: 'Tags' })
+    expect(localizedName).toHaveFocus()
     expect(localizedName).toHaveValue('Pica')
     expect(tags).toHaveValue('mascot, starter')
     await userEvent.clear(localizedName)
@@ -261,7 +263,7 @@ describe('PokemonDetailPage', () => {
 
     expect(await screen.findByText('Johto')).toBeInTheDocument()
     expect(sent).toEqual({ localizedName: 'Pikachu BR', region: 'Johto', tags: ['electric'] })
-    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('shows what the API rejected next to the field, keeping what the user typed', async () => {
