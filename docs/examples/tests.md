@@ -117,7 +117,7 @@ class TagTest {
 
 ## Interactor unit test
 
-`@ExtendWith(MockitoExtension.class)`. **Mock ports** (repository, `PokemonSource`, `UnitOfWork`)
+`@ExtendWith(MockitoExtension.class)`. **Mock ports** (repository, `PokemonRepository`, `UnitOfWork`)
 and use **real pure collaborators** (`new LocalPokemonMapper()`). Use BDD Mockito only. Name the
 test after the interactor class, `SyncPokemonInteractorTest`.
 
@@ -126,7 +126,7 @@ test after the interactor class, `SyncPokemonInteractorTest`.
 @ExtendWith(MockitoExtension.class)
 class SyncPokemonInteractorTest {
 
-    @Mock private PokemonSource source;
+    @Mock private PokemonRepository source;
     @Mock private LocalPokemonRepository repository;
     @Mock private UnitOfWork unitOfWork;
 
@@ -176,10 +176,10 @@ class SyncPokemonInteractorTest {
     @Test
     void shouldNotOpenTransactionWhenPokeApiIsUnavailable() {
         given(source.getByIdentifier(any()))
-            .willThrow(new PokemonSourceUnavailableException("down", new IOException()));
+            .willThrow(new PokemonDataUnavailableException("down", new IOException()));
 
         assertThatThrownBy(() -> interactor.execute(new SyncPokemonInput("pikachu"), PokemonFixture.PIKACHU_ID, PokemonFixture.NOW))
-            .isInstanceOf(PokemonSourceUnavailableException.class);
+            .isInstanceOf(PokemonDataUnavailableException.class);
 
         // Guards the "no remote call inside the transaction" rule.
         then(unitOfWork).shouldHaveNoInteractions();
@@ -198,7 +198,7 @@ class SyncPokemonInteractorTest {
 @ExtendWith(MockitoExtension.class)
 class GetPokemonInteractorTest {
 
-    @Mock private PokemonSource source;
+    @Mock private PokemonRepository source;
     @Mock private LocalPokemonRepository repository;
     private GetPokemonInteractor interactor;   // set up with new LocalPokemonMapper()
 
@@ -331,11 +331,11 @@ class PokeApiTranslatorTest {
 ```
 
 **HTTP behaviour**: `@RestClientTest(PokeApiClient.class)` + `MockRestServiceServer`. Cover 404 →
-`Optional.empty()`, 500 → `PokemonSourceUnavailableException`, and a timeout →
-`PokemonSourceUnavailableException`.
+`Optional.empty()`, 500 → `PokemonDataUnavailableException`, and a timeout →
+`PokemonDataUnavailableException`.
 
-**Caching**: a small Spring test with the cache enabled, `PokeApiClient`, `PokeApiPokemonSource`
-and a `MockRestServiceServer`. Call **`PokemonSource.getByIdentifier`** (the default method the
+**Caching**: a small Spring test with the cache enabled, `PokeApiClient`, `PokeApiPokemonRepository`
+and a `MockRestServiceServer`. Call **`PokemonRepository.getByIdentifier`** (the default method the
 interactors use) twice and assert the second call makes no HTTP request. Going through the default
 method is the point: it's the path where a `@Cacheable` on the adapter itself would be silently
 bypassed (self-invocation, see `standards/backend.md`).

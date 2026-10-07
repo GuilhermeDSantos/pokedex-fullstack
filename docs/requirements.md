@@ -27,9 +27,9 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| FR-0 | Spring Boot REST API that **communicates with PokeAPI** | 🟨 | `PokemonSource` port → `PokeApiPokemonSource`; so far `PokeApiClient` (`PokeApiClientTest`, `PokeApiClientTimeoutIT`) and `PokeApiTranslator` |
+| FR-0 | Spring Boot REST API that **communicates with PokeAPI** | 🟨 | `PokemonRepository` port → `PokeApiPokemonRepository`; so far `PokeApiClient` (`PokeApiClientTest`, `PokeApiClientTimeoutIT`) and `PokeApiTranslator` |
 | US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | 🟨 | `GET /api/v1/pokemon` (`BrowsePokemonInteractorTest`, `PokemonControllerIT`); `PokemonListPage` (`PokemonListPage.test.tsx`); merged with local data in Slice 6 (D-030) |
-| US-01.N | *Nice to have:* **cache** service responses | 🟨 | Caffeine on `PokeApiClient` (D-012): `PokeApiClientCacheTest`, `PokeApiPokemonSourceCacheTest`; the list endpoint comes in S2.5 |
+| US-01.N | *Nice to have:* **cache** service responses | 🟨 | Caffeine on `PokeApiClient` (D-012): `PokeApiClientCacheTest`, `PokeApiPokemonRepositoryCacheTest`; the list endpoint comes in S2.5 |
 | US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | 🟨 | `GET /api/v1/pokemon/{identifier}` (`GetPokemonInteractorTest`, `PokemonControllerIT`, `PokeApiTranslatorTest`); `PokemonDetailPage` (`PokemonDetailPage.test.tsx`); merged with local data in Slice 6 |
 | US-03 | **Persist** Pokémon data into a **local relational store** (sync) | ⬜ | `POST /api/v1/pokemon/{identifier}/local` → `local_pokemons` (scalar snapshot, D-031) |
 | US-03.a | Replication enables **proprietary fields**: localized nomenclature, geographical metadata, internal classification tags (D-006; one free-text `localizedName`, D-027 rejected) | ⬜ | `CustomAttributes` (localizedName, region, tags) — the brief's three examples |

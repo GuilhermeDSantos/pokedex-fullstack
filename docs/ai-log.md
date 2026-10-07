@@ -31,6 +31,23 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — "PokeAPI is just a data source": one pattern, one 503
+- **Context:** Reviewing Slice 3, the developer pushed on the `*Source` naming and on how failures
+  are treated (OV-2, TR-ERR).
+- **AI proposed:** Keep `PokemonSource` apart from repositories, justified first by "where the data
+  comes from", then by "ownership"; a 503 just for PokeAPI.
+- **Problem:** The developer showed the first justification was invalid ("a source you read users
+  from" fits too) and that the second, while true, is something the interface already says (no
+  `save`), not something the domain needs a second name for. Meanwhile a down PostgreSQL was an
+  unexplained 500 after Hikari's 30 s default, while a down PokeAPI was a friendly 503: the same
+  situation, treated two ways.
+- **Resolution:** `PokemonRepository` in `domain/repository`, read models in `domain/model`, no
+  PokeAPI in domain code. `DataUnavailableException` as an abstract category with one subclass per
+  repository (the log names the root cause) and one 503 `DATA_UNAVAILABLE`. A new IT stops the
+  database container for real: 500 in 30.9 s before, 503 within 3 s after.
+- **Lesson:** When an argument for a distinction keeps changing, the distinction is probably a
+  naming preference. Failures, though, are behaviour: treat equal situations equally and prove it.
+
 ### 2026-10-07 — "The domain shouldn't know PokeAPI exists"
 - **Context:** Reviewing Slice 3, the developer questioned the `domain/model` and `domain/source`
   packages (OV-2, Clean Architecture).

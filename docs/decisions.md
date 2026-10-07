@@ -64,7 +64,7 @@ only the input boundary.
 interactor implements a `*UseCase`. A context-load IT catches a missing bean.
 
 ## D-004 — PokeAPI is a domain port (`domain/catalog/PokemonCatalog`)
-**Status:** Accepted, renamed by D-032 (`domain/source/PokemonSource`) · **Date:** 2026-10-05 · **Requirements:** FR-0, US-01, US-02, US-03
+**Status:** Accepted, renamed by D-032 (`domain/repository/PokemonRepository`) · **Date:** 2026-10-05 · **Requirements:** FR-0, US-01, US-02, US-03
 **Decision:** The catalog is part of the domain's vocabulary ("browse/look up the authoritative
 Pokédex"), and sync builds the aggregate from it, so the port and its read types live in
 `domain/catalog`. `CatalogUnavailableException extends RuntimeException` (not `DomainException`) is
@@ -153,7 +153,7 @@ on PUT, so stale clients get a 409. Mention it as a next step, don't build it.
 **Decision:** `@Cacheable` goes only on `PokeApiClient`, a dedicated bean with one method per
 PokeAPI resource (`pokeapi-pages`, `pokeapi-pokemon`, `pokeapi-species`,
 `pokeapi-evolution-chains`), with a TTL and max size from `application.yaml`. Exceptions aren't
-cached. `PokeApiPokemonSource` (the port adapter, D-032) has no `@Cacheable`: interactors call the port's
+cached. `PokeApiPokemonRepository` (the port adapter, D-032) has no `@Cacheable`: interactors call the port's
 `default getByIdentifier`, which invokes `findByIdentifier` on `this` and would bypass the caching
 proxy (self-invocation). Calls from the adapter into the client always cross a bean boundary.
 **Alternatives considered:** `ConcurrentMapCache` (no dependency) has no TTL or eviction, so it
@@ -361,12 +361,12 @@ work for nothing visible. Only the custom attributes, which wouldn't be "persist
 **Consequences:** US-03 is met with two tables. The snapshot is what a future offline fallback
 would use.
 
-## D-032 — Naming: no "Pokédex", no "catalog"; `PokemonSource` and `LocalPokemon`
+## D-032 — Naming: no "Pokédex", no "catalog"; `PokemonRepository` and `LocalPokemon`
 **Status:** Accepted · **Date:** 2026-10-06 · **Requirements:** EV-3, EV-5 · **Renames:** D-004
 **Context:** "Pokédex" suggested a personal collection, and "catalog" meant only the PokeAPI half,
 while the whole system is a catalog. Both made the model harder to explain.
-**Decision:** Use the brief's own words. **PokeAPI** is the source (`PokemonSource` port,
-`PokeApiPokemonSource` adapter, `PokemonSourceUnavailableException`). The **local database** holds
+**Decision:** Use the brief's own words. **PokeAPI** is the source (`PokemonRepository` port,
+`PokeApiPokemonRepository` adapter, `PokemonDataUnavailableException`). The **local database** holds
 `LocalPokemon` records. **Sync** is the brief's "Data Synchronization". `PokemonNotFoundException`
 means "not in PokeAPI", and `LocalPokemonNotFoundException` means "not synced".
 **Consequences:** No change in behaviour. D-004's reasoning (a domain-owned port, an outage

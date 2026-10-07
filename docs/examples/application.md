@@ -26,12 +26,12 @@ public interface SyncPokemonUseCase {
 // application/usecase/SyncPokemonInteractor.java
 public class SyncPokemonInteractor implements SyncPokemonUseCase {
 
-    private final PokemonSource source;
+    private final PokemonRepository source;
     private final LocalPokemonRepository repository;
     private final LocalPokemonMapper mapper;
     private final UnitOfWork unitOfWork;
 
-    public SyncPokemonInteractor(PokemonSource source,
+    public SyncPokemonInteractor(PokemonRepository source,
                                  LocalPokemonRepository repository,
                                  LocalPokemonMapper mapper,
                                  UnitOfWork unitOfWork) {
@@ -45,7 +45,7 @@ public class SyncPokemonInteractor implements SyncPokemonUseCase {
     public LocalPokemonOutput execute(SyncPokemonInput input, LocalPokemonId id, Instant now) {
         // 1. Remote call FIRST, outside the transaction. A PokeAPI round trip must never hold a
         //    DB connection/transaction open. 404 → PokemonNotFoundException,
-        //    outage → PokemonSourceUnavailableException; both just propagate.
+        //    outage → PokemonDataUnavailableException; both just propagate.
         var identifier = mapper.toIdentifier(input.identifier());
         var detail = source.getByIdentifier(identifier);
 
@@ -84,11 +84,11 @@ public interface GetPokemonUseCase {
 // application/usecase/GetPokemonInteractor.java
 public class GetPokemonInteractor implements GetPokemonUseCase {
 
-    private final PokemonSource source;
+    private final PokemonRepository source;
     private final LocalPokemonRepository repository;
     private final LocalPokemonMapper mapper;
 
-    public GetPokemonInteractor(PokemonSource source, LocalPokemonRepository repository,
+    public GetPokemonInteractor(PokemonRepository source, LocalPokemonRepository repository,
                                 LocalPokemonMapper mapper) {
         this.source = source;
         this.repository = repository;
@@ -113,10 +113,10 @@ per Pokémon.
 // application/usecase/BrowsePokemonInteractor.java
 public class BrowsePokemonInteractor implements BrowsePokemonUseCase {
 
-    private final PokemonSource source;
+    private final PokemonRepository source;
     private final LocalPokemonRepository repository;
 
-    public BrowsePokemonInteractor(PokemonSource source, LocalPokemonRepository repository) {
+    public BrowsePokemonInteractor(PokemonRepository source, LocalPokemonRepository repository) {
         this.source = source;
         this.repository = repository;
     }
@@ -430,12 +430,12 @@ public class UseCaseConfig {
     }
 
     @Bean
-    BrowsePokemonUseCase browsePokemonUseCase(PokemonSource source, LocalPokemonRepository repository) {
+    BrowsePokemonUseCase browsePokemonUseCase(PokemonRepository source, LocalPokemonRepository repository) {
         return new BrowsePokemonInteractor(source, repository);
     }
 
     @Bean
-    SyncPokemonUseCase syncPokemonUseCase(PokemonSource source, LocalPokemonRepository repository,
+    SyncPokemonUseCase syncPokemonUseCase(PokemonRepository source, LocalPokemonRepository repository,
                                           LocalPokemonMapper mapper, UnitOfWork unitOfWork) {
         return new SyncPokemonInteractor(source, repository, mapper, unitOfWork);
     }

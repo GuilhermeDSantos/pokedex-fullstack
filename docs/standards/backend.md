@@ -30,7 +30,7 @@ dev.guilhermeds.backend
 ├── domain
 │   ├── model           # Entities, Value Objects, Aggregates
 │   ├── repository      # Repository interfaces (ports) — persistence
-│   ├── source          # PokemonSource port + its read types (PokeAPI, seen from the domain)
+│   ├── source          # PokemonRepository port + its read types (PokeAPI, seen from the domain)
 │   ├── pagination      # Page / PageRequest
 │   ├── service         # Domain Services (plain objects, not beans)
 │   └── exception       # DomainException + categories + concrete exceptions
@@ -52,7 +52,7 @@ dev.guilhermeds.backend
 │   ├── config          # Composition root (UseCaseConfig wires interactors/mappers as @Bean),
 │   │                   # @ConfigurationProperties, SecurityFilterChain, Clock, cache
 │   └── external
-│       └── pokeapi     # PokeApiPokemonSource (port adapter), PokeApiClient (cached HTTP), PokeAPI JSON records
+│       └── pokeapi     # PokeApiPokemonRepository (port adapter), PokeApiClient (cached HTTP), PokeAPI JSON records
 └── interfaces
     └── rest
         ├── controller  # @RestController + GlobalExceptionHandler
@@ -78,7 +78,7 @@ than a typical Spring codebase:
   `{Verb}{Name}Interactor implements {Verb}{Name}UseCase` in the same package. Controllers depend on
   the **interface** only, never on an `*Interactor`. That's enforced by ArchUnit.
 - **Output ports.** Everything the interactor needs from the outside world is an interface declared
-  inward: repositories and `PokemonSource` in `domain/`, and `UnitOfWork`, `PasswordHasher` and
+  inward: repositories and `PokemonRepository` in `domain/`, and `UnitOfWork`, `PasswordHasher` and
   `TokenIssuer` in `application/port/`. They are implemented in `infrastructure/`.
 - **Response model.** An interactor returns an Output DTO (a plain `record`, the "response model")
   instead of calling a presenter/output boundary. This is a deliberate, documented simplification.
@@ -99,7 +99,7 @@ than a typical Spring codebase:
 The test is **whose need the port expresses**:
 
 - The *domain's* own vocabulary → `domain/`. `LocalPokemonRepository` ("a synced Pokémon can be
-  found by name or number"), `UserAccountRepository`, and `PokemonSource` ("Pokémon can be browsed
+  found by name or number"), `UserAccountRepository`, and `PokemonRepository` ("Pokémon can be browsed
   and looked up at the source") live there.
 - An *orchestration* need → `application/port/` or `application/query/`. A transaction boundary
   (`UnitOfWork`), hashing a password (`PasswordHasher`), issuing an access token (`TokenIssuer`), a
@@ -124,8 +124,8 @@ Exact patterns, not suggestions.
 | Spring Data interface | `{Name}JpaRepository` | `LocalPokemonJpaRepository` |
 | JPA entity | `{Name}Entity` | `LocalPokemonEntity` |
 | JPA mapper | `{Name}EntityMapper` | `LocalPokemonEntityMapper` |
-| External data port | `{Name}Source` | `PokemonSource` |
-| External data adapter | `{Provider}{PortName}` | `PokeApiPokemonSource` |
+| Repository backed by an external API | `{Name}Repository` (read-only when the data isn't ours) | `PokemonRepository` |
+| External API repository adapter | `{Provider}{Name}Repository` | `PokeApiPokemonRepository` |
 | External HTTP client (cached, one method per remote resource) | `{Provider}Client` | `PokeApiClient` |
 | Use case — input port (interface) | `{Verb}{Name}UseCase` | `SyncPokemonUseCase` |
 | Use case — implementation | `{Verb}{Name}Interactor` | `SyncPokemonInteractor` |
@@ -218,12 +218,17 @@ Exact patterns, not suggestions.
 | `ValidationException` | 400 | `VALIDATION_ERROR` | `InvalidTagException`, `InvalidEmailException`, `WeakPasswordException`, `InvalidPageRequestException` |
 | `UnauthenticatedException` | 401 | `UNAUTHENTICATED` | `InvalidCredentialsException`, `UnknownAccountException` |
 | `DomainException` (catch-all) | 422 | `DOMAIN_ERROR` | one-off business rule violations with no sibling |
+| `DataUnavailableException` (not a `DomainException`) | 503 | `DATA_UNAVAILABLE` | `PokemonDataUnavailableException`, `UserAccountDataUnavailableException`, `TransactionUnavailableException` |
 
-- **PokeAPI being down is not a domain exception.** The `PokemonSource` port declares
-  `PokemonSourceUnavailableException extends RuntimeException` in `domain/source/` as part of its
-  contract; the adapter throws it for timeouts/5xx/IO errors; `GlobalExceptionHandler` maps it to
-  `503 SOURCE_UNAVAILABLE`. A PokeAPI 404 is a business fact and becomes
-  `PokemonNotFoundException` (404).
+- **Data that can't be reached is not a domain exception**, wherever it lives. Every repository
+  adapter translates "unreachable" into its own subclass of the abstract `DataUnavailableException`
+  (`domain/exception`): the PokeAPI adapter for timeouts/5xx/IO (`PokemonDataUnavailableException`),
+  the JPA adapters for `DataAccessResourceFailureException` / `CannotCreateTransactionException`
+  (`UserAccountDataUnavailableException`), and `SpringUnitOfWork` when a transaction can't start
+  (`TransactionUnavailableException`). `GlobalExceptionHandler` maps the category to one `503
+  DATA_UNAVAILABLE` with a neutral message and logs the subclass and its cause. Hikari's
+  `connection-timeout` is 3000 ms, so a down database is a 503 in seconds, not after 30 s. A PokeAPI
+  404 is a business fact and becomes `PokemonNotFoundException` (404).
 
 ### application/
 
@@ -275,7 +280,7 @@ Exact patterns, not suggestions.
   `infrastructure/persistence/query/`) is only for screens that span more than one aggregate. It is
   read-only by construction. Don't create one until a screen actually needs it.
 - The merged views (PokeAPI + local record) are **not** read models: they combine the
-  `PokemonSource` port with one aggregate, which the use case does directly (port + repository).
+  `PokemonRepository` port with one aggregate, which the use case does directly (port + repository).
   Local data for a list page comes in one query (`findAllByPokedexNumbers`), never one per item.
 
 ### infrastructure/
@@ -313,7 +318,7 @@ Exact patterns, not suggestions.
     (D-038): don't set a request factory by hand, or `@RestClientTest`'s mock server stops
     intercepting. It returns the package-private
     JSON records. **It is the only place `@Cacheable` appears.**
-  - `PokeApiPokemonSource implements PokemonSource` (`@Component`) composes those calls, runs
+  - `PokeApiPokemonRepository implements PokemonRepository` (`@Component`) composes those calls, runs
     the fan-out, and translates JSON → domain through `PokeApiTranslator`. It has no `@Cacheable`.
 - **Boot 4 dependency:** the `RestClient` *class* is in `spring-web`, but the auto-configured
   `RestClient.Builder` bean and `@RestClientTest` live in `spring-boot-starter-restclient` and
@@ -322,7 +327,7 @@ Exact patterns, not suggestions.
 - PokeAPI JSON is deserialized into package-private records local to the adapter
   (`PokeApiPokemonJson`, `PokeApiSpeciesJson`, `PokeApiEvolutionChainJson`, …) annotated with
   `@JsonIgnoreProperties(ignoreUnknown = true)`. **No PokeAPI type leaves the package** — the
-  adapter translates to `domain/source` records.
+  adapter translates to `domain/repository` records.
 - Translation rules (encode them in adapter tests):
   - `weight` is **hectograms** → kg = `weight / 10`; `height` is **decimetres** → m = `height / 10`.
   - Sprite: `sprites.front_default`; artwork: `sprites.other["official-artwork"].front_default`
@@ -333,19 +338,19 @@ Exact patterns, not suggestions.
     dropped (they only mark where a word may break).
   - Evolution lineage = recursive walk of `evolution-chain.chain.evolves_to[]` (it branches — Eevee).
 - Errors: PokeAPI 404 → empty, which the port turns into `PokemonNotFoundException`; timeout / 5xx /
-  I/O → `PokemonSourceUnavailableException`. Never let a `RestClientException` escape the adapter.
+  I/O → `PokemonDataUnavailableException`. Never let a `RestClientException` escape the adapter.
 - Browsing a page needs N `/pokemon/{id}` + N `/pokemon-species/{id}` calls (the list endpoint only
   returns names). Fetch them **concurrently** (virtual threads — `spring.threads.virtual.enabled:
   true` / an executor of virtual threads) and **cache per Pokémon**, so a page is fast after the
   first hit. Cap page size (≤ 50).
 - **Caching** (the brief's nice-to-have): Spring Cache abstraction with `@Cacheable` on
   `PokeApiClient`'s public methods only (never in `domain`/`application`, never on
-  `PokeApiPokemonSource`), backed by Caffeine with a TTL and a max size configured in
+  `PokeApiPokemonRepository`), backed by Caffeine with a TTL and a max size configured in
   `application.yaml`. One cache per remote resource: `pokeapi-pages`, `pokeapi-pokemon`,
   `pokeapi-species`, `pokeapi-evolution-chains`. Errors are not cached. Local data is never cached.
 - **Why a separate client bean (the self-invocation trap).** Spring caching works through a proxy,
   so only calls that *enter the bean from outside* are cached. Interactors call
-  `PokemonSource.getByIdentifier`, a `default` method that calls `this.findByIdentifier` inside
+  `PokemonRepository.getByIdentifier`, a `default` method that calls `this.findByIdentifier` inside
   the target object, which bypasses the proxy. `@Cacheable` on `findByIdentifier` would therefore
   never hit for detail or sync, and per-entry caching inside `findAll` would fail the same way.
   Calls from the source adapter into `PokeApiClient` always cross a bean boundary, so they are
@@ -395,7 +400,7 @@ Exact patterns, not suggestions.
   Must also cover, all as `400 VALIDATION_ERROR` with a consistent body:
   `MethodArgumentNotValidException` (with field errors), `HttpMessageNotReadableException`
   (malformed JSON — the brief's "malformed payloads"), `MethodArgumentTypeMismatchException`,
-  `HandlerMethodValidationException`/`ConstraintViolationException`. Plus `PokemonSourceUnavailableException`
+  `HandlerMethodValidationException`/`ConstraintViolationException`. Plus `PokemonDataUnavailableException`
   → 503, `NoResourceFoundException` → 404, and a last-resort `Exception` → 500 that logs the stack
   trace and returns a generic message (never the exception text).
 - The catch-all `Exception` handler must keep the status of Spring's own web exceptions (anything

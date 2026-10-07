@@ -39,7 +39,7 @@ remove all happen on the detail page.
 
 | Term | Meaning |
 |---|---|
-| **PokeAPI** / **source** | The external source of canonical data. Read-only from our side. In code: the `PokemonSource` port. |
+| **PokeAPI** / **source** | The external source of canonical data. Read-only from our side. In code: the `PokemonRepository` port. |
 | **Local record** / **local Pokémon** | A Pokémon synced into our PostgreSQL database. The `LocalPokemon` aggregate. It's shared and has no owner. |
 | **Sync** | Creating the local record of a Pokémon from PokeAPI data (US-03). The brief calls it "Data Synchronization". |
 | **Snapshot** | The scalar subset of PokeAPI data copied into the local record at sync time (name, category, height, weight, sprite, artwork, description). |
@@ -120,27 +120,28 @@ repository of their own.
 Password policy runs on `RawPassword` **before** hashing. The domain never sees a hash being
 computed: that happens behind the `PasswordHasher` port.
 
-### PokeAPI port (`domain/source`)
+### Pokémon repository (`domain/repository`)
 
-The domain never knows where data comes from: not JPA, not PokeAPI, not JSON. Every data port follows
-one shape: an interface in the domain, implemented in `infrastructure`, where the technical format
-(a JPA entity, PokeAPI's JSON) is translated into domain types and never leaves the adapter. Domain
-code doesn't even name PokeAPI in comments. The packages say which kind of port it is:
-`domain/repository` (ours), `domain/source` (read from outside, with the read models it returns),
-and `domain/model` holds the concepts both share (value objects, aggregates).
-There are two kinds, and the suffix says which:
+The domain never knows where data comes from: not JPA, not PokeAPI, not JSON. Every data port is a
+**repository**: an interface in `domain/repository`, implemented in `infrastructure`, where the
+technical format (a JPA entity, PokeAPI's JSON) is translated into domain types and never leaves
+the adapter. Domain code doesn't name PokeAPI, not even in comments. `domain/model` holds the
+types the repositories return and the aggregates. Whether a repository can write is said by its
+interface alone:
 
-| Suffix | Data | Operations | Examples |
-|---|---|---|---|
-| `*Repository` | **Ours**: an aggregate we own and persist | load, save, delete | `UserAccountRepository`, `LocalPokemonRepository` |
-| `*Source` | **External**: canonical data we only read | read | `PokemonSource` (PokeAPI) |
+| Repository | Methods | Backed by (infrastructure only) |
+|---|---|---|
+| `UserAccountRepository` | `save`, `findById`, `findByEmail` | PostgreSQL |
+| `PokemonRepository` | `findAll`, `findByIdentifier` (read-only: the canonical data isn't ours to change) | PokeAPI |
+| `LocalPokemonRepository` (Slice 4) | load, save, delete | PostgreSQL |
 
-`PokemonSource` is not called a repository on purpose: it returns read models, not aggregates, it
-can't save or delete, and the Pokémon repository already exists (`LocalPokemonRepository`, the
-synced records). Sync reads from the source and writes to the repository.
+The canonical data and the local record are still two things in the domain, not because of where
+they are stored but because of what the business allows: the canonical data can only be read, the
+local record (`LocalPokemon`) is synced, edited and removed. Clients never see the split: the use
+cases merge both into one Pokémon (D-030).
 
 ```java
-public interface PokemonSource {
+public interface PokemonRepository {
     Page<PokemonSummary> findAll(PageRequest pageRequest);                 // US-01
     Optional<PokemonDetail> findByIdentifier(PokemonIdentifier identifier); // US-02, US-03
 
@@ -157,7 +158,7 @@ public interface PokemonSource {
 | `EvolutionStage` | `String speciesName, PokedexNumber number, List<EvolutionStage> evolvesTo` (recursive tree) |
 | `PokemonDataUnavailableException extends DataUnavailableException` | The Pokémon repository's data can't be reached. See *Data unavailable* below |
 
-Every method may throw `PokemonSourceUnavailableException`.
+Every method may throw `PokemonDataUnavailableException`.
 
 ### Repository ports (`domain/repository`)
 

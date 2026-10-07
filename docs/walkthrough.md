@@ -19,7 +19,7 @@ claim should point at something concrete: a file, a test, a row in
 3. **Architecture (4 min).**
    - The layer diagram and the Dependency Rule. `domain` and `application` are framework-free (D-001).
    - Input ports + interactors + composition root (D-003), and why there's no presenter (D-002).
-   - Output ports: repositories, `PokemonSource`, `UnitOfWork`, `PasswordHasher`, `TokenIssuer`.
+   - Output ports: repositories, `PokemonRepository`, `UnitOfWork`, `PasswordHasher`, `TokenIssuer`.
    - The merge: a use case combines the PokeAPI port and the repository. `displayName` is a domain
      rule on `LocalPokemon`.
    - **Data model** (TR-DB-1/2): `local_pokemons` (a scalar snapshot + the custom attributes, D-031)
@@ -68,15 +68,18 @@ claim should point at something concrete: a file, a test, a row in
 
 ## Design FAQ (a short answer + where to look)
 
-- Why `PokemonSource` and not `PokemonRepository`? → Same pattern (port in the domain, adapter in
-  `infrastructure`), different kind of data. A repository holds aggregates we own and can save or
-  delete; PokeAPI is external and read-only, and returns read models. `LocalPokemonRepository` is
-  the Pokémon repository: sync reads the source and writes the repository (`domain-model.md` →
-  PokeAPI port).
-- Why are `PokeApiClient` and `PokeApiPokemonSource` two classes? → `@Cacheable` works through a
+- Why is PokeAPI a repository? → To the domain it is just where Pokémon are read from; it doesn't
+  know or care that it's an HTTP API (`domain-model.md` → Pokémon repository). `PokemonRepository`
+  has no `save` because the canonical data isn't ours to change; the interface says so. The
+  developer chose this over a separate `*Source` name: one pattern for every data port.
+- What happens when the database or PokeAPI is down? → Same answer for both: each repository
+  throws its own `DataUnavailableException` subclass (the log says which, and why), and the API
+  answers one 503 `DATA_UNAVAILABLE`. `DatabaseUnavailableIT` stops PostgreSQL for real; Hikari
+  gives up after 3s instead of 30s.
+- Why are `PokeApiClient` and `PokeApiPokemonRepository` two classes? → `@Cacheable` works through a
   Spring proxy, which only sees calls coming from outside the bean. Merged, `findAll` would call
   `this.fetchPokemon(...)` and the cache would never hit, silently. Split, every call crosses a
-  bean boundary (D-012); `PokeApiPokemonSourceCacheTest` proves it, and fails if the annotation
+  bean boundary (D-012); `PokeApiPokemonRepositoryCacheTest` proves it, and fails if the annotation
   goes. It also keeps each test simple: HTTP against a mock server, concurrency with the client
   mocked.
 - Why interfaces for use cases? Isn't that over-engineering? → D-003. Controllers depend on
@@ -84,7 +87,7 @@ claim should point at something concrete: a file, a test, a row in
 - Why no `@Transactional` on use cases? → D-001 + `UnitOfWork`. Show `SpringUnitOfWork`.
 - How do you guarantee the domain doesn't depend on Spring? → The ArchUnit allowlist. Adding a
   Spring import to `domain` fails the build.
-- What happens if PokeAPI is down? → `PokemonSourceUnavailableException` → 503 on the merged reads;
+- What happens if PokeAPI is down? → `PokemonDataUnavailableException` → 503 on the merged reads;
   `GET …/local` still works, and the cache softens it. Serving synced Pokémon from the snapshot is
   the next step (D-030).
 - Two users edit the same Pokémon at once? → `@Version` → 409 (D-011). Next step: expose the

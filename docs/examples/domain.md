@@ -383,20 +383,20 @@ public interface LocalPokemonRepository {
 }
 ```
 
-## PokeAPI port — `PokemonSource`
+## PokeAPI port — `PokemonRepository`
 
 PokeAPI as the domain sees it. It's declared here because "Pokémon can be browsed and looked up at
 the source" is domain vocabulary, and sync builds the aggregate from it. Nothing HTTP-shaped leaks
 in: no status codes, no JSON, no URLs except data fields.
 
 ```java
-// domain/source/PokemonSource.java
-public interface PokemonSource {
+// domain/repository/PokemonRepository.java
+public interface PokemonRepository {
 
-    /** @throws PokemonSourceUnavailableException when PokeAPI can't be reached */
+    /** @throws PokemonDataUnavailableException when PokeAPI can't be reached */
     Page<PokemonSummary> findAll(PageRequest pageRequest);
 
-    /** @throws PokemonSourceUnavailableException when PokeAPI can't be reached */
+    /** @throws PokemonDataUnavailableException when PokeAPI can't be reached */
     Optional<PokemonDetail> findByIdentifier(PokemonIdentifier identifier);
 
     default PokemonDetail getByIdentifier(PokemonIdentifier identifier) {
@@ -405,7 +405,7 @@ public interface PokemonSource {
     }
 }
 
-// domain/source/PokemonDetail.java
+// domain/repository/PokemonDetail.java
 public record PokemonDetail(PokedexNumber number, PokemonProfile profile, EvolutionStage evolutionChain) {
     public PokemonDetail {
         Objects.requireNonNull(number, "number must not be null");
@@ -414,7 +414,7 @@ public record PokemonDetail(PokedexNumber number, PokemonProfile profile, Evolut
     }
 }
 
-// domain/source/EvolutionStage.java — a tree, because lineages branch (Eevee has 8 children)
+// domain/repository/EvolutionStage.java — a tree, because lineages branch (Eevee has 8 children)
 public record EvolutionStage(String speciesName, PokedexNumber number, List<EvolutionStage> evolvesTo) {
     public EvolutionStage {
         Objects.requireNonNull(speciesName, "speciesName must not be null");
@@ -423,14 +423,14 @@ public record EvolutionStage(String speciesName, PokedexNumber number, List<Evol
     }
 }
 
-// domain/source/PokemonSourceUnavailableException.java
+// domain/repository/PokemonDataUnavailableException.java
 /**
  * Technical failure reaching PokeAPI (timeout, 5xx, I/O). Deliberately NOT a DomainException:
  * nothing about the business was violated. It is part of the port's contract so interfaces/ can
  * map it to 503 without depending on the infrastructure adapter that throws it.
  */
-public class PokemonSourceUnavailableException extends RuntimeException {
-    public PokemonSourceUnavailableException(String message, Throwable cause) {
+public class PokemonDataUnavailableException extends RuntimeException {
+    public PokemonDataUnavailableException(String message, Throwable cause) {
         super(message, cause);
     }
 }

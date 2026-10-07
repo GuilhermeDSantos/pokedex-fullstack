@@ -206,10 +206,10 @@ public class GlobalExceptionHandler {
     // ---- PokeAPI port contract -------------------------------------------------
 
     // The message can name internal details (a Pokémon PokeAPI couldn't return), so it only goes to the log.
-    @ExceptionHandler(PokemonSourceUnavailableException.class)
-    public ResponseEntity<ErrorResponse> handleSourceUnavailable(PokemonSourceUnavailableException ex) {
+    @ExceptionHandler(PokemonDataUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleSourceUnavailable(PokemonDataUnavailableException ex) {
         log.warn("PokeAPI unavailable: {}", ex.getMessage());
-        return error(HttpStatus.SERVICE_UNAVAILABLE, "SOURCE_UNAVAILABLE",
+        return error(HttpStatus.SERVICE_UNAVAILABLE, "DATA_UNAVAILABLE",
             "The Pokémon catalog is unavailable right now. Please try again in a moment.");
     }
 

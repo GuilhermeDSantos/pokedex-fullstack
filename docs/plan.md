@@ -214,8 +214,8 @@ Backend:
       400; boundary proven by mutation), `Weight` (kg from PokeAPI's hectograms, one decimal so
       `6` equals `6.0`, negative rejected), `PokemonType` (trimmed, lower-cased), `Ability` (the
       brief's skills), `PokemonSummary` (number, name and weight required; sprite and category
-      nullable; immutable lists), and the `PokemonSource` port (`findAll` only) with
-      `PokemonSourceUnavailableException`. Data that comes from PokeAPI and breaks a rule is a
+      nullable; immutable lists), and the `PokemonRepository` port (`findAll` only) with
+      `PokemonDataUnavailableException`. Data that comes from PokeAPI and breaks a rule is a
       mapping bug (`IllegalArgumentException`, 500), not a 400. `PokemonIdentifier` and
       `findByIdentifier` move to S3.1: only the detail route uses them.
 - [x] S2.2 Fixtures recorded from pokeapi.co with `curl` under `src/test/resources/pokeapi/` (a list
@@ -232,14 +232,14 @@ Backend:
       4.1.1). `PokeApiClient` on the auto-configured `RestClient.Builder` with `pokeapi.base-url`
       (`PokeApiProperties`); timeouts from Boot's `spring.http.clients.connect-timeout` (2s) /
       `read-timeout` (3s), the non-deprecated names in 4.1.1's metadata. `@RestClientTest` with
-      recorded JSON: fetch a Pokémon, 404 → empty, 500 and I/O error → `PokemonSourceUnavailable`,
+      recorded JSON: fetch a Pokémon, 404 → empty, 500 and I/O error → `PokemonRepositoryUnavailable`,
       species fetched from the URL PokeAPI gave (404 there → unavailable: PokeAPI contradicted
       itself), a list page. `PokeApiClientTimeoutIT` runs a real slow HTTP server (JDK
       `HttpServer`): the call gives up at ~3.3s with a 503-bound error, which proves the timeout
       property reaches our client. The developer asked whether PokeAPI should be a repository;
-      kept as `PokemonSource`, with the `*Repository` / `*Source` rule now explicit in
+      kept as `PokemonRepository`, with the `*Repository` / `*Source` rule now explicit in
       `domain-model.md` and the walkthrough FAQ.
-- [x] S2.4 `PokeApiPokemonSource implements PokemonSource`: `findAll` fetches each card's Pokémon
+- [x] S2.4 `PokeApiPokemonRepository implements PokemonRepository`: `findAll` fetches each card's Pokémon
       and species concurrently on virtual threads and joins them in PokeAPI's order (D-018; proven
       with a latch: Bulbasaur's answer waits until Pikachu's request has started), capped by
       `pokeapi.max-concurrency` (10) through one shared `Semaphore` (peak of exactly 2 with a cap of
@@ -256,7 +256,7 @@ Backend:
       `UseCaseConfig`: `ApplicationContextIT` went red until it was, as designed. `PageResponse`,
       `PokemonSummaryResponse`, `PokemonRestMapper`, `PokemonController` `GET /api/v1/pokemon`
       (defaults `page=0`, `size=20`; public). `PokemonControllerIT`: 200 (strict shape, no token),
-      defaults, 400 size out of range, 400 page not a number, 503 `SOURCE_UNAVAILABLE`. The 503 body
+      defaults, 400 size out of range, 400 page not a number, 503 `DATA_UNAVAILABLE`. The 503 body
       has a fixed message: the exception's own can name internals, so it only goes to the log
       (the reference example echoed it; corrected). Measured on Docker against the real PokeAPI:
       a cold page of 20 (41 upstream calls) in 0.94s, the same page cached in 0.008s, another cold
@@ -299,7 +299,7 @@ Backend:
       with breaks and form feeds read as single spaces and soft hyphens dropped, the whole lineage
       tree, null artwork or description accepted. Client `fetchEvolutionChain` (cached,
       `pokeapi-evolution-chains`). Port `findByIdentifier` + default `getByIdentifier` →
-      `PokemonNotFoundException` (404). `PokeApiPokemonSource.findByIdentifier` follows Pokémon →
+      `PokemonNotFoundException` (404). `PokeApiPokemonRepository.findByIdentifier` follows Pokémon →
       species → chain by the URLs PokeAPI gave; a repeated `getByIdentifier` (the default method's
       self-call) is served from the cache.
 - [x] S3.3 `GetPokemonInteractor` (TDD; the identifier built by a pure `PokemonMapper`; a malformed
@@ -318,6 +318,14 @@ Frontend:
       `retryPolicy` now never retries a 4xx (the 5xx count stays for U.4). Checked on Docker:
       list → Ivysaur, Eevee's 8 branches → Sylveon (scrolled to the top), `missingno` → not found
       within a second.
+- [x] S3.5 Review follow-ups, decided by the developer: the domain never names PokeAPI, not even in
+      comments; every data port is a **repository** (`PokemonSource` → `PokemonRepository`, its
+      read models moved to `domain/model`, adapter `PokeApiPokemonRepository`); and data that can't
+      be reached is handled the same wherever it lives: abstract `DataUnavailableException` with one
+      subclass per repository (+ `TransactionUnavailableException`), one 503 `DATA_UNAVAILABLE`
+      (contract updated first). `DatabaseUnavailableIT` stops PostgreSQL for real: sign-in and
+      registration answered 500 after 30.9 s; now 503 within Hikari's 3 s. `PokemonSummary` keeps its
+      name, the pair of `PokemonDetail`; the merged "one Pokémon" is what the API returns (D-030).
 
 ## Slice 4 — Sync a Pokémon into the local database (US-03, TR-DAL, TR-API-1)
 

@@ -288,7 +288,7 @@ public class SpringUnitOfWork implements UnitOfWork {
 ## PokeAPI adapter
 
 `infrastructure/external/pokeapi/`. Two beans: `PokeApiClient` does the cached HTTP, one method per
-PokeAPI resource, and `PokeApiPokemonSource` implements the domain's `PokemonSource` port on top of
+PokeAPI resource, and `PokeApiPokemonRepository` implements the domain's `PokemonRepository` port on top of
 it. PokeAPI JSON shapes are **package-private records** in this package, so they can't leak.
 
 ```java
@@ -354,7 +354,7 @@ public class PokeApiClient {
         return getRequired(url, PokeApiEvolutionChainJson.class);
     }
 
-    /** 404 → empty; everything else that isn't a 2xx → PokemonSourceUnavailableException. */
+    /** 404 → empty; everything else that isn't a 2xx → PokemonDataUnavailableException. */
     private <T> Optional<T> get(String uri, Class<T> type, Object... vars) {
         try {
             return Optional.ofNullable(restClient.get().uri(uri, vars).retrieve().body(type));
@@ -362,18 +362,18 @@ public class PokeApiClient {
             return Optional.empty();
         } catch (RestClientException e) {
             log.warn("PokeAPI call failed: {}", uri);   // path only — never the body
-            throw new PokemonSourceUnavailableException("PokeAPI is unavailable right now", e);
+            throw new PokemonDataUnavailableException("PokeAPI is unavailable right now", e);
         }
     }
 
     private <T> T getRequired(String uri, Class<T> type, Object... vars) {
         return get(uri, type, vars)
-            .orElseThrow(() -> new PokemonSourceUnavailableException("PokeAPI returned incomplete data"));
+            .orElseThrow(() -> new PokemonDataUnavailableException("PokeAPI returned incomplete data"));
     }
 }
 ```
 
-### `PokeApiPokemonSource` — the port adapter
+### `PokeApiPokemonRepository` — the port adapter
 
 No `@Cacheable` here, on purpose. Interactors call `getByIdentifier`, the port's `default` method,
 which calls `this.findByIdentifier` *inside* the target object and bypasses Spring's caching proxy.
@@ -382,9 +382,9 @@ An annotation on `findByIdentifier` would never hit for detail or sync, and per-
 goes through the proxy and is cached.
 
 ```java
-// infrastructure/external/pokeapi/PokeApiPokemonSource.java
+// infrastructure/external/pokeapi/PokeApiPokemonRepository.java
 @Component
-public class PokeApiPokemonSource implements PokemonSource {
+public class PokeApiPokemonRepository implements PokemonRepository {
 
     private final PokeApiClient client;           // cached HTTP: calls into it cross the proxy
     private final PokeApiTranslator translator;   // pure JSON → domain translation, unit-tested on its own
@@ -411,9 +411,9 @@ public class PokeApiPokemonSource implements PokemonSource {
 The translation rules (unit conversion, English genus, normalized flavor text, the recursive
 evolution tree, slot ordering, null sprites) live in `PokeApiTranslator`. It's a pure class tested
 with plain JUnit against recorded JSON in `src/test/resources/pokeapi/`. The HTTP behaviour of
-`PokeApiClient` (404 → empty, 500/timeout → `PokemonSourceUnavailableException`) is tested
+`PokeApiClient` (404 → empty, 500/timeout → `PokemonDataUnavailableException`) is tested
 separately with `@RestClientTest` + `MockRestServiceServer`. The cache test calls
-**`PokemonSource.getByIdentifier`** twice and asserts the second call makes no HTTP request, which
+**`PokemonRepository.getByIdentifier`** twice and asserts the second call makes no HTTP request, which
 is exactly the path that the self-invocation trap would break.
 
 ### Cache configuration
