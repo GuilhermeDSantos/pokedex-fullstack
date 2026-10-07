@@ -15,8 +15,10 @@ import dev.guilhermeds.backend.application.usecase.GetPokemonUseCase;
 import dev.guilhermeds.backend.application.usecase.SyncPokemonUseCase;
 import dev.guilhermeds.backend.domain.exception.InvalidPageRequestException;
 import dev.guilhermeds.backend.domain.exception.InvalidPokemonIdentifierException;
+import dev.guilhermeds.backend.domain.exception.PokemonAlreadySyncedException;
 import dev.guilhermeds.backend.domain.exception.PokemonDataUnavailableException;
 import dev.guilhermeds.backend.domain.exception.PokemonNotFoundException;
+import dev.guilhermeds.backend.domain.model.PokedexNumber;
 import dev.guilhermeds.backend.domain.model.PokemonIdentifier;
 import dev.guilhermeds.backend.infrastructure.config.JwtConfig;
 import dev.guilhermeds.backend.infrastructure.config.SecurityConfig;
@@ -41,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @WebMvcTest(PokemonController.class)
@@ -220,5 +223,47 @@ class PokemonControllerIT {
                 { "pokedexNumber": 25, "localizedName": null, "region": null, "tags": [],
                   "syncedAt": "2026-01-15T10:00:00Z", "updatedAt": "2026-01-15T10:00:00Z" }
                 """);
+    }
+
+    @Test
+    void shouldRequireATokenToSync() {
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local"))
+            .hasStatus(401)
+            .bodyJson().extractingPath("$.code").isEqualTo("UNAUTHENTICATED");
+        verifyNoInteractions(syncPokemonUseCase);
+    }
+
+    @Test
+    void shouldAnswerASyncOfAnUnknownPokemonWith404() {
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("missingno")), any(), any()))
+            .willThrow(new PokemonNotFoundException(new PokemonIdentifier("missingno")));
+
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/missingno/local").with(jwt())).hasStatus(404);
+    }
+
+    @Test
+    void shouldAnswerASecondSyncWith409() {
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pikachu")), any(), any()))
+            .willThrow(new PokemonAlreadySyncedException(new PokedexNumber(25)));
+
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt()))
+            .hasStatus(409)
+            .bodyJson().extractingPath("$.message").isEqualTo("Pokémon #25 is already in the local database");
+    }
+
+    @Test
+    void shouldAnswerASyncOfAMalformedIdentifierWith400() {
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pika!")), any(), any()))
+            .willThrow(new InvalidPokemonIdentifierException());
+
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/pika!/local").with(jwt())).hasStatus(400);
+    }
+
+    @Test
+    void shouldAnswerASyncWith503WhenTheDataIsUnavailable() {
+        given(syncPokemonUseCase.execute(eq(new SyncPokemonInput("pikachu")), any(), any()))
+            .willThrow(new PokemonDataUnavailableException("PokeAPI is unavailable right now"));
+
+        assertThat(mockMvc.post().uri("/api/v1/pokemon/pikachu/local").with(jwt())).hasStatus(503);
     }
 }
