@@ -29,7 +29,7 @@ public class SyncPokemonInteractor implements SyncPokemonUseCase {
 
     @Override
     public LocalPokemonOutput execute(SyncPokemonInput input, LocalPokemonId id, Instant now) {
-        var number = mapper.toPokedexNumber(input.identifier());
+        var number = mapper.toPokedexNumber(input.pokedexNumber());
         // Only a Pokémon the canonical data knows can be synced (404 otherwise). Asked before the
         // transaction: a slow call must never hold a connection.
         pokemonRepository.getByIdentifier(mapper.toIdentifier(number));

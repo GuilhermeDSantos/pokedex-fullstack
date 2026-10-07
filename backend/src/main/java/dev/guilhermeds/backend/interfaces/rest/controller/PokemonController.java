@@ -61,11 +61,10 @@ public class PokemonController {
         return mapper.toResponse(getPokemonUseCase.execute(new GetPokemonInput(identifier)));
     }
 
-    // Location names the record by its Pokédex number, whatever the client called the Pokémon.
-    @PostMapping("/{identifier}/local")
+    @PostMapping("/{number}/local")
     @SecurityRequirement(name = OpenApiDocumentation.BEARER_JWT)
-    public ResponseEntity<LocalPokemonResponse> sync(@PathVariable String identifier) {
-        var synced = syncPokemonUseCase.execute(new SyncPokemonInput(identifier), LocalPokemonId.generate(),
+    public ResponseEntity<LocalPokemonResponse> sync(@PathVariable String number) {
+        var synced = syncPokemonUseCase.execute(new SyncPokemonInput(number), LocalPokemonId.generate(),
             Instant.now(clock));
         var location = ServletUriComponentsBuilder.fromCurrentContextPath()
             .path("/api/v1/pokemon/{number}/local").buildAndExpand(synced.pokedexNumber()).toUri();

@@ -1,4 +1,4 @@
 package dev.guilhermeds.backend.application.dto;
 
-public record SyncPokemonInput(String identifier) {
+public record SyncPokemonInput(String pokedexNumber) {
 }
