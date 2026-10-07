@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { Link } from 'react-router'
 import { formatKilograms, formatName, formatPokedexNumber } from '../../../shared/lib/format'
 import { Badge } from '../../../shared/ui/Badge'
 import { Card } from '../../../shared/ui/Card'
@@ -26,7 +27,7 @@ export function PokemonCard({ pokemon }: { pokemon: PokemonSummary }) {
       )}
       <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>
       <h2 id={titleId} className={styles.name}>
-        {name}
+        <Link to={`/pokemon/${pokemon.name}`}>{name}</Link>
       </h2>
       <p>{pokemon.category ?? 'Category unknown'}</p>
       <p>{formatKilograms(pokemon.weightKilograms)}</p>
