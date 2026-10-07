@@ -14,3 +14,7 @@ export function formatPokedexNumber(pokedexNumber: number): string {
 export function formatKilograms(kilograms: number): string {
   return `${kilograms.toFixed(1)} kg`
 }
+
+export function formatMeters(meters: number): string {
+  return `${meters.toFixed(1)} m`
+}
