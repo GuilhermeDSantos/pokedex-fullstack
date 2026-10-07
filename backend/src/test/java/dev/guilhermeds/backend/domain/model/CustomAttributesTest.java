@@ -4,6 +4,7 @@ import dev.guilhermeds.backend.domain.exception.InvalidCustomAttributesException
 import dev.guilhermeds.backend.domain.exception.ValidationException;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -62,6 +63,18 @@ class CustomAttributesTest {
         assertThatThrownBy(() -> new CustomAttributes(null, null, tags(11)))
             .isInstanceOf(InvalidCustomAttributesException.class)
             .hasMessage("A Pokémon has at most 10 tags");
+    }
+
+    @Test
+    void shouldKeepItsOwnUnmodifiableCopyOfTheTags() {
+        var given = new HashSet<>(Set.of(new Tag("starter")));
+        var attributes = new CustomAttributes(null, null, given);
+
+        given.add(new Tag("mascot"));
+
+        assertThat(attributes.tags()).containsExactly(new Tag("starter"));
+        assertThatThrownBy(() -> attributes.tags().add(new Tag("mascot")))
+            .isInstanceOf(UnsupportedOperationException.class);
     }
 
     private static Set<Tag> tags(int count) {
