@@ -17,7 +17,7 @@ export function PokemonListPage() {
           <ul className={styles.grid}>
             {Array.from({ length: PAGE_SIZE }, (_, slot) => (
               <li key={slot}>
-                <Skeleton height="18rem" />
+                <Skeleton variant="card" />
               </li>
             ))}
           </ul>
