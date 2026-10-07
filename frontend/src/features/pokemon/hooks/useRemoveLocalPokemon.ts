@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../auth/useAuth'
 import { useSignInAgainOnUnauthenticated } from '../../auth/useSignInAgainOnUnauthenticated'
 import { removeLocalPokemon } from '../api/pokemonApi'
-import { pokemonKeys } from './pokemonKeys'
+import { refreshOurData } from './refreshOurData'
 
 export function useRemoveLocalPokemon(pokedexNumber: number) {
   const { session } = useAuth()
@@ -15,7 +15,7 @@ export function useRemoveLocalPokemon(pokedexNumber: number) {
       }
       return removeLocalPokemon(pokedexNumber, session.accessToken)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: pokemonKeys.details() }),
+    onSuccess: () => refreshOurData(queryClient),
     onError: signInAgainOnUnauthenticated,
   })
 }
