@@ -1,15 +1,19 @@
 package dev.guilhermeds.backend.infrastructure.persistence.repository;
 
 import dev.guilhermeds.backend.domain.exception.EmailAlreadyRegisteredException;
+import dev.guilhermeds.backend.domain.exception.UserAccountDataUnavailableException;
 import dev.guilhermeds.backend.domain.model.Email;
 import dev.guilhermeds.backend.domain.model.UserAccount;
 import dev.guilhermeds.backend.domain.model.UserId;
 import dev.guilhermeds.backend.domain.repository.UserAccountRepository;
 import dev.guilhermeds.backend.infrastructure.persistence.mapper.UserAccountEntityMapper;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @Repository
 public class JpaUserAccountRepository implements UserAccountRepository {
@@ -27,7 +31,7 @@ public class JpaUserAccountRepository implements UserAccountRepository {
     @Override
     public UserAccount save(UserAccount account) {
         try {
-            return mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(account)));
+            return reachable(() -> mapper.toDomain(jpaRepository.saveAndFlush(mapper.toEntity(account))));
         } catch (DataIntegrityViolationException exception) {
             if (violates(exception, UNIQUE_EMAIL_CONSTRAINT)) {
                 throw new EmailAlreadyRegisteredException();
@@ -38,12 +42,21 @@ public class JpaUserAccountRepository implements UserAccountRepository {
 
     @Override
     public Optional<UserAccount> findById(UserId id) {
-        return jpaRepository.findById(id.value()).map(mapper::toDomain);
+        return reachable(() -> jpaRepository.findById(id.value()).map(mapper::toDomain));
     }
 
     @Override
     public Optional<UserAccount> findByEmail(Email email) {
-        return jpaRepository.findByEmail(email.value()).map(mapper::toDomain);
+        return reachable(() -> jpaRepository.findByEmail(email.value()).map(mapper::toDomain));
+    }
+
+    // A database that is down surfaces as either one, depending on whether a transaction was being opened.
+    private static <T> T reachable(Supplier<T> call) {
+        try {
+            return call.get();
+        } catch (DataAccessResourceFailureException | CannotCreateTransactionException exception) {
+            throw new UserAccountDataUnavailableException(exception);
+        }
     }
 
     private static boolean violates(DataIntegrityViolationException exception, String constraint) {

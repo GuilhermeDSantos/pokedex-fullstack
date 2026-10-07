@@ -18,6 +18,10 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/pokedex}
     username: ${DB_USERNAME:pokedex}
     password: ${DB_PASSWORD:pokedex}
+    hikari:
+      # Milliseconds (Hikari's own unit). The default 30s would hold a request for half a minute when
+      # the database is down, before the 503.
+      connection-timeout: 3000
   jpa:
     open-in-view: false
     hibernate:
