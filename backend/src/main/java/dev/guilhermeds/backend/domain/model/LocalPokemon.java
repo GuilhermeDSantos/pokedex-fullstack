@@ -13,9 +13,9 @@ public class LocalPokemon {
 
     private final LocalPokemonId id;
     private final PokedexNumber pokedexNumber;
-    private final CustomAttributes customAttributes;
+    private CustomAttributes customAttributes;
     private final Instant syncedAt;
-    private final Instant updatedAt;
+    private Instant updatedAt;
 
     private LocalPokemon(Builder builder) {
         this.id = Objects.requireNonNull(builder.id, "id must not be null");
@@ -39,7 +39,10 @@ public class LocalPokemon {
         return new Builder();
     }
 
+    // PUT semantics (US-04): the given fields replace ours entirely.
     public void updateCustomAttributes(CustomAttributes attributes, Instant now) {
+        this.customAttributes = Objects.requireNonNull(attributes, "attributes must not be null");
+        this.updatedAt = Objects.requireNonNull(now, "now must not be null");
     }
 
     // The canonical name comes from the caller, which reads it from the canonical data.
