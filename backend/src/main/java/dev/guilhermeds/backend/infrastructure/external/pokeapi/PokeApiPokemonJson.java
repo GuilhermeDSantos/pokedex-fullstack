@@ -8,7 +8,7 @@ import java.util.List;
 // GET /pokemon/{id}: only the fields we use.
 @JsonIgnoreProperties(ignoreUnknown = true)
 record PokeApiPokemonJson(int id, String name, int weight, Sprites sprites, List<TypeSlot> types,
-                          List<AbilitySlot> abilities) {
+                          List<AbilitySlot> abilities, NamedResource species) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Sprites(@JsonProperty("front_default") String frontDefault) {
