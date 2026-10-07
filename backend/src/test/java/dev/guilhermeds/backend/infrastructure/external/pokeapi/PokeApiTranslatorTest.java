@@ -55,7 +55,7 @@ class PokeApiTranslatorTest {
     void shouldAcceptAPokemonWithoutASprite() {
         var pikachu = pokemon(25);
         var withoutSprite = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(),
-            new PokeApiPokemonJson.Sprites(null), pikachu.types(), pikachu.abilities());
+            new PokeApiPokemonJson.Sprites(null), pikachu.types(), pikachu.abilities(), pikachu.species());
 
         assertThat(translator.toSummary(withoutSprite, species(25)).spriteUrl()).isNull();
     }
@@ -65,7 +65,7 @@ class PokeApiTranslatorTest {
     void shouldListTheTypesInSlotOrder() {
         var bulbasaur = pokemon(1);
         var shuffled = new PokeApiPokemonJson(bulbasaur.id(), bulbasaur.name(), bulbasaur.weight(), bulbasaur.sprites(),
-            bulbasaur.types().reversed(), bulbasaur.abilities());
+            bulbasaur.types().reversed(), bulbasaur.abilities(), bulbasaur.species());
 
         assertThat(translator.toSummary(shuffled, species(1)).types())
             .containsExactly(new PokemonType("grass"), new PokemonType("poison"));
@@ -76,7 +76,7 @@ class PokeApiTranslatorTest {
     void shouldListTheAbilitiesInSlotOrderWithTheHiddenOneMarked() {
         var pikachu = pokemon(25);
         var shuffled = new PokeApiPokemonJson(pikachu.id(), pikachu.name(), pikachu.weight(), pikachu.sprites(),
-            pikachu.types(), pikachu.abilities().reversed());
+            pikachu.types(), pikachu.abilities().reversed(), pikachu.species());
 
         assertThat(translator.toSummary(shuffled, species(25)).abilities())
             .containsExactly(new Ability("static", false), new Ability("lightning-rod", true));
