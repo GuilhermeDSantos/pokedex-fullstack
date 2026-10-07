@@ -396,6 +396,19 @@ endpoint would get its security retrofitted.
 Slice 1. The list and detail come from PokeAPI only in Slices 2–3, and local data joins them in
 Slices 4 and 6.
 
+## D-038 — Boot 4's RestClient starters for the PokeAPI client
+**Status:** Accepted (listed in the plan's S2.3, which the developer approved) · **Date:** 2026-10-07 · dependencies · **Requirements:** FR-0, US-01
+**Context:** Boot 4 moved the auto-configured `RestClient.Builder` and `@RestClientTest` out of the
+web starter. The `RestClient` class itself is still in `spring-web`.
+**Decision:** Add `spring-boot-starter-restclient` and, for tests,
+`spring-boot-starter-restclient-test` (both 4.1.1, from the Boot BOM; checked on Maven Central).
+Timeouts come from Boot's own `spring.http.clients.connect-timeout` / `read-timeout` (the
+`spring.http.client.*` names are deprecated in 4.1.1's metadata), so the client only sets its base
+URL, and `@RestClientTest`'s mock server still intercepts it.
+**Alternatives considered:** Building the request factory by hand inside the client: it would
+replace the mock server's factory in tests. WebClient: reactive, a second paradigm for one
+adapter (D-018).
+
 ## D-037 — Frontend test matchers: @testing-library/jest-dom
 **Status:** Accepted · **Date:** 2026-10-06 · dev dependency · **Requirements:** TR-UT, FE-5
 **Context:** D-023 covers the runner and the rendering library, but not the DOM assertions.
