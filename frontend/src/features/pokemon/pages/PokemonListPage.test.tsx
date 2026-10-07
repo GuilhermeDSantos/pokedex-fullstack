@@ -1,5 +1,6 @@
 import { screen, waitForElementToBeRemoved, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { PIKACHU, pageOf } from '../../../test/fixtures/pokemon'
 import { server } from '../../../test/msw/server'
@@ -25,5 +26,21 @@ describe('PokemonListPage', () => {
     const loading = screen.getByRole('status', { name: 'Loading Pokémon' })
     await waitForElementToBeRemoved(loading)
     expect(screen.getByRole('article', { name: 'Bulbasaur' })).toBeInTheDocument()
+  })
+
+  it('explains when the catalog is unavailable and loads the page on retry', async () => {
+    const unavailable = 'The Pokémon catalog is unavailable right now. Please try again in a moment.'
+    server.use(
+      http.get(
+        '/api/v1/pokemon',
+        () => HttpResponse.json({ code: 'SOURCE_UNAVAILABLE', message: unavailable, fieldErrors: [] }, { status: 503 }),
+        { once: true },
+      ),
+    )
+    renderApp('/')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(unavailable)
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByRole('article', { name: 'Bulbasaur' })).toBeInTheDocument()
   })
 })
