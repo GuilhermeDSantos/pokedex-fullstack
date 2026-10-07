@@ -307,4 +307,24 @@ describe('PokemonDetailPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
   })
+
+  it('removes our record once the user confirms, offering the sync again', async () => {
+    let detail = SYNCED_PIKACHU_DETAIL
+    server.use(
+      http.get('/api/v1/pokemon/pikachu', () => HttpResponse.json(detail)),
+      http.delete('/api/v1/pokemon/25/local', () => {
+        detail = PIKACHU_DETAIL
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderApp('/pokemon/pikachu', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }))
+    const dialog = screen.getByRole('alertdialog', { name: 'Remove our record of Pikachu?' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove' }))
+
+    expect(await screen.findByRole('button', { name: 'Sync to local database' })).toBeInTheDocument()
+    expect(screen.queryByText('Kanto')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
 })
