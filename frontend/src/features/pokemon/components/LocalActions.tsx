@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router'
-import { withReturnTo } from '../../auth/lib/authLink'
 import { useAuth } from '../../auth/useAuth'
 import { ApiError } from '../../../shared/api/ApiError'
 import { formatName } from '../../../shared/lib/format'
@@ -13,7 +11,6 @@ import { LocalForm } from './LocalForm'
 import styles from './LocalActions.module.css'
 
 export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
-  const { pathname } = useLocation()
   const { session } = useAuth()
   const sync = useSyncPokemon(pokemon.pokedexNumber)
   const syncedMeanwhile = sync.error instanceof ApiError && sync.error.status === 409
@@ -22,7 +19,6 @@ export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
   const [confirmingRemoval, setConfirmingRemoval] = useState(false)
   return (
     <>
-      {pokemon.local === null && !session && <Link to={withReturnTo('/login', pathname)}>Log in to sync</Link>}
       {pokemon.local === null && session && (
         <div className={styles.actions}>
           <Button pending={sync.isPending} onClick={() => sync.mutate()}>
