@@ -41,6 +41,10 @@ public class LocalPokemon {
         return new Builder();
     }
 
+    public String displayName() {
+        return customAttributes.localizedName() != null ? customAttributes.localizedName() : name;
+    }
+
     public LocalPokemonId getId() { return id; }
     public PokedexNumber getPokedexNumber() { return pokedexNumber; }
     public String getName() { return name; }
