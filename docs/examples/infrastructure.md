@@ -423,7 +423,7 @@ is exactly the path that the self-invocation trap would break.
 spring:
   cache:
     type: caffeine
-    cache-names: pokeapi-pages, pokeapi-pokemon, pokeapi-species, pokeapi-evolution-chains
+    cache-names: pokeapi-pages, pokeapi-pokemon, pokeapi-species   # + pokeapi-evolution-chains in Slice 3
     caffeine:
       spec: maximumSize=2000,expireAfterWrite=6h   # PokeAPI data is effectively static
 ```

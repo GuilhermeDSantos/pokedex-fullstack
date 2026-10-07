@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.4 (the PokeAPI source: concurrent fan-out and the cache). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
+> **Slice 1 — Sign up, sign in, sign out.** Next task: S2.5 (BrowsePokemon use case, PageResponse, 503 and GET /pokemon). Slice 1 works end to end on Docker. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -239,9 +239,18 @@ Backend:
       property reaches our client. The developer asked whether PokeAPI should be a repository;
       kept as `PokemonSource`, with the `*Repository` / `*Source` rule now explicit in
       `domain-model.md` and the walkthrough FAQ.
-- [ ] S2.4 `PokeApiPokemonSource.findAll` (concurrent fan-out on virtual threads, D-018) and the
-      Caffeine cache on `PokeApiClient` only (D-012), with a test that a repeated call makes no HTTP
-      request.
+- [x] S2.4 `PokeApiPokemonSource implements PokemonSource`: `findAll` fetches each card's Pokémon
+      and species concurrently on virtual threads and joins them in PokeAPI's order (D-018; proven
+      with a latch: Bulbasaur's answer waits until Pikachu's request has started), capped by
+      `pokeapi.max-concurrency` (10) through one shared `Semaphore` (peak of exactly 2 with a cap of
+      2; mutation without `acquire` fails). A cap below 1 refuses to start (it would hang every
+      list). A listed Pokémon PokeAPI can't return → unavailable; a worker's failure reaches the
+      caller unwrapped (mutation proven). Caffeine cache (D-012): `CacheConfig` + `@Cacheable` on
+      the client's three methods only, `maximumSize=2000,expireAfterWrite=6h`. Tests: each resource
+      fetched once, a failure is not cached, and a repeated `findAll` through the port makes no
+      new HTTP call (mutation without `@Cacheable` fails). The developer asked about merging client
+      and source; kept apart because a merged class would self-call past the cache proxy (FAQ).
+      `pokeapi-evolution-chains` comes with Slice 3.
 - [ ] S2.5 `BrowsePokemonInteractor` (TDD), then `PageResponse`, the 503 mapping of
       `PokemonSourceUnavailableException` in `GlobalExceptionHandler`, and `PokemonController`
       `GET /pokemon` + `PokemonControllerIT` (200, 400 page/size, 503).

@@ -29,7 +29,7 @@ to a decision in [`decisions.md`](decisions.md).
 |---|---|---|---|
 | FR-0 | Spring Boot REST API that **communicates with PokeAPI** | 🟨 | `PokemonSource` port → `PokeApiPokemonSource`; so far `PokeApiClient` (`PokeApiClientTest`, `PokeApiClientTimeoutIT`) and `PokeApiTranslator` |
 | US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | ⬜ | `GET /api/v1/pokemon` (merged with local data, D-030) |
-| US-01.N | *Nice to have:* **cache** service responses | ⬜ | Caffeine on `PokeApiClient` (D-012) |
+| US-01.N | *Nice to have:* **cache** service responses | 🟨 | Caffeine on `PokeApiClient` (D-012): `PokeApiClientCacheTest`, `PokeApiPokemonSourceCacheTest`; the list endpoint comes in S2.5 |
 | US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | ⬜ | `GET /api/v1/pokemon/{identifier}` (merged with local data) |
 | US-03 | **Persist** Pokémon data into a **local relational store** (sync) | ⬜ | `POST /api/v1/pokemon/{identifier}/local` → `local_pokemons` (scalar snapshot, D-031) |
 | US-03.a | Replication enables **proprietary fields**: localized nomenclature, geographical metadata, internal classification tags (D-006; one free-text `localizedName`, D-027 rejected) | ⬜ | `CustomAttributes` (localizedName, region, tags) — the brief's three examples |
@@ -45,7 +45,7 @@ to a decision in [`decisions.md`](decisions.md).
 | TR-GIT | Code hosted in a **public Git repository** | ⬜ | GitHub URL in README |
 | TR-TEST | **Tests included** | ⬜ | |
 | TR-ERR | **Proper error handling** (uniform `ErrorResponse`, category mapping) | 🟨 | `GlobalExceptionHandlerIT`: categories 404/409/400/401/422, malformed/invalid body and params → 400, unknown path 404, generic 500, framework 405/415 kept |
-| TR-CACHE | *Nice to have:* **caching layer for PokeAPI** responses | ⬜ | same as US-01.N |
+| TR-CACHE | *Nice to have:* **caching layer for PokeAPI** responses | 🟨 | same as US-01.N |
 | TR-FE | **Front-end** consuming the API | ⬜ | `frontend/` |
 | TR-OPT | *Optional:* additional functionality is welcome | 🟨 | Swagger UI at `/swagger-ui.html` with bearer auth (D-016, `OpenApiIT`); planned: "synced" badge and display name on the list |
 

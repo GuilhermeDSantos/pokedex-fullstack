@@ -31,6 +31,20 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-07 — The PokeAPI source: a hang waiting to happen, and a design question answered with a test
+- **Context:** S2.4, the concurrent fan-out and the cache (US-01, US-01.N, D-012, D-018).
+- **AI proposed:** A `Semaphore(properties.maxConcurrency())` to cap concurrent PokeAPI calls.
+- **Problem:** A missing or zero `pokeapi.max-concurrency` would build `Semaphore(0)`: every list
+  request would wait forever, with no error. Separately, the developer asked why the client and the
+  source are two classes and whether merging them would be simpler. And the first cache test passed
+  alone but broke when a second test ran first: the cache outlives a test in a shared context.
+- **Resolution:** `PokeApiProperties` refuses a cap below 1 at startup. The two classes stay:
+  merged, the calls would be self-invocations that skip the cache proxy. Instead of only arguing
+  it, `PokeApiPokemonSourceCacheTest` goes through the port and fails when `@Cacheable` is removed.
+  The cache tests clear every cache before each test.
+- **Lesson:** A concurrency limit is also a way to deadlock: validate it. And when a design choice
+  is questioned, a test that would break under the alternative is the best answer.
+
 ### 2026-10-07 — The PokeAPI client: a property name checked, a timeout proven, a slip caught
 - **Context:** S2.3, the HTTP client for PokeAPI (FR-0).
 - **AI proposed:** Configuring timeouts somewhere sensible, and, in a first draft of
