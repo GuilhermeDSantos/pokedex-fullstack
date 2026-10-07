@@ -2,7 +2,14 @@ import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-lib
 import { http, HttpResponse } from 'msw'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { EDITED_PIKACHU_DETAIL, PIKACHU_DETAIL, SYNCED_PIKACHU_DETAIL } from '../../../test/fixtures/pokemon'
+import {
+  BULBASAUR,
+  EDITED_PIKACHU_DETAIL,
+  PIKACHU,
+  PIKACHU_DETAIL,
+  SYNCED_PIKACHU_DETAIL,
+  pageOf,
+} from '../../../test/fixtures/pokemon'
 import { ASH_SESSION } from '../../../test/fixtures/session'
 import { server } from '../../../test/msw/server'
 import { renderApp } from '../../../test/renderApp'
@@ -356,5 +363,37 @@ describe('PokemonDetailPage', () => {
     expect(await screen.findByText('Kanto')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument()
+  })
+
+  // The list page stays cached: it is refreshed as soon as our data changes, so it never shows the old name.
+  it('shows an edit on the list as soon as the user goes back to it', async () => {
+    let localizedName = 'Pica'
+    let listRequests = 0
+    server.use(
+      http.get('/api/v1/pokemon', () => {
+        listRequests += 1
+        return HttpResponse.json(pageOf([BULBASAUR, { ...PIKACHU, localizedName }]))
+      }),
+      http.get('/api/v1/pokemon/pikachu', () =>
+        HttpResponse.json(localizedName === 'Pica' ? SYNCED_PIKACHU_DETAIL : EDITED_PIKACHU_DETAIL),
+      ),
+      http.put('/api/v1/pokemon/25/local', () => {
+        localizedName = 'Pikachu BR'
+        return HttpResponse.json({ pokedexNumber: 25, ...EDITED_PIKACHU_DETAIL.local })
+      }),
+    )
+    renderApp('/', { session: ASH_SESSION })
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Pikachu' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    const name = screen.getByRole('textbox', { name: 'Localized name' })
+    await userEvent.clear(name)
+    await userEvent.type(name, 'Pikachu BR')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(listRequests).toBe(2))
+    await userEvent.click(screen.getByRole('link', { name: 'Pokémon Catalog' }))
+
+    expect(screen.getByText('Pikachu BR')).toBeInTheDocument()
+    expect(screen.queryByText('Pica')).not.toBeInTheDocument()
   })
 })
