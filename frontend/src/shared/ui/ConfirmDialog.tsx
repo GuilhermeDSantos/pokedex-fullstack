@@ -15,8 +15,10 @@ export function ConfirmDialog({ title, message, confirmLabel, pending = false, o
   return (
     <Dialog title={title} description={message} role="alertdialog" onClose={onCancel}>
       <div className={styles.actions}>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button pending={pending} onClick={onConfirm}>
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="danger" pending={pending} onClick={onConfirm}>
           {confirmLabel}
         </Button>
       </div>

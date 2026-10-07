@@ -49,11 +49,15 @@ export function PokemonDetailPage() {
         <p className={styles.noImage}>No image</p>
       )}
       <Stack>
-        <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>
-        <Heading level={1}>{name}</Heading>
-        {pokemon.local?.localizedName && <p className={styles.localizedName}>{pokemon.local.localizedName}</p>}
+        <header className={styles.header}>
+          <div className={styles.titles}>
+            <p className={styles.number}>{formatPokedexNumber(pokemon.pokedexNumber)}</p>
+            <Heading level={1}>{name}</Heading>
+            {pokemon.local?.localizedName && <p className={styles.localizedName}>{pokemon.local.localizedName}</p>}
+          </div>
+          <LocalActions pokemon={pokemon} />
+        </header>
         <BadgeList label="Types" items={pokemon.types} />
-        <LocalActions pokemon={pokemon} />
         <p>{pokemon.description}</p>
         <ul aria-label="Facts" className={styles.facts}>
           <li>

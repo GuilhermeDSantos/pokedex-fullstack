@@ -1,12 +1,29 @@
 .button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font: inherit;
   font-weight: var(--font-weight-bold);
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--color-text);
   border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.primary {
   background: var(--color-text);
   color: var(--color-background);
-  cursor: pointer;
+}
+
+.secondary {
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.danger {
+  border-color: var(--color-danger);
+  background: var(--color-background);
+  color: var(--color-danger);
 }
 
 .button:disabled {

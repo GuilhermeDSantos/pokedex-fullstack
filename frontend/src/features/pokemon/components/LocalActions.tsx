@@ -4,6 +4,7 @@ import { ApiError } from '../../../shared/api/ApiError'
 import { formatName } from '../../../shared/lib/format'
 import { Button } from '../../../shared/ui/Button'
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
+import { PencilIcon } from '../../../shared/ui/PencilIcon'
 import type { PokemonDetail } from '../api/pokemonApi'
 import { useRemoveLocalPokemon } from '../hooks/useRemoveLocalPokemon'
 import { useSyncPokemon } from '../hooks/useSyncPokemon'
@@ -18,21 +19,24 @@ export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
   const remove = useRemoveLocalPokemon(pokemon.pokedexNumber)
   const [confirmingRemoval, setConfirmingRemoval] = useState(false)
   return (
-    <>
+    <div className={styles.bar}>
       {pokemon.local === null && session && (
+        <Button pending={sync.isPending} onClick={() => sync.mutate()}>
+          Sync to local database
+        </Button>
+      )}
+      {pokemon.local !== null && session && (
         <div className={styles.actions}>
-          <Button pending={sync.isPending} onClick={() => sync.mutate()}>
-            Sync to local database
+          <Button variant="secondary" onClick={() => setEditing(true)}>
+            <PencilIcon />
+            Edit
+          </Button>
+          <Button variant="danger" onClick={() => setConfirmingRemoval(true)}>
+            Remove
           </Button>
         </div>
       )}
       {syncedMeanwhile && <p role="status">Someone synced this Pokémon just before you.</p>}
-      {pokemon.local !== null && session && (
-        <div className={styles.actions}>
-          <Button onClick={() => setEditing(true)}>Edit</Button>
-          <Button onClick={() => setConfirmingRemoval(true)}>Remove</Button>
-        </div>
-      )}
       {confirmingRemoval && (
         <ConfirmDialog
           title={`Remove our record of ${formatName(pokemon.name)}?`}
@@ -46,6 +50,6 @@ export function LocalActions({ pokemon }: { pokemon: PokemonDetail }) {
       {pokemon.local !== null && session && editing && (
         <LocalForm pokedexNumber={pokemon.pokedexNumber} local={pokemon.local} onDone={() => setEditing(false)} />
       )}
-    </>
+    </div>
   )
 }

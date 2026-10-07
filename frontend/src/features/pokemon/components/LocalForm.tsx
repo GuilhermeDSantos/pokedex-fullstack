@@ -77,10 +77,12 @@ export function LocalForm({ pokedexNumber, local, onDone }: LocalFormProps) {
             error={errors.tags}
           />
           <div className={styles.actions}>
+            <Button variant="secondary" onClick={onDone}>
+              Cancel
+            </Button>
             <Button type="submit" pending={update.isPending}>
               Save
             </Button>
-            <Button onClick={onDone}>Cancel</Button>
           </div>
         </Stack>
       </form>
