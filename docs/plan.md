@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 2 — Browse the list.** Next task: S3.1 (Slice 3, view a Pokémon). Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Slice 2 — Browse the list.** Next task: S3.2 (PokeAPI detail: fixtures, translator, findByIdentifier). Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -282,9 +282,15 @@ Frontend:
 ## Slice 3 — View a Pokémon (US-02, FE-2)
 
 Backend:
-- [ ] S3.1 Domain (TDD): `PokemonIdentifier` (+ `InvalidPokemonIdentifierException`), `Height`,
-      `BaseStat`/`StatName`, `PokemonProfile`, `EvolutionStage`, `PokemonDetail`,
-      `PokemonNotFoundException`, and `PokemonSource.findByIdentifier` / `getByIdentifier`.
+- [x] S3.1 Domain (TDD, plain JUnit): `PokemonIdentifier` (trimmed, lower-cased, `[a-z0-9-]{1,100}`,
+      else `InvalidPokemonIdentifierException`, 400; `isNumber`/`asNumber` wait for the local
+      lookup in Slice 4, since PokeAPI takes a name or a number as is), `Height` (m from
+      decimetres, one decimal, never negative), `StatName` + `BaseStat` (1..255, ends proven by
+      mutation), `EvolutionStage` (a tree; its own copy of the branches, none = a leaf),
+      `PokemonProfile` (name, height, weight required; stats in the games' order, exactly one per
+      stat), `PokemonDetail`. `PokemonNotFoundException` and the port's `findByIdentifier` /
+      `getByIdentifier` move to S3.2, with the adapter that implements them, so no step leaves the
+      port unimplemented.
 - [ ] S3.2 Fixtures for eevee (branching chain) and an evolution chain. `PokeApiTranslator` for
       details + tests (flavor-text normalization, highest English version, branching evolution
       tree, null artwork). `PokeApiPokemonSource.findByIdentifier`, cached through the client, with
@@ -393,6 +399,9 @@ styles change; behaviour and tests stay as they are.
       and detail layouts.
 - [ ] U.3 Visual check at ~360 px, tablet and desktop width, keyboard focus still visible, AA
       contrast still met, console still empty.
+- [ ] U.4 The one behaviour change of the pass, test-first: TanStack Query retries a failed query 3
+      times by default, so with PokeAPI down the list shows skeletons for ~7s before the error.
+      Retry once, on 5xx and network errors only (scheduled here by the developer during S2.6).
 
 ## GenAI case study (AI-1..5)
 

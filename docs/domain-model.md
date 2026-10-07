@@ -87,12 +87,12 @@ repository of their own.
 | `LocalPokemonId(UUID value)` | non-null; `generate()` (edge only) |
 | `UserId(UUID value)` | same shape |
 | `PokedexNumber(int value)` | `value ≥ MIN_VALUE` (1) → `InvalidPokedexNumberException` ("Pokédex number must be at least 1", Validation) |
-| `PokemonIdentifier(String value)` | trimmed, lower-cased; digits or `[a-z0-9-]+`, ≤ `MAX_LENGTH` (100) → `InvalidPokemonIdentifierException` (Validation). A name **or** a number: `isNumber()`, `asNumber()` |
+| `PokemonIdentifier(String value)` | trimmed, lower-cased; `[a-z0-9-]{1,100}` → else `InvalidPokemonIdentifierException` ("A Pokémon is identified by its name or its Pokédex number", Validation). A name **or** a number; `isNumber()` / `asNumber()` arrive with the local lookup (Slice 4) |
 | `Height(BigDecimal meters)` / `Weight(BigDecimal kilograms)` | `≥ 0`, scale 1. Factories `fromDecimetres(int)` / `fromHectograms(int)` hold the unit conversion |
 | `PokemonType(String name)` | non-blank (else `IllegalArgumentException`: it comes from PokeAPI, so it's a mapping bug), trimmed, lower-cased |
 | `Ability(String name, boolean hidden)` | non-blank name |
 | `BaseStat(StatName name, int value)` | `1 ≤ value ≤ 255`. `StatName` enum: `HP, ATTACK, DEFENSE, SPECIAL_ATTACK, SPECIAL_DEFENSE, SPEED` |
-| `PokemonProfile(...)` | The full PokeAPI view: name, category, height, weight, spriteUrl, artworkUrl, `types` 1..2, `abilities` ≥ 1, `stats` one per `StatName` in `StatName` order, description. Urls, description and category are nullable (PokeAPI has gaps). `toSnapshot()` returns the scalar subset |
+| `PokemonProfile(...)` | The full PokeAPI view: name, category, height, weight, spriteUrl, artworkUrl, types, abilities, `stats` exactly one per `StatName`, kept in `StatName` order, description. Name, height and weight required; urls, description and category nullable (PokeAPI has gaps). A broken rule here is a mapping bug (`IllegalArgumentException`). `toSnapshot()` comes with Slice 4 |
 | `PokemonSnapshot(...)` | name non-blank; category, height, weight, spriteUrl, artworkUrl, description; urls, category and description nullable |
 | `Tag(String value)` | trimmed, lower-cased, `^[a-z0-9][a-z0-9-]{0,29}$` → `InvalidTagException` (Validation) |
 | `CustomAttributes(String localizedName, String region, Set<Tag> tags)` | strings trimmed, blank → `null`, ≤ `MAX_TEXT_LENGTH` (100) chars each; ≤ `MAX_TAGS` (10) tags → `InvalidCustomAttributesException` (Validation). `CustomAttributes.empty()` |
