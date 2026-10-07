@@ -105,4 +105,14 @@ class PokeApiTranslatorTest {
             new BaseStat(StatName.SPECIAL_ATTACK, 50), new BaseStat(StatName.SPECIAL_DEFENSE, 50),
             new BaseStat(StatName.SPEED, 90));
     }
+
+    // Legends: Arceus (version 39) is Pikachu's newest English entry; the array order isn't guaranteed.
+    @Test
+    void shouldDescribeThePokemonWithTheNewestEnglishEntry() {
+        var pikachu = species(25);
+        var shuffled = new PokeApiSpeciesJson(pikachu.genera(), pikachu.flavorTextEntries().reversed(), pikachu.evolutionChain());
+
+        assertThat(translator.toDetail(pokemon(25), shuffled, evolutionChain(10)).profile().description())
+            .startsWith("Possesses cheek sacs in which it stores electricity.");
+    }
 }
