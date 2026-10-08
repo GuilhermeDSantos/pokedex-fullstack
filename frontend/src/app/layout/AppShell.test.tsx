@@ -17,6 +17,17 @@ describe('header session area', () => {
     )
   })
 
+  // Already on sign in (or sign up): the header keeps where the user was going, never returns to itself.
+  it('keeps the page the user was going back to while they are signing in', () => {
+    renderApp('/login?returnTo=%2Fpokemon%2Fpikachu')
+
+    const banner = screen.getByRole('banner')
+    expect(within(banner).getByRole('link', { name: 'Create account' })).toHaveAttribute(
+      'href',
+      '/register?returnTo=%2Fpokemon%2Fpikachu',
+    )
+  })
+
   it('shows who is signed in after a reload, with a way to sign out', () => {
     renderApp('/', { session: ASH_SESSION })
 
