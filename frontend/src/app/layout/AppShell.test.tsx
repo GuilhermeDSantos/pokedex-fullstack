@@ -5,12 +5,16 @@ import { ASH_SESSION } from '../../test/fixtures/session'
 import { renderApp } from '../../test/renderApp'
 
 describe('header session area', () => {
-  it('offers to sign in or create an account when nobody is signed in', () => {
-    renderApp('/')
+  // Signing in from a page comes back to that page, list page and its query included.
+  it('offers to sign in or create an account when nobody is signed in, coming back to the page', () => {
+    renderApp('/?page=2')
 
     const banner = screen.getByRole('banner')
-    expect(within(banner).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
-    expect(within(banner).getByRole('link', { name: 'Create account' })).toHaveAttribute('href', '/register')
+    expect(within(banner).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?returnTo=%2F%3Fpage%3D2')
+    expect(within(banner).getByRole('link', { name: 'Create account' })).toHaveAttribute(
+      'href',
+      '/register?returnTo=%2F%3Fpage%3D2',
+    )
   })
 
   it('shows who is signed in after a reload, with a way to sign out', () => {
