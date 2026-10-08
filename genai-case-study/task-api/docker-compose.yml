@@ -1,4 +1,4 @@
-# PostgreSQL for `./gradlew bootRun`; 5434 on the host, beside the Pokémon project's 5433.
+# PostgreSQL for `./gradlew bootRun`.
 services:
   postgres:
     image: postgres:17-alpine

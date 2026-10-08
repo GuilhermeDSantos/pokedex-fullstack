@@ -1,3 +1,7 @@
+# 8081 and 5434 (docker-compose.yml), so it runs beside the Pokémon project's 8080 and 5433.
+server:
+  port: 8081
+
 spring:
   application:
     name: task-api
