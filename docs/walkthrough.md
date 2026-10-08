@@ -5,7 +5,7 @@ Keep it **clear and concise**. **Backend and frontend** practices each get their
 claim should point at something concrete: a file, a test, a row in
 [`requirements.md`](requirements.md).
 
-> Completed in the plan's Walkthrough section. Keep it as an outline, not a script to read aloud.
+Keep it as an outline, not a script to read aloud.
 
 ## Agenda (about 25 minutes, then questions)
 
@@ -14,6 +14,7 @@ claim should point at something concrete: a file, a test, a row in
    own fields ([`domain-model.md` → Product vision](domain-model.md#product-vision)).
 2. **User stories → design (2 min).** US-01…US-04 mapped to two pages and one resource: list and
    detail read merged data, and sync/edit/remove go to `/pokemon/{number}/local` (D-030, D-040).
+   Walk the [table below](#user-stories--what-to-show).
    State the interpretations: category = genus, skills = abilities (D-010), the brief's three
    example proprietary fields, and why US-04 edits only those (D-026).
 3. **Architecture (4 min).**
@@ -45,23 +46,42 @@ claim should point at something concrete: a file, a test, a row in
    test → IT, the coverage report, the frontend tests (RTL + MSW), and the test-first commits in the
    history.
 7. **Live demo (5 min).** See the script below.
-8. **AI-assisted development (3 min).** How the agent was set up (`AGENTS.md` + standards +
-   decision log), two or three entries from [`ai-log.md`](ai-log.md) where AI output was corrected,
-   and the task-API case study ([`genai-case-study.md`](genai-case-study.md)).
+8. **AI-assisted development (3 min).**
+   - The roles: I directed and decided (architecture and its strictness, the rules in `AGENTS.md`
+     and the standards, product vision, scope, the slice order); the agent wrote most of the code
+     under those rules, test-first, and nothing was committed before I had read it.
+   - Two or three entries from [`ai-log.md`](ai-log.md) where AI output was corrected (PokeAPI as a
+     repository, dropping the stored name, `/local` by number, the screen showing one Pokémon).
+   - The task-API case study ([`genai-case-study.md`](genai-case-study.md)): the spec-first prompt,
+     the blind first run I stopped, the run under my rules, and the defects the checks caught.
 9. **Limitations & next steps (1 min).** From `plan.md` → "Parked".
+
+## User stories → what to show
+
+| Story | What it asks | API | Screen | Demo step |
+|---|---|---|---|---|
+| US-01 | Browse, paginated: sprite, category, mass, skills (+ cache) | `GET /pokemon?page=&size=` | List: cards, our localized name under the name | 2 |
+| US-02 | Detail: image, stats, description, evolutionary lineage | `GET /pokemon/{name or number}` | Detail: artwork, facts, stats, evolution tree (Eevee branches) | 2, 3 |
+| US-03 | Sync into the local database, for our own fields | `POST /pokemon/{number}/local` → 201, 409 if already synced | "Sync to local database" | 4 |
+| US-04 | Update the local record; 404 missing, 400 malformed, more defensive logic | `PUT /pokemon/{number}/local` → 200, 400, 404, 409 | Edit dialog: localized name, region, tags | 5, 8 |
+| CRUD-D | Remove the local record | `DELETE /pokemon/{number}/local` → 204, 404 | Remove, with confirmation | 6 |
+| TR-AUTH | Registration, authentication, public vs protected routes | `POST /auth/register`, `POST /auth/login`, `GET /auth/me` | Sign in / Create account; visitors see no controls | 3 |
 
 ## Demo script
 
 1. `docker compose up --build` is already running, so show the containers healthy.
-2. Logged out: browse the list. Seeded Pokémon already show their localized name under the name.
+2. Logged out: browse the list. Seeded Pokémon already show their (French) localized name under the
+   name.
    Paginate, open Eevee (branching evolution), and show a cached second load.
 3. Open Pikachu (deliberately not in the seed): no local data, and no controls for a visitor. Sign
-   in with the demo credentials from the README → back on Pikachu, now with "Sync to local database".
+   in from the header with the demo account (`demo@pokemon.com`, password in the README) → back on
+   Pikachu, now with "Sync to local database".
 4. Sync → 201: the page is the same Pokémon, now ours too (no fields set yet). (Optional: `curl`
    the same sync → 409.)
 5. Edit: localized name "Pikachu BR", a region and tags. Save: "Pikachu BR" appears under the
-   title, the region joins the facts, and the tags close the page. Show a validation error (an
-   invalid tag → 400 with the field message). Back to the list: the card shows the new name.
+   title, the region joins the facts, and the tags close the page. Show the validation: an invalid
+   tag (`bad tag!`) → 400 with the domain's message above the form, the typed values kept. Back to
+   the list: the card already shows the new name.
 6. Remove with confirmation, and the detail goes back to "not synced".
 7. DevTools open throughout: **an empty console**. Resize to mobile width.
 8. Optional: Swagger UI, and `curl` showing malformed JSON → 400, `PUT` on a Pokémon that isn't
@@ -76,7 +96,9 @@ claim should point at something concrete: a file, a test, a row in
 - What happens when the database or PokeAPI is down? → Same answer for both: each repository
   throws its own `DataUnavailableException` subclass (the log says which, and why), and the API
   answers one 503 `DATA_UNAVAILABLE`. `DatabaseUnavailableIT` stops PostgreSQL for real; Hikari
-  gives up after 3s instead of 30s.
+  gives up after 3s instead of 30s. With PokeAPI down, our own data stays readable and editable on
+  `/pokemon/{number}/local` (D-040), and the cache softens it; serving synced Pokémon offline would
+  need a copy of PokeAPI's data, which D-039 dropped on purpose.
 - Why are `PokeApiClient` and `PokeApiPokemonRepository` two classes? → `@Cacheable` works through a
   Spring proxy, which only sees calls coming from outside the bean. Merged, `findAll` would call
   `this.fetchPokemon(...)` and the cache would never hit, silently. Split, every call crosses a
@@ -88,10 +110,6 @@ claim should point at something concrete: a file, a test, a row in
 - Why no `@Transactional` on use cases? → D-001 + `UnitOfWork`. Show `SpringUnitOfWork`.
 - How do you guarantee the domain doesn't depend on Spring? → The ArchUnit allowlist. Adding a
   Spring import to `domain` fails the build.
-- What happens if PokeAPI is down? → `PokemonDataUnavailableException` → 503 on the merged reads;
-  our own data stays readable and editable on `/pokemon/{number}/local` (D-040), and the cache
-  softens it. Serving synced Pokémon offline would need a copy of PokeAPI's data, which D-039
-  dropped on purpose.
 - Two users edit the same Pokémon at once? → `@Version` → 409 (D-011). Next step: expose the
   version and require `If-Match`, so a stale browser tab also gets a 409.
 - Two users sync the same Pokémon at once? → The unique constraint, translated to 409. The
@@ -102,15 +120,26 @@ claim should point at something concrete: a file, a test, a row in
   where data comes from, and one request is one consistent view.
 - Why do writes go to `/local`? → So `DELETE` then `GET` stays coherent: the Pokémon still exists in
   PokeAPI, only the local record is gone (D-030).
-- Why does the database keep only some fields? → D-031: types, stats and evolution are always read
-  from PokeAPI, so storing them would be persistence work no screen uses.
-- Why is the cache on `PokeApiClient` and not on the source adapter? → D-012: the port's `default
-  getByIdentifier` calls `findByIdentifier` on `this`, which bypasses Spring's proxy. Show the
-  cache test that goes through `getByIdentifier`.
+- Why does the database keep only the Pokédex number and our fields? → D-039: PokeAPI stays the
+  source of truth for everything else, the name included, so nothing local can go stale and a
+  renamed Pokémon needs no migration. The earlier snapshot (D-031) was dropped for that reason.
+- Why do the `/local` routes take only the number? → D-040: the record is keyed by it, and the
+  detail page already has it. Get, edit and remove never call PokeAPI, so editing our data works
+  even while PokeAPI is down; a name there is a 400.
 - The brief says "update any Pokémon". Why can't I edit the name? → D-026: canonical data is
-  PokeAPI's and comes from the sync; US-04 edits what we own. The localized name *is* the name
-  shown, without touching the original. Mixing the two would make any future refresh from PokeAPI
-  clobber local edits.
+  PokeAPI's; US-04 edits what we own. The name is always the title, and our localized name sits
+  under it, on the detail and the list alike. Editing PokeAPI's name would be a copy that goes
+  stale.
+- Why did `displayName` disappear from the API? → Once every screen titled a Pokémon by its name
+  and showed the localized one underneath, nothing read it; the list carries `localizedName`
+  instead. Unused contract is dead code.
+- After an edit, how is the list already up to date? → Every write calls `refreshOurData`: the
+  detail on screen refetches, and the cached list pages refetch right away too (`refetchType:
+  'all'`). A test edits, waits for that refetch, goes back and checks the card with no wait.
+- How does the demo data get there, and is it safe to rerun? → A Flyway migration (`V3`): the demo
+  account, hashed by the app's own `BCryptPasswordHasher`, and ten synced Pokémon with names from
+  PokeAPI. `ON CONFLICT DO NOTHING` keeps it from failing on a database that already synced some of
+  them; `ApplicationContextIT` signs the demo account in.
 - Why is the local data shared and not per user? → D-030: the brief's fields are organizational
   ("internal classification tags"), and users are an "auxiliary" API for protected routes. A
   per-user collection is a different product.

@@ -21,7 +21,7 @@ to a decision in [`decisions.md`](decisions.md).
 | OV-3 | **TDD** methodology, visible in history and tests | ✅ | Inward-out TDD visible in the history: 305 `test:` commits (red) and 239 `feat:` commits (green), plus `refactor:` steps; [`ai-log.md`](ai-log.md) |
 | OV-4 | Backed by a reliable data store | ✅ | PostgreSQL 17 with Flyway-owned migrations (`ddl-auto: validate`); unreachable database → 503 within 3 s (`DatabaseUnavailableIT`, `DatabaseConnectionLostIT`) |
 | OV-5 | Integrates **PokeAPI** for retrieval, local replication and attribute modification | ✅ | Retrieval (list and detail from PokeAPI), local replication (sync, `POST …/local`), attribute modification (`PUT …/local`); `PokemonControllerIT`, `JpaLocalPokemonRepositoryIT`, the demo on Docker |
-| OV-6 | The user stories are explicit in the docs and the walkthrough | 🟨 | The stories are explicit in this matrix (US-01…US-04) and in [`domain-model.md`](domain-model.md#product-vision); [`walkthrough.md`](walkthrough.md) still to be brought up to date |
+| OV-6 | The user stories are explicit in the docs and the walkthrough | ✅ | US-01…US-04 in this matrix and in [`domain-model.md`](domain-model.md#product-vision); [`walkthrough.md`](walkthrough.md#user-stories--what-to-show) maps each story to its API, screen and demo step |
 
 ## Functional — user stories
 

@@ -471,6 +471,9 @@ Independent of the Pokémon code: do it once Slice 5 is done, before the polish.
 
 - [ ] W.1 Fill in the [`walkthrough.md`](walkthrough.md) agenda and demo script, and have the
       evidence for every row of `requirements.md` ready.
+      Done except the frontend part, which waits for the UI pass: the stories table (OV-6), the
+      demo script and FAQ brought up to D-039/D-040, the AI section with the roles; the matrix has
+      evidence for every row but the frontend ones.
 - [ ] W.2 Check the answers in the design FAQ against the final code, with a full dry run from
       `docker compose up`.
 - [ ] W.3 Final check: every row in `requirements.md` is ✅ with evidence, the repo is public, the
