@@ -1,5 +1,6 @@
 package com.example.tasks.domain.repository;
 
+import com.example.tasks.domain.exception.TaskNotFoundException;
 import com.example.tasks.domain.model.Task;
 import com.example.tasks.domain.model.TaskId;
 import com.example.tasks.domain.model.TaskStatus;
@@ -17,7 +18,7 @@ public interface TaskRepository {
     Optional<Task> findByIdAndOwner(TaskId id, UserId owner);
 
     default Task getByIdAndOwner(TaskId id, UserId owner) {
-        throw new UnsupportedOperationException("not implemented yet");
+        return findByIdAndOwner(id, owner).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
     /** {@code status} is optional: {@code null} lists every status. */
