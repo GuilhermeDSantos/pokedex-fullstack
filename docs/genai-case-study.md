@@ -79,6 +79,31 @@ Representative files:
   the whole application with real HTTP Basic and PostgreSQL: Bob gets 404 on Alice's task in
   every operation.
 
+### Assumptions
+
+The prompt asks for the assumptions made where it was silent or ambiguous:
+
+1. **No registration endpoint.** The `User` model is assumed to exist, so the users come only from
+   the seed migration.
+2. **An id that isn't a UUID is a 400**, not a 404: it's an invalid value, not a missing task.
+3. **Status values are exact and case-sensitive** (`TODO`, `IN_PROGRESS`, `DONE`); `todo` is a 400.
+4. **`PUT` requires a status** and replaces all four fields, so an omitted `description` or
+   `dueDate` is cleared.
+5. **Only a changed due date is checked against today**, so a task that became overdue can still
+   be edited.
+6. **The 409** comes from comparing the `version` the client sends with the stored one; `@Version`
+   in the adapter also covers a race between load and save.
+7. **Lists are newest first** (`createdAt` descending, the id as a tie-breaker so pages don't
+   overlap).
+8. **The principal is named by the user's id**, so the REST layer gets the owner without knowing
+   any security class.
+9. **Missing and wrong credentials read the same:** 401 in the API's error shape. There's no
+   `WWW-Authenticate` challenge, so a browser doesn't pop up a login dialog.
+10. **The module runs on 8081, with PostgreSQL on 5434,** beside the main project.
+11. **Interactor tests use a hand-written `UnitOfWork` fake** that runs the work at once and counts
+    transactions, instead of a Mockito mock. The prompt said mocks; the fake makes "no transaction
+    was opened" a one-line assertion.
+
 ## 4. How the output was validated (AI-3)
 
 | Check | Result | Evidence |
@@ -166,14 +191,5 @@ Real defects, each caught before the code went green:
 
 ## Running it
 
-```bash
-cd genai-case-study/task-api
-docker compose up -d          # PostgreSQL on localhost:5434
-./gradlew bootRun             # API on http://localhost:8081
-./gradlew check               # unit tests, ArchUnit, integration tests (needs Docker)
-
-curl -u alice:alice-pass-1 -H 'Content-Type: application/json' \
-     -d '{"title":"Buy milk","dueDate":"2099-01-01"}' localhost:8081/api/v1/tasks
-```
-
-Seeded users: `alice` / `alice-pass-1` and `bob` / `bob-pass-1`.
+How to run it, the seeded users and `curl` examples (the README the prompt asks for) are in
+[`genai-case-study/task-api/README.md`](../genai-case-study/task-api/README.md).
