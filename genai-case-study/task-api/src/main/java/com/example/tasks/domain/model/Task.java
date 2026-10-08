@@ -49,6 +49,12 @@ public class Task {
             .build();
     }
 
+    // PUT semantics: the four fields are replaced; the caller's version must be the stored one.
+    public void update(Title title, Description description, TaskStatus status, LocalDate dueDate,
+                       long expectedVersion, LocalDate today, Instant now) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
     public static Builder builder() {
         return new Builder();
     }
