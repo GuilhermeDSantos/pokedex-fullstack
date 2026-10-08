@@ -1,5 +1,7 @@
 package com.example.tasks.domain.model;
 
+import com.example.tasks.domain.exception.InvalidTaskException;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -34,11 +36,27 @@ public class Task {
 
     public static Task create(TaskId id, UserId ownerId, Title title, Description description, TaskStatus status,
                               LocalDate dueDate, LocalDate today, Instant now) {
-        throw new UnsupportedOperationException("not implemented yet");
+        requireNotInThePast(dueDate, today);
+        return builder()
+            .id(id)
+            .ownerId(ownerId)
+            .title(title)
+            .description(description)
+            .status(status == null ? TaskStatus.TODO : status)
+            .dueDate(dueDate)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    private static void requireNotInThePast(LocalDate dueDate, LocalDate today) {
+        if (dueDate != null && dueDate.isBefore(today)) {
+            throw new InvalidTaskException("Due date must not be in the past");
+        }
     }
 
     public TaskId getId() { return id; }
