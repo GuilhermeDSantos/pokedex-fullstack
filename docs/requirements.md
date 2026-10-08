@@ -97,11 +97,11 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| AI-1 | The **prompt** to generate a Task Management REST API (CRUD; task has title, description, status, due_date; belongs to a user) | ⬜ | [`genai-case-study.md`](genai-case-study.md) |
-| AI-2 | The **output code** (or a representative sample) | ⬜ | |
-| AI-3 | How the AI's suggestions were **validated** | ⬜ | |
-| AI-4 | How the output was **corrected / improved** | ⬜ | |
-| AI-5 | How **edge cases, authentication and validations** were handled | ⬜ | |
+| AI-1 | The **prompt** to generate a Task Management REST API (CRUD; task has title, description, status, due_date; belongs to a user) | ✅ | [`genai-case-study/PROMPT.md`](../genai-case-study/PROMPT.md), verbatim; its design in [`genai-case-study.md`](genai-case-study.md) §2 |
+| AI-2 | The **output code** (or a representative sample) | ✅ | [`genai-case-study/task-api/`](../genai-case-study/task-api/), isolated from the main build; tree and key files in §3 |
+| AI-3 | How the AI's suggestions were **validated** | ✅ | §4: `./gradlew check` (34 unit, 19 integration tests), the main project's ArchUnit rules, `curl` against the running app |
+| AI-4 | How the output was **corrected / improved** | ✅ | §5: five real defects with the fix and how it was caught, from a blind first run to a mock that would have returned `null` |
+| AI-5 | How **edge cases, authentication and validations** were handled | ✅ | §6: ownership as a 404 in every operation (`TaskOwnershipIT`), HTTP Basic, domain-owned validation, the UTC "today" limitation |
 
 ## Quality criteria
 

@@ -1,5 +1,3 @@
-# DRAFT — prompt for the task management API (to be reviewed before it is run)
-
 You are a senior Java engineer. Generate a complete, runnable RESTful API for a simple task
 management system. Follow every constraint below; where something is ambiguous, choose the simplest
 option and list the assumption at the end of your answer instead of asking.

@@ -31,6 +31,22 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-08 — The case study: "I'd never run an agent blind"
+- **Context:** The GenAI case study (AI-1..5): a task API generated from a spec-first prompt.
+- **AI proposed:** Running the prompt in an isolated agent with no access to the project's rules,
+  so the "raw output" would reflect the prompt alone; then, when that was questioned, writing a new
+  `AGENTS.md` for the task API before the developer had answered.
+- **Problem:** The developer pointed out that this doesn't reflect how they work: on a real job the
+  agent always runs under their own prompts and rules. The isolated run had already drifted from
+  the project's conventions. And the extra `AGENTS.md` duplicated rules that already exist, written
+  without waiting for a decision.
+- **Resolution:** The partial output and the extra file were deleted. The task API was built in
+  this repository under the existing `AGENTS.md` and standards, test-first. The checks then caught
+  a mock that would have returned `null` (a default method on a Mockito mock), a caught
+  `NullPointerException`, an `orElseThrow()` in a test, and a port clash only visible at runtime.
+- **Lesson:** A case study on AI use should show the real workflow, context included. And a
+  question to the developer is a stop sign, not a head start.
+
 ### 2026-10-08 — The clean run found what the tests didn't, and the AI broke its own snapshot once
 - **Context:** Delivery: the seed, a run from empty volumes and the frontend quality pass (DL-1..3,
   FE-5), done by the agent while the developer was away.

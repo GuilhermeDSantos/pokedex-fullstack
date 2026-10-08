@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Delivery done (D.1–D.6).** Next task: G.1 (the GenAI case study), then the UI pass and the walkthrough. Slice 6 works end to end on Docker: a card shows our localized name under the name, and an edit is on the list as soon as the user goes back. Slice 5: the full CRUD of our record from the detail page; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Delivery and the GenAI case study done.** Next task: U.1 (the UI pass), then the walkthrough (W). Slice 6 works end to end on Docker: a card shows our localized name under the name, and an edit is on the list as soon as the user goes back. Slice 5: the full CRUD of our record from the detail page; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -459,10 +459,13 @@ styles change; behaviour and tests stay as they are.
 
 Independent of the Pokémon code: do it once Slice 5 is done, before the polish.
 
-- [ ] G.1 Write the prompt in [`genai-case-study.md`](genai-case-study.md), run it, and save the raw output.
-- [ ] G.2 Review the output against a checklist, then record the defects found and the fixes, with
+- [x] G.1 Write the prompt ([`genai-case-study/PROMPT.md`](../genai-case-study/PROMPT.md)) and run it. A first run in
+      an isolated agent, without the project's rules, was stopped by the developer: on real work
+      the agent always runs under one's own rules. The task API was then built in this repository,
+      under `AGENTS.md` and the standards, test-first, in `genai-case-study/task-api/`.
+- [x] G.2 Review the output against a checklist, then record the defects found and the fixes, with
       before/after snippets.
-- [ ] G.3 Write up edge cases, auth and validation handling, plus lessons learned.
+- [x] G.3 Write up edge cases, auth and validation handling, plus lessons learned.
 
 ## Walkthrough (EV-1..6)
 
