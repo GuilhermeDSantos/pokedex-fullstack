@@ -1,6 +1,7 @@
 package com.example.tasks.domain.model;
 
 import com.example.tasks.domain.exception.InvalidTaskException;
+import com.example.tasks.domain.exception.TaskModifiedConcurrentlyException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -52,7 +53,20 @@ public class Task {
     // PUT semantics: the four fields are replaced; the caller's version must be the stored one.
     public void update(Title title, Description description, TaskStatus status, LocalDate dueDate,
                        long expectedVersion, LocalDate today, Instant now) {
-        throw new UnsupportedOperationException("not implemented yet");
+        if (expectedVersion != version) {
+            throw new TaskModifiedConcurrentlyException();
+        }
+        if (status == null) {
+            throw new InvalidTaskException("Status is required");
+        }
+        if (!Objects.equals(dueDate, this.dueDate)) {
+            requireNotInThePast(dueDate, today);
+        }
+        this.title = Objects.requireNonNull(title, "title must not be null");
+        this.description = description;
+        this.status = status;
+        this.dueDate = dueDate;
+        this.updatedAt = now;
     }
 
     public static Builder builder() {
