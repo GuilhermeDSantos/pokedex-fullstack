@@ -19,6 +19,10 @@ public class ListTasksInteractor implements ListTasksUseCase {
 
     @Override
     public PageOutput<TaskOutput> execute(ListTasksInput input, UserId owner) {
-        throw new UnsupportedOperationException("not implemented yet");
+        var status = mapper.toStatus(input.status());
+        var pageRequest = mapper.toPageRequest(input.page(), input.size());
+        var page = taskRepository.findAllByOwner(owner, status, pageRequest);
+        return new PageOutput<>(page.content().stream().map(TaskOutput::from).toList(), pageRequest.page(),
+            pageRequest.size(), page.totalElements());
     }
 }

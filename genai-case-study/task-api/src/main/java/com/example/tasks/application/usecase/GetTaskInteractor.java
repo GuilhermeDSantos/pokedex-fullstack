@@ -18,6 +18,6 @@ public class GetTaskInteractor implements GetTaskUseCase {
 
     @Override
     public TaskOutput execute(GetTaskInput input, UserId owner) {
-        throw new UnsupportedOperationException("not implemented yet");
+        return TaskOutput.from(taskRepository.getByIdAndOwner(mapper.toTaskId(input.id()), owner));
     }
 }

@@ -24,6 +24,14 @@ public class UpdateTaskInteractor implements UpdateTaskUseCase {
 
     @Override
     public TaskOutput execute(UpdateTaskInput input, UserId owner, LocalDate today, Instant now) {
-        throw new UnsupportedOperationException("not implemented yet");
+        var id = mapper.toTaskId(input.id());
+        var title = mapper.toTitle(input.title());
+        var description = mapper.toDescription(input.description());
+        var status = mapper.toStatus(input.status());
+        return unitOfWork.inTransaction(() -> {
+            var task = taskRepository.getByIdAndOwner(id, owner);
+            task.update(title, description, status, input.dueDate(), input.version(), today, now);
+            return TaskOutput.from(taskRepository.save(task));
+        });
     }
 }

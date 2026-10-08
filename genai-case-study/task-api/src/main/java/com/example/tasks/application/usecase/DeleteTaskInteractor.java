@@ -20,6 +20,9 @@ public class DeleteTaskInteractor implements DeleteTaskUseCase {
 
     @Override
     public void execute(DeleteTaskInput input, UserId owner) {
-        throw new UnsupportedOperationException("not implemented yet");
+        var id = mapper.toTaskId(input.id());
+        unitOfWork.inTransaction(() -> {
+            taskRepository.delete(taskRepository.getByIdAndOwner(id, owner));
+        });
     }
 }
