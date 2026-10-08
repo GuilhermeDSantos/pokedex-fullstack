@@ -14,7 +14,7 @@ interactor → adapters → controller → screen. The product being built is de
 
 ## Current focus
 
-> **Slice 6 — The list shows our localized names.** Next task: D.1 (the demo seed). Slice 6 works end to end on Docker: a card shows our localized name under the name, and an edit is on the list as soon as the user goes back. Slice 5: the full CRUD of our record from the detail page; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
+> **Delivery done (D.1–D.6).** Next task: G.1 (the GenAI case study), then the UI pass and the walkthrough. Slice 6 works end to end on Docker: a card shows our localized name under the name, and an edit is on the list as soon as the user goes back. Slice 5: the full CRUD of our record from the detail page; the `/local` routes take the Pokédex number (D-040). Slice 4 works end to end on Docker: sign in from the detail page, sync, and our fields appear merged into the page. Slice 3 works end to end on Docker. Slice 2 works end to end on Docker against the real PokeAPI. Phase 1 (foundation) is done.
 > Phase 0 is done: the whole stack runs with `docker compose up --build` and `./gradlew check` is
 > green. No blockers. The agent never commits or pushes before the developer has read the changes.
 
@@ -411,15 +411,20 @@ Frontend:
 
 ## Delivery (DL-1..3, TR-OPT, FE-5)
 
-- [ ] D.1 `V3__seed_demo_data.sql`: demo user + about 10 synced Pokémon with custom attributes
+- [x] D.1 `V3__seed_demo_data.sql`: demo user + about 10 synced Pokémon with custom attributes
       and tags, so the list starts with merged data. The user's BCrypt hash is generated with the
       project's own `BCryptPasswordHasher` (a one-off run), never with an online generator. The
       plain demo password appears only in the README. The Pokédex numbers come from real
       PokeAPI responses recorded with `curl`, never typed from memory. **Pikachu is not in the
-      seed**: it's synced live in the demo (a 201, not a 409) and it's the test fixture.
-- [ ] D.2 `ApplicationContextIT`: context loads, every `*UseCase` bean resolves, seed present.
-- [ ] D.3 Clean `docker compose up --build` from scratch (`down -v`), with the seed, and the whole
-      demo flow clicked through.
+      seed**: it's synced live in the demo (a 201, not a 409) and it's the test fixture. Ten
+      Pokémon with French names (`pokemon-species` names) and region Kanto (generation I's main
+      region), avoiding the numbers the ITs use. `ON CONFLICT DO NOTHING`, so the migration also
+      applies to a dev database that already synced some of them (checked on one).
+- [x] D.2 `ApplicationContextIT`: context loads, every `*UseCase` bean resolves, seed present (the
+      README's demo account signs in; ten records, not Pikachu).
+- [x] D.3 Clean `docker compose up --build` from scratch, with the seed, and the whole demo flow
+      clicked through. Run as a separate Compose project (`-p pokemon-catalog-fresh`) on new volumes,
+      so the dev database survived; the run found the two D.6 fixes.
 - [x] D.4 OpenAPI UI via springdoc (D-016), brought forward to the end of Slice 1: springdoc 3.1.1
       (built on Boot 4.1.0), `/v3/api-docs` and `/swagger-ui.html` public, a `bearer-jwt` scheme
       on protected operations (`@SecurityRequirement` on the controller; the scheme is declared in
@@ -427,11 +432,13 @@ Frontend:
       `OpenApiIT`: contract and UI without a token, title, scheme on `/auth/me` and not on login.
       Checked in the browser on Docker: the UI loads, Authorize works, empty console. Every new
       protected endpoint carries `@SecurityRequirement(name = OpenApiDocumentation.BEARER_JWT)`.
-- [ ] D.5 `README.md`: expand the current run instructions with the product overview, an
+- [x] D.5 `README.md`: expand the current run instructions with the product overview, an
       architecture diagram, demo credentials, the API table, design decisions summary (linking
       `docs/decisions.md`), known limitations and next steps, and how AI was used.
-- [ ] D.6 Frontend quality pass: zero console warnings on every page (manual, DevTools open),
-      keyboard-only run, a manual check at ~360 px and desktop width.
+- [x] D.6 Frontend quality pass: zero console warnings on every page (manual, DevTools open),
+      keyboard-only run, a manual check at ~360 px and desktop width. Fixed, test-first: the header's
+      Sign in / Create account come back to the current page (lost when "Log in to sync" went), and
+      keep the original `returnTo` on the auth pages; a dialog traps Tab inside itself.
 
 ## UI pass (FE-2)
 

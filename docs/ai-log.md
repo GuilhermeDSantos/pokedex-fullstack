@@ -31,6 +31,23 @@ Keep entries short and factual. Newest first.
 
 ## Entries
 
+### 2026-10-08 — The clean run found what the tests didn't, and the AI broke its own snapshot once
+- **Context:** Delivery: the seed, a run from empty volumes and the frontend quality pass (DL-1..3,
+  FE-5), done by the agent while the developer was away.
+- **AI proposed:** A seed with plain `INSERT`s, and treating the earlier removal of "Log in to sync"
+  as complete.
+- **Problem:** Plain inserts would have stopped Flyway, and so the backend, on any database that
+  already synced one of the seeded Pokémon (the developer's had Bulbasaur). Clicking the demo from
+  scratch then showed that signing in from the header lost the page the visitor was on, a
+  regression from removing that link, and that a dialog let Tab escape to the page behind it.
+  Separately, while redoing a red step the AI restored files with `git checkout --`, which reads
+  the index, not `HEAD`: a duplicate test survived into the snapshot until the test run showed it.
+- **Resolution:** The seed uses `ON CONFLICT DO NOTHING` (verified on the real dev database), and
+  `ApplicationContextIT` signs the README's account in. The header links carry `returnTo` and keep
+  it on the auth pages; the dialog traps focus. Both test-first. The steps were redone from `HEAD`.
+- **Lesson:** Run the product the way a newcomer will, from nothing; and a test that passed when
+  a feature was removed says nothing about the paths that feature used to serve.
+
 ### 2026-10-07 — The buttons worked, but sat in the content; the developer asked for a place
 - **Context:** Reviewing S5.4 in the browser (FE-2, FE-3).
 - **AI proposed:** The record's controls in the flow of the page, under the types, and an inline

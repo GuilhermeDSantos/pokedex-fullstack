@@ -83,15 +83,15 @@ to a decision in [`decisions.md`](decisions.md).
 | FE-2 | **Responsive** and **user-centric** design | 🟨 | live resize in the demo (~360 px → desktop), four async states per view |
 | FE-3 | **CRUD** matching the functional use cases | ✅ | detail page: Sync (C), our fields merged into the page (R), Edit in a dialog (U), Remove after a `ConfirmDialog` (D). `PokemonDetailPage.test.tsx`; checked in the browser on Docker |
 | FE-4 | **Clean component organization** and **efficient state management** | ⬜ | [`standards/frontend.md`](standards/frontend.md) |
-| FE-5 | *Optional but desired:* **no warnings in the browser console** | 🟨 | console guard in `src/test/setup.ts` (fails any test that warns); manual pass per page |
+| FE-5 | *Optional but desired:* **no warnings in the browser console** | ✅ | console guard in `src/test/setup.ts` (fails any test that writes to the console); manual pass (D.6) on every page: list, detail, sign in, sign up, unknown route, unknown Pokémon. The only lines are the browser's own network log for a deliberate 4xx (an unknown Pokémon, a rejected edit), which no page code writes |
 
 ## Submission & delivery
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| DL-1 | **README**: environment setup and technical documentation | ⬜ | `README.md` |
-| DL-2 | **Pre-populated** with seeded data / mock credentials for the demo | ⬜ | `V3__seed_demo_data.sql`, credentials in README |
-| DL-3 | **Dockerfile** for containerized execution | ⬜ | `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml` |
+| DL-1 | **README**: environment setup and technical documentation | ✅ | `README.md`: quick start, demo account and script, architecture and data model diagrams, API table, decisions summary, tests, local development, limitations, how AI was used |
+| DL-2 | **Pre-populated** with seeded data / mock credentials for the demo | ✅ | `V3__seed_demo_data.sql`: the demo account (hash from the app's own `BCryptPasswordHasher`) and ten synced Pokémon, numbers and French names from PokeAPI, idempotent on an existing database; credentials in the README; `ApplicationContextIT` signs the demo account in and checks the ten records |
+| DL-3 | **Dockerfile** for containerized execution | ✅ | `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml`; a clean `docker compose up --build` on empty volumes (a separate Compose project) ran the whole demo (D.3) |
 
 ## AI-assisted development case study (separate deliverable)
 

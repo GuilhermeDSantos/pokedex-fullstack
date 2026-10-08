@@ -32,8 +32,9 @@ docker compose up --build
 | `demo@pokemon.com` | `Pikachu2026!` |
 
 The database starts with demo data: this account and ten synced Pokémon (Bulbasaur, Charmander,
-Charizard, Squirtle, Jigglypuff, Meowth, Psyduck, Gengar, Snorlax, Dragonite) with French localized
-names, region and tags. Pikachu is left out on purpose, so it can be synced live.
+Charizard, Squirtle, Jigglypuff, Meowth, Psyduck, Gengar, Snorlax, Dragonite), most with a French
+localized name, a region and tags; Snorlax has no localized name and Psyduck no region, so unset
+fields show too. Pikachu is left out on purpose, so it can be synced live.
 
 ### Try it
 
