@@ -16,21 +16,21 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| OV-1 | RESTful API in **Java + Spring Boot** | ⬜ | |
-| OV-2 | **Clean Architecture** (applied strictly — D-001) | ⬜ | `LayeredArchitectureTest` |
-| OV-3 | **TDD** methodology, visible in history and tests | ⬜ | commit history (test-first), [`ai-log.md`](ai-log.md) |
-| OV-4 | Backed by a reliable data store | ⬜ | PostgreSQL + Flyway |
-| OV-5 | Integrates **PokeAPI** for retrieval, local replication and attribute modification | ⬜ | |
-| OV-6 | The user stories are explicit in the docs and the walkthrough | ⬜ | [`walkthrough.md`](walkthrough.md) |
+| OV-1 | RESTful API in **Java + Spring Boot** | ✅ | Spring Boot 4.1 on Java 25, REST under `/api/v1` ([API contract](domain-model.md#api-contract)); every endpoint has success and error ITs |
+| OV-2 | **Clean Architecture** (applied strictly — D-001) | ✅ | `domain` and `application` framework-free, ports and adapters, `UseCaseConfig` as the composition root; `LayeredArchitectureTest` (17 rules) fails the build on any violation (D-001…D-003) |
+| OV-3 | **TDD** methodology, visible in history and tests | ✅ | Inward-out TDD visible in the history: 305 `test:` commits (red) and 239 `feat:` commits (green), plus `refactor:` steps; [`ai-log.md`](ai-log.md) |
+| OV-4 | Backed by a reliable data store | ✅ | PostgreSQL 17 with Flyway-owned migrations (`ddl-auto: validate`); unreachable database → 503 within 3 s (`DatabaseUnavailableIT`, `DatabaseConnectionLostIT`) |
+| OV-5 | Integrates **PokeAPI** for retrieval, local replication and attribute modification | ✅ | Retrieval (list and detail from PokeAPI), local replication (sync, `POST …/local`), attribute modification (`PUT …/local`); `PokemonControllerIT`, `JpaLocalPokemonRepositoryIT`, the demo on Docker |
+| OV-6 | The user stories are explicit in the docs and the walkthrough | 🟨 | The stories are explicit in this matrix (US-01…US-04) and in [`domain-model.md`](domain-model.md#product-vision); [`walkthrough.md`](walkthrough.md) still to be brought up to date |
 
 ## Functional — user stories
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| FR-0 | Spring Boot REST API that **communicates with PokeAPI** | 🟨 | `PokemonRepository` port → `PokeApiPokemonRepository`; so far `PokeApiClient` (`PokeApiClientTest`, `PokeApiClientTimeoutIT`) and `PokeApiTranslator` |
+| FR-0 | Spring Boot REST API that **communicates with PokeAPI** | ✅ | `PokemonRepository` port → `PokeApiPokemonRepository` + `PokeApiClient` (RestClient, timeouts, cache) and `PokeApiTranslator`; `PokeApiClientTest`, `PokeApiClientTimeoutIT`, `PokeApiTranslatorTest`, `PokeApiPokemonRepositoryTest` |
 | US-01 | **Browse** Pokémon with **paginated** results, each showing **sprite, category, mass, skills (abilities)** (D-010) | ✅ | `GET /api/v1/pokemon` (`BrowsePokemonInteractorTest`, `PokemonControllerIT`); `PokemonListPage` (`PokemonListPage.test.tsx`, `PokemonCard.test.tsx`); each card carries our localized name, from one query per page (`JpaLocalPokemonRepositoryIT` counts it, D-030); checked on Docker |
-| US-01.N | *Nice to have:* **cache** service responses | 🟨 | Caffeine on `PokeApiClient` (D-012): `PokeApiClientCacheTest`, `PokeApiPokemonRepositoryCacheTest`; the list endpoint comes in S2.5 |
-| US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | 🟨 | `GET /api/v1/pokemon/{identifier}` (`GetPokemonInteractorTest`, `PokemonControllerIT`, `PokeApiTranslatorTest`); `PokemonDetailPage` (`PokemonDetailPage.test.tsx`); merged with local data in Slice 6 |
+| US-01.N | *Nice to have:* **cache** service responses | ✅ | Caffeine on `PokeApiClient` (D-012): `PokeApiClientCacheTest`, `PokeApiPokemonRepositoryCacheTest`; a cached list page answers in milliseconds |
+| US-02 | **Detail** of a chosen Pokémon: **image, core statistics, narrative description, evolutionary lineage** | ✅ | `GET /api/v1/pokemon/{identifier}`: image, stats, description, evolution tree (branching, e.g. Eevee), merged with our record (`GetPokemonInteractorTest`, `PokemonControllerIT`, `PokeApiTranslatorTest`); `PokemonDetailPage` (`PokemonDetailPage.test.tsx`) |
 | US-03 | **Persist** Pokémon data into a **local relational store** (sync) | ✅ | `POST /api/v1/pokemon/{identifier}/local` → 201 + `Location`, a row in `local_pokemons` (Pokédex number + our fields, D-039). `JpaLocalPokemonRepositoryIT`, `PokemonControllerIT` (201/400/401/404/409/503), `SyncPokemonInteractorTest`; the detail page's **Sync to local database** checked on Docker |
 | US-03.a | Replication enables **proprietary fields**: localized nomenclature, geographical metadata, internal classification tags (D-006; one free-text `localizedName`, D-027 rejected) | ✅ | `CustomAttributes` (localizedName, region, tags), the brief's three examples: validated in the domain (`CustomAttributesTest`, `TagTest`), stored in `local_pokemons` + `local_pokemon_tags`, edited with `PUT …/local`, shown on the detail (name, facts, tags) and on the list (localized name) |
 | US-04 | **Update** any Pokémon in the local DB (editable fields = the proprietary ones: D-006/D-026) | ✅ | `PUT /api/v1/pokemon/{number}/local` (D-040) replaces our fields: `UpdateLocalPokemonInteractorTest`, `LocalPokemonTest`, `JpaLocalPokemonRepositoryIT` (repeated edits), `PokemonControllerIT`; checked with curl on Docker |
@@ -42,38 +42,38 @@ to a decision in [`decisions.md`](decisions.md).
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| TR-GIT | Code hosted in a **public Git repository** | ⬜ | GitHub URL in README |
-| TR-TEST | **Tests included** | ⬜ | |
-| TR-ERR | **Proper error handling** (uniform `ErrorResponse`, category mapping) | 🟨 | `GlobalExceptionHandlerIT`: categories 404/409/400/401/422, malformed/invalid body and params → 400, unknown path 404, generic 500, framework 405/415 kept |
-| TR-CACHE | *Nice to have:* **caching layer for PokeAPI** responses | 🟨 | same as US-01.N |
+| TR-GIT | Code hosted in a **public Git repository** | ✅ | https://github.com/GuilhermeDSantos/pokedex-fullstack (public) |
+| TR-TEST | **Tests included** | ✅ | Backend: 181 unit tests, 108 integration tests (Testcontainers), 17 ArchUnit rules; frontend: Vitest + Testing Library + MSW, failing on any console output |
+| TR-ERR | **Proper error handling** (uniform `ErrorResponse`, category mapping) | ✅ | One `ErrorResponse` shape mapped by exception category; `GlobalExceptionHandlerIT`: 404/409/400/401/422, malformed and invalid bodies → 400, unknown path 404, generic 500 without internals, framework 405/415 kept; unreachable data → 503 `DATA_UNAVAILABLE` |
+| TR-CACHE | *Nice to have:* **caching layer for PokeAPI** responses | ✅ | Same as US-01.N |
 | TR-FE | **Front-end** consuming the API | ⬜ | `frontend/` |
-| TR-OPT | *Optional:* additional functionality is welcome | 🟨 | Swagger UI at `/swagger-ui.html` with bearer auth (D-016, `OpenApiIT`); planned: "synced" badge and display name on the list |
+| TR-OPT | *Optional:* additional functionality is welcome | ✅ | Swagger UI at `/swagger-ui.html` with bearer auth (D-016, `OpenApiIT`); localized names on the list; demo data; the 503 for unavailable data |
 
 ## Technical — database
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| TR-DB-1 | Relational DB with a **primary entity** (Pokémon) and a **secondary collection for user management** (user accounts) | 🟨 | `user_accounts` (`V1__…`), `local_pokemons` (`V2__…`) |
-| TR-DB-2 | Records have a **unique primary key** and **≥ 2 descriptive attributes** | 🟨 | `local_pokemons.id`, `user_accounts.id` |
+| TR-DB-1 | Relational DB with a **primary entity** (Pokémon) and a **secondary collection for user management** (user accounts) | ✅ | `local_pokemons` (+ `local_pokemon_tags`) as the primary entity, `user_accounts` for user management (`V1__…`, `V2__…`); `JpaLocalPokemonRepositoryIT`, `JpaUserAccountRepositoryIT` |
+| TR-DB-2 | Records have a **unique primary key** and **≥ 2 descriptive attributes** | ✅ | UUID primary keys; `local_pokemons`: Pokédex number (unique), localized name, region, tags, timestamps; `user_accounts`: email (unique), name, password hash, created at |
 
 ## Technical — API
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
 | TR-API-1 | Java Web API with **comprehensive CRUD** on the dataset | ✅ | on `/api/v1/pokemon/{number}/local`: C = `POST` (sync), R = `GET`, U = `PUT`, D = `DELETE`, each with ITs for success and every documented error |
-| TR-API-2 | **Standard HTTP verbs**, required parameters, **consistent return structures** | 🟨 | `PageResponse`, `ErrorResponse`, statuses in [`domain-model.md`](domain-model.md#api-contract) |
-| TR-AUTH-1 | Auxiliary API for **user registration** | 🟨 | `POST /api/v1/auth/register`: `AuthController`, `RegisterUserInteractor`; `RegisterUserInteractorTest`, `AuthControllerIT`, `AuthFlowIT` |
-| TR-AUTH-2 | **Authentication** | 🟨 | `POST /api/v1/auth/login` (JWT). `AuthController` (login, `/auth/me`), `BCryptPasswordHasher`, `JwtTokenIssuer` + `JwtConfig` (HS256), `AuthenticateUserInteractor`, `GetCurrentUserInteractor`; their tests, `AuthControllerIT`, `AuthFlowIT` (real token end to end), `JwtTokenIssuerTest`, `JwtPropertiesTest` |
-| TR-AUTH-3 | **Protected vs public routes** | 🟨 | `SecurityConfig`: every read public, writes on `/local` and `/auth/me` protected, closed by default (D-030, D-035); `SecurityConfigIT`. Controller-level 401 tests come with each endpoint |
+| TR-API-2 | **Standard HTTP verbs**, required parameters, **consistent return structures** | ✅ | GET/POST/PUT/DELETE with their standard statuses (200/201 + `Location`/204), path and query parameters validated (400), `PageResponse` and `ErrorResponse` everywhere; statuses in [`domain-model.md`](domain-model.md#api-contract) |
+| TR-AUTH-1 | Auxiliary API for **user registration** | ✅ | `POST /api/v1/auth/register`: `AuthController`, `RegisterUserInteractor`; `RegisterUserInteractorTest`, `AuthControllerIT`, `AuthFlowIT` |
+| TR-AUTH-2 | **Authentication** | ✅ | `POST /api/v1/auth/login` (JWT HS256, BCrypt): `AuthenticateUserInteractor`, `GetCurrentUserInteractor`, `JwtTokenIssuer`; `AuthControllerIT`, `AuthFlowIT` (a real token end to end), `JwtTokenIssuerTest` |
+| TR-AUTH-3 | **Protected vs public routes** | ✅ | `SecurityConfig`: every read public, writes on `/local` and `/auth/me` protected, closed by default (D-030, D-035); public routes ignore the token (D-036); `SecurityConfigIT` and a 401 IT for each protected endpoint |
 
 ## Technical — layers
 
 | ID | Requirement | Status | Evidence |
 |---|---|---|---|
-| TR-DAL | Specialized **data access layer** managing persistence interactions, the foundation for controllers | ⬜ | `infrastructure/persistence` behind domain repository ports |
-| TR-BL-1 | Dedicated **business logic layer** with all domain rules and **data validation** (the domain is the validation authority: D-028) | ⬜ | `domain` + `application` |
-| TR-BL-2 | Business layer **independent of both the API and data access** | ⬜ | framework-free `domain`/`application`, ArchUnit allowlists |
-| TR-UT | **Thorough unit test coverage for every core component** | ⬜ | JaCoCo report (unit + IT data merged), test list per layer |
+| TR-DAL | Specialized **data access layer** managing persistence interactions, the foundation for controllers | ✅ | `infrastructure/persistence`: JPA entities, Spring Data repositories and adapters behind the domain's repository ports, with exception translation; `JpaLocalPokemonRepositoryIT`, `JpaUserAccountRepositoryIT` |
+| TR-BL-1 | Dedicated **business logic layer** with all domain rules and **data validation** (the domain is the validation authority: D-028) | ✅ | `domain` holds the rules and the validation (value objects such as `Tag`, `CustomAttributes`, `Email`, `RawPassword`, `PokedexNumber`); `application` orchestrates them in use cases (D-028) |
+| TR-BL-2 | Business layer **independent of both the API and data access** | ✅ | `domain` and `application` import only `java.*` and inner layers, enforced by the ArchUnit allowlists in `LayeredArchitectureTest` |
+| TR-UT | **Thorough unit test coverage for every core component** | ✅ | JaCoCo over unit + integration tests: **97.7% of lines, 82.1% of branches** in the backend; unit tests per layer (domain plain JUnit, interactors with mocked ports) |
 
 ## Frontend
 
